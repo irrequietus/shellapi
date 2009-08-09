@@ -112,7 +112,8 @@ function odsel_ispli_repo() {
 
 #;
 # @desc The init implementation for this module
-# @warn FIXME: import XML - driven implementation for this one as well
+# @devs FIXME: import XML - driven implementation for this one as well
+# @devs FIXME: port globals into the XML configuration file (syscore - specs like)
 #;
 function odsel_init() {
     I9KG_ALIASES=(LOCATION
@@ -177,7 +178,6 @@ function odsel_init() {
     _UPDATE=3
     _PREGET=4
     _POSTGET=5
-    # define operators
 }
 
 #;
@@ -270,6 +270,7 @@ function odsel_ifind() {
 #;
 # @desc Read a file with ppli links and preprocess it
 # @ptip $1  path to file
+# @devs FIXME: _fatal raised is superfluous; move to _emsg
 #;
 function odsel_pppli() {
     local   _pre_l=() \

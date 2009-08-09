@@ -911,6 +911,14 @@ function _wshow() {
     SHELLAPI_ERROR=()
 }
 
+#;
+# @desc A sorting algorithm using a function as a comparison predicate
+# @ptip $1     comparison predicate (ascending/descending)
+# @ptip ${@:2} list of variables to sort
+# @devs FIXME: can improve performance in certain scenarios using reference semantics
+#              instead of passing by value. Consider non - predicate versions as well.
+# @warn not applicable to entries containing whitespace (temporarily)
+#;
 function _qsx_pred() {
     local l r
     (($# < 3)) && printf "%b\n" ${@:2} || (
