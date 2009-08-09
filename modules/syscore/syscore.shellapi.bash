@@ -633,7 +633,6 @@ function _cfx() {
 # @ptip $1  string to shorten
 #;
 function _dotstr() {
-    SHELLAPI_LDOT=10
     local v="${1:0:${SHELLAPI_LDOT-${#1}}}"
     (($SHELLAPI_LDOT < ${#1})) \
         && v="$v..."
@@ -656,6 +655,7 @@ function _init() {
         && _fatal "${FUNCNAME}: home not set"
     SHELLAPI_MODULES_DIR="${SHELLAPI_HOME}/modules"
     SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}
+    SHELLAPI_LDOT=${SHELLAPI_LDOT:-10}
     local l="$SHELLAPI_MODULES_DIR/syscore/locales/syscore.locale.$SHELLAPI_LOCALE.xml"
     local f="$SHELLAPI_MODULES_DIR/syscore/extra/syscore.config.xml"
     [[ -e $l ]] \
