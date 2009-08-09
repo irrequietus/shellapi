@@ -560,7 +560,7 @@ function _include_fcheck() {
                 _fatal "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_FNSET]}: ${BASH_REMATCH[1]}"
             SHELLAPI_LFUNC[${#SHELLAPI_LFUNC[@]}]="${BASH_REMATCH[1]}"
         }
-    done < $1
+    done < "$1"
 }
 
 #;
