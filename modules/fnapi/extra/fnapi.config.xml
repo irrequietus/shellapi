@@ -1,0 +1,6 @@
+<bashdata fni="_initglobals_fnapi">
+    <var name="BOEBO">ehohoce</var>
+    <array name="I9KG_UTILSPACE" check="reuse">
+        <index name="LOCATION">${SHELLAPI_RSPACE}/utilspace</index>
+    </array>
+</bashdata>

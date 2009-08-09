@@ -1,0 +1,54 @@
+<!-- Configuration file for the syscore module -->
+<bashdata fni="_initglobals_syscore">
+    <var name="SHELLAPI_LOCALE">en</var>
+    <var name="SHELLAPI_PAYLOAD">lzma</var>
+    <var name="SHELLAPI_HOME">${SHELLAPI_HOME:-.}</var>
+    <var name="SHELLAPI_FNOIMP">n</var>
+    <var name="SHELLAPI_MODULES_DIR">${SHELLAPI_HOME}/modules</var>
+    <var name="SHELLAPI_MLOG" check="warn">${SHELLAPI_HOME}/logging/shellapi.log</var>
+    <var name="SHELLAPI_VERBOSITY">${SHELLAPI_VERBOSITY:=max}</var>
+    <var name="SHELLAPI_LOGFMSG">${SHELLAPI_LOGFMSG=y}</var>
+    <var name="SHCORE_MLOG">${SHELLAPI_HOME}/logging/shellapi.log</var>
+    <var name="SHELLAPI_HASH_MODES">${SHELLAPI_HASH_MODES:=sha1sum}</var>
+    <var name="SHELLAPI_HASH">${SHELLAPI_HASH_MODES}</var>
+    <var name="SHELLAPI_TARGET">${SHELLAPI_TARGET:=$(pwd)/rspace}</var>
+    <var name="SHELLAPI_RSPACE">${SHELLAPI_TARGET}/shellrun</var>
+    <var name="I9KG_POOLSPACE">${SHELLAPI_TARGET}/poolset</var>
+    <array name="SHELLAPI_MODULES"/>
+    <array name="SHELLAPI_LFUNC"/>
+    <array name="SHELLAPI_GMSG"/>
+    <array name="I9KG_DEFS" check="ignore">
+        <index name="PROGRESS_LOCKS">${SHELLAPI_RSPACE}/progress/locks</index>
+        <index name="PROGRESS_REPORTS">${SHELLAPI_RSPACE}/progress/reports</index>
+        <index name="PROCESS_LOCKS">${SHELLAPI_RSPACE}/process/locks</index>
+        <index name="PROCESS_REPORTS">${SHELLAPI_RSPACE}/process/reports</index>
+        <index name="BTCHAIN">${SHELLAPI_RSPACE}/btchain</index>
+        <index name="POOLSETS">${SHELLAPI_TARGET}/poolset</index>
+    </array>
+    <array name="I9KG_PRIME" check="fatal">
+        <index name="LOCATION">${I9KG_POOLSPACE}/prime</index>
+        <index name="PRISTINE">${I9KG_POOLSPACE}/prime/pristine</index>
+        <index name="PAYLOAD">${I9KG_POOLSPACE}/prime/payload</index>
+        <index name="PATCHES">${I9KG_POOLSPACE}/prime/patches</index>
+        <index name="SNAPSHOTS">${I9KG_POOLSPACE}/prime/snapshots</index>
+        <index name="CLONES">${I9KG_POOLSPACE}/prime/clones</index>
+        <index name="EZCONFIG">${I9KG_POOLSPACE}/prime/ezconfig</index>
+        <index name="METABASE">${I9KG_POOLSPACE}/prime/metabase</index>
+        <index name="METACACHE">${I9KG_POOLSPACE}/prime/metacache</index>
+        <index name="I9KG_DEPOT">${I9KG_POOLSPACE}/prime/i9kg</index>
+        <index name="I9KG_SEEDS">${I9KG_POOLSPACE}/prime/i9kg/seeds</index>
+        <index name="I9KG_SEEDS_XML">${I9KG_POOLSPACE}/prime/i9kg/seeds/xml</index>
+        <index name="I9KG_SEEDS_JSON">${I9KG_POOLSPACE}/prime/i9kg/seeds/json</index>
+        <index name="I9KG_SEEDS_YAML">${I9KG_POOLSPACE}/prime/i9kg/seeds/yaml</index>
+        <index name="I9KG_REPORTS">${I9KG_POOLSPACE}/prime/i9kg/reports</index>
+        <index name="I9KG_REPORTS_XML">${I9KG_POOLSPACE}/prime/i9kg/reports/xml</index>
+        <index name="I9KG_REPORTS_JSON">${I9KG_POOLSPACE}/prime/i9kg/reports/json</index>
+        <index name="I9KG_REPORTS_YAML">${I9KG_POOLSPACE}/prime/i9kg/reports/yaml</index>
+        <index name="FCACHE">${I9KG_POOLSPACE}/prime/fcache</index>
+        <index name="RHID"></index>
+        <index name="RPLI"></index>
+    </array>
+    <array name="I9KG_UTILSPACE" check="reuse">
+        <index name="LOCATION">${SHELLAPI_RSPACE}/utilspace</index>
+    </array>
+</bashdata>

@@ -1,0 +1,10 @@
+<bashdata fni="_fnapi_intl_en">
+    <array name="MSGL" prefixall="FNAPI">
+        <index></index>
+        <index>has a fail lock</index>
+        <index>is already in progress, skipping</index>
+        <index>is already in queue, skipping</index>
+        <index>has been forcively interrupted</index>
+        <index>unrecognized error</index>
+    </array>
+</bashdata>

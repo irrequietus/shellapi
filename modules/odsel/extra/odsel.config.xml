@@ -1,0 +1,4 @@
+<bashdata fni="_initglobals_odsel">
+    <var name="POOL_RELAY_STORE">${SHELLAPI_TARGET}/relays</var>
+    <var name="POOL_RELAY_CACHE">${SHELLAPI_TARGET}/relays/cache</var>
+</bashdata>

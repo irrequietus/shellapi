@@ -1,0 +1,34 @@
+<bashdata fni="_syscore_intl_en">
+    <array name="MSGL" prefixall="SHCORE">
+        <index name="NOINC">could not include</index>
+        <index name="ALLRD">already included into shellapi</index>
+        <index name="INC">included</index>
+        <index name="FEXIST">file exists</index>
+        <index name="FNOEXIST">file does not exist</index>
+        <index name="FALRDF">file already found</index>
+        <index name="FNOWRITE">could not write to file</index>
+        <index name="ERRNOPARAM">wrong number of arguments</index>
+        <index name="REGENREQ">regeneration required (hash mismatch)</index>
+        <index name="NOGLOBCONF">no globals configuration file</index>
+        <index name="FNSET">function already set</index>
+        <index name="TYPE_MISMATCH">arguments do not follow type requirements (integer/string mismatch)</index>
+        <index name="DT_NEGDIFF">the time difference between the two instances is negative</index>
+        <index name="DT_FERROR">improper format when time is represented as a mixed number</index>
+        <index name="DT_NEGATIVE">time cannot be negative (in this problem space)</index>
+        <index name="EVDEV_FORMAT">basic event - color mappings do not follow established guidelines</index>
+        <index name="NOINT">not an integer</index>
+        <index name="NOSTR">not a string</index>
+        <index name="NOREP">incorrect representation</index>
+        <index name="NOFORMAT">format deployed not supported</index>
+        <index name="OUTLIM">value out of preset range</index>
+        <index name="NOSEQOK">could not complete sequence</index>
+        <index name="NOCONFF">could not find configuration file</index>
+        <index name="INCLUDE">including module</index>
+        <index name="NOSUPPORT">not supported</index>
+        <index name="FATAL">a fatality occured, as a result of</index>
+        <index name="NOLOCINIT">could not initialize locale</index>
+        <index name="XML_NOATTR">expected XML attribute not found</index>
+        <index name="XML_NOGENT">XML general entity not found</index>
+        <index name="WSHOW">A series of warnings have been issued</index>
+    </array>
+</bashdata>
