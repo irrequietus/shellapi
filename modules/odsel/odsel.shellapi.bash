@@ -1138,6 +1138,7 @@ function odsel_scli() {
 #       instruction sequences etc. The resulting array is
 # @ptip $1  path to file
 # @ptip $2  a hash identifier or default to ODSEL_XMLA global
+# @devs TODO: consider removing _fatal for _emsg semantics with stop on first error.
 #;
 function odsel_xmla() {
     local   v_sn v_an v_in v_iv t=() c=() k=0 \

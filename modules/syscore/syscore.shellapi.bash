@@ -862,7 +862,7 @@ function _isavailable() {
 # @warn Do not rely on $IFS/$OFS if in need to "reimplement" this function.
 #;
 function _arraygen_nls() {
-    local j a=() b=${2-$1}
+    local j a=() b="${2-$1}"
     while read -r j; do
         ! [[ -z $j ]] \
             && a[${#a[@]}]="$j"
