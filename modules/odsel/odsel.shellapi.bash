@@ -780,7 +780,7 @@ function _odsel_i9kg_header() {
             && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
             || a=("${a/:*/}" "prime")
     v="$(_hsos "${a[0]}[${a[1]}]")"
-    printf "%s\n%s\n%s\n" "${a[0]}" "${a[1]}" "$v" "$(odsel_gph "prime")" "${1#*://}"
+    printf "%s\n%s\n%s\n" "${a[0]}" "${a[1]}" "$v" "$(odsel_gph "${a[1]}")" "${1#*://}"
 }
 
 #;
