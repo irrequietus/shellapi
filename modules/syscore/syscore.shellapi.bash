@@ -1023,6 +1023,12 @@ function _decoy_this() {
     ! ((${#SHELLAPI_ERROR[@]}))
 }
 
+#;
+# @desc A void function, goes nowhere does nothing
+#;
+function _void() {
+    1>&1
+}
 
 #;
 # @desc Perform a greater than (>) comparison between two version ids
