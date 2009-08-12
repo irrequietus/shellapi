@@ -1218,10 +1218,12 @@ function odsel_xmla() {
                     || t[${#t[@]}]=$p
                 _A[${#_A[@]}]="${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}(:$((k++)))]:${li:2:4} $p"
                 x="${xarray[$v]//\$/\\\$}"
+                x="${x//\`/\\\`}"
                 _rvfx[$p]="${x//\"/\\\"}"
                 ((v++))
                 for((;v<$q;v++)); do
                    x="${xarray[$v]//\$/\\\$}"
+                   x="${x//\`/\\\`}"
                    _rvfx[$p]="${_rvfx[$p]}$(printf "\n%s" "${x//\"/\\\"}")"
                 done
                 _pt[${#_pt[@]}]="$p" # events are split into single transactions
