@@ -57,7 +57,7 @@ function i9kgoo_load() {
                 }
                 _eqmsg "@[${y[$_I9KG_POOL]}] : $p complete"
         }
-        _ckmsg "requesting $m ?= $p"
+        _ckmsg "requesting $m ?= $r"
         _init_pool_${y[$_I9KG_PHID]}
         n="__pool_relay_${y[$_I9KG_PHID]}[$_FCACHE]"
         n="${!n}/__i9kg_init_${y[$_I9KG_RHID]}.odsel.bash"
@@ -65,7 +65,7 @@ function i9kgoo_load() {
             l="__pool_relay_${y[$_I9KG_PHID]}[$_I9KG_SEEDS_XML]"
             l="${!l}/${y[$_I9KG_RLAY]}.i9kg.xml"
             [[ -e $l ]] && {
-                _nmsg "extracting $m -> $p"
+                _nmsg "extracting $m -> $r"
                 odsel_xmla \
                     "$l" \
                     "__i9kg_rcache_${y[$_I9KG_RHID]}" \
