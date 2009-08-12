@@ -192,7 +192,7 @@ function odsel_init() {
 function odsel_depquery() {
     local x y q=0 k=0 f=0
     [[ -z $3 ]] && {
-        y=($(_odsel_i9kg_header "$1")) \
+        y=($(_odsel_i9kg_header "$1"))
         y=__i9kg_rcache_${y[$_I9KG_RHID]}
     } || y=__i9kg_rcache_$3
     x="$y[0]"
