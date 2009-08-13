@@ -143,7 +143,7 @@ function i9kgoo_pcache() {
                 && _isfunction _init_pool_$y \
                 && _init_pool_$y \
                 || {
-                    _emsg "${FUNCNAME}: poolconf corrupt or missing: $(_dotstr $y)"
+                    _emsg "${FUNCNAME}: @[${1:-prime}] poolconf corrupt or missing: $(_dotstr $y)"
                     return 1
                 }
         }
