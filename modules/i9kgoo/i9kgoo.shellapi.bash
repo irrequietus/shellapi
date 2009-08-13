@@ -48,14 +48,17 @@ function i9kgoo_load() {
         m="${y[$_I9KG_RLAY]}[${y[$_I9KG_POOL]}]"
         r=$(_dotstr ${y[$_I9KG_RHID]})
         p=$(_dotstr ${y[$_I9KG_PHID]})
-        _isfunction "_init_pool_${y[$_I9KG_PHID]}" || {
-            . "$POOL_RELAY_CACHE/functions/${y[$_I9KG_PHID]}.poolconf.bash" &> /dev/null || {
-                _emsg "@[${y[$_I9KG_POOL]}] : $p failed"
-                return 1
+        eval "! ((__LOCK__pool_${y[$_I9KG_PHID]}))" && {
+            _isfunction "_init_pool_${y[$_I9KG_PHID]}" || {
+                . "$POOL_RELAY_CACHE/functions/${y[$_I9KG_PHID]}.poolconf.bash" &> /dev/null || {
+                    _emsg "@[${y[$_I9KG_POOL]}] : $p failed"
+                    return 1
+                }
+                _eqmsg "@[${y[$_I9KG_POOL]}] : $p complete"
             }
-            _eqmsg "@[${y[$_I9KG_POOL]}] : $p complete"
+            _init_pool_${y[$_I9KG_PHID]}
+            eval "__LOCK__pool_${y[$_I9KG_PHID]}=1"
         }
-        _init_pool_${y[$_I9KG_PHID]}
         _ckmsg "requesting $m ?= $r"
         n="__pool_relay_${y[$_I9KG_PHID]}[$_FCACHE]"
         n="${!n}/__i9kg_init_${y[$_I9KG_RHID]}.odsel.bash"
