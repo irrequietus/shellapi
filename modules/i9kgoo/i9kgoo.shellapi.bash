@@ -49,20 +49,17 @@ function i9kgoo_load() {
         r=$(_dotstr ${y[$_I9KG_RHID]})
         p=$(_dotstr ${y[$_I9KG_PHID]})
         _isfunction "_init_pool_${y[$_I9KG_PHID]}" || {
-            [[ -e $POOL_RELAY_CACHE/functions/${y[$_I9KG_PHID]}.poolconf.bash ]] \
-                && . "$POOL_RELAY_CACHE/functions/${y[$_I9KG_PHID]}.poolconf.bash" \
-                || {
-                    _emsg "@[${y[$_I9KG_POOL]}] : $p failed"
-                    return 1
-                }
-                _eqmsg "@[${y[$_I9KG_POOL]}] : $p complete"
+            . "$POOL_RELAY_CACHE/functions/${y[$_I9KG_PHID]}.poolconf.bash" &> /dev/null || {
+                _emsg "@[${y[$_I9KG_POOL]}] : $p failed"
+                return 1
+            }
+            _eqmsg "@[${y[$_I9KG_POOL]}] : $p complete"
         }
         _init_pool_${y[$_I9KG_PHID]}
         _ckmsg "requesting $m ?= $r"
         n="__pool_relay_${y[$_I9KG_PHID]}[$_FCACHE]"
         n="${!n}/__i9kg_init_${y[$_I9KG_RHID]}.odsel.bash"
-        [[ -e $n ]] && {
-            . "$n"
+        . "$n" &> /dev/null && {
             _isfunction "__i9kg_init_${y[$_I9KG_RHID]}" \
                 && "__i9kg_init_${y[$_I9KG_RHID]}" \
                 || {
@@ -102,40 +99,57 @@ function i9kgoo_load() {
 # @desc Get a list of i9kg XML files inside a poolconf
 # @ptip $1  The name of the pool whose i9kg XML files are requested,
 #           defaults to "prime" when none is set.
+# @ptip $2  A hash identifier for the pool hash; when set, it overrides
+#           $1.
 # @arrv I9KGOO_LIST : global array where the results of the operation
 #       are stored
 #;
 function i9kgoo_list_xml() {
     I9KGOO_LIST=()
-    local v x="$(odsel_gph "${1:-prime}")" y z
+    local x="${2:-$(odsel_gph "${1:-prime}")}" y="${1:-prime}" z
     _isfunction "_init_pool_$x" || {
-        [[ -e $POOL_RELAY_CACHE/functions/$x.poolconf.bash ]] \
-            && . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash" \
-            || {
-                _emsg "${FUNCNAME}: @[$2]: cache $(_dotstr $x) not found"
-                return 1
-            }
+        . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash" &> /dev/null || {
+            _emsg "${FUNCNAME}: @[$y]: cache $(_dotstr $x) not found"
+            return 1
+        }
     }
-    _init_pool_$x
+    [[ -z $2 ]] && _init_pool_$x
     y="__pool_relay_$x[$_I9KG_SEEDS_XML]"
     shopt -s nullglob dotglob
     pushd "${!y}" &> /dev/null && {
         I9KGOO_LIST=(*.i9kg.xml)
         I9KGOO_LIST=("${I9KGOO_LIST[@]/.i9kg.*/}")
-        v=${#I9KGOO_LIST[@]}
+        z=${#I9KGOO_LIST[@]}
         popd &> /dev/null
     } || _fatal "${FUNCNAME}: i9kg XML seeds directory not found"
     shopt -u nullglob dotglob
-    (($v > -1))
+    (($z > -1))
 }
 
 #;
 # @desc Create i9kg odsel caches for all the i9kg assets of a pool.
 # @ptip $1  pool whose i9kg odsel caches must be initialized.
+# @ptip $2  (optional) pool hash identifier, defaults to generating it
+#           from $1
+# @devs TODO: all odsel_gph calls can be optimized and eliminated when
+#       using i9kgoo_* and other modules depending on this function
+#       in "chained" mode.
 #;
 function i9kgoo_pcache() {
-    i9kgoo_list_xml "${1:-prime}"
-    local x="${I9KGOO_LIST[@]}"
+    local   x y="${2:-$(odsel_gph "${1:-prime}")}"
+    _isnullref "__pool_relay_$y" && {
+        _isfunction _init_pool_$y && _init_pool_$y || {
+            . "${POOL_RELAY_CACHE}/functions/$y.poolconf.bash" &> /dev/null \
+                && _isfunction _init_pool_$y \
+                && _init_pool_$y \
+                || {
+                    _emsg "${FUNCNAME}: poolconf corrupt or missing: $(_dotstr $y)"
+                    return 1
+                }
+        }
+    }
+    i9kgoo_list_xml "${1:-prime}" "$y"
+    x="${I9KGOO_LIST[@]}"
     i9kgoo_load "${x// /,}" \
         || _emsg "${FUNCNAME}: could not create caches"
     ! ((${#SHELLAPI_ERROR[@]}))
