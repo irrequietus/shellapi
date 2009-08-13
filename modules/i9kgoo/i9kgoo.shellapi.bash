@@ -129,3 +129,12 @@ function i9kgoo_list_xml() {
     (($v > -1))
 }
 
+#;
+# @desc Create i9kg odsel caches for all the i9kg assets of a pool.
+# @ptip $1  pool whose i9kg odsel caches must be initialized.
+#;
+function i9kgoo_pcache() {
+    i9kgoo_list_xml "${1:-prime}"
+    local x="${I9KGOO_LIST[@]}"
+    i9kgoo_load "${x// /,}"
+}
