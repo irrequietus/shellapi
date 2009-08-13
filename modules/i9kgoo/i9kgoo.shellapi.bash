@@ -136,5 +136,7 @@ function i9kgoo_list_xml() {
 function i9kgoo_pcache() {
     i9kgoo_list_xml "${1:-prime}"
     local x="${I9KGOO_LIST[@]}"
-    i9kgoo_load "${x// /,}"
+    i9kgoo_load "${x// /,}" \
+        || _emsg "${FUNCNAME}: could not create caches"
+    ! ((${#SHELLAPI_ERROR[@]}))
 }
