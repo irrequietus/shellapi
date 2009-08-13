@@ -67,6 +67,7 @@ function i9kgoo_load() {
                 && "__i9kg_init_${y[$_I9KG_RHID]}" \
                 || {
                     _emsg "${FUNCNAME}: corrupt i9kg cache: $r"
+                    return 1
                 }
         } || {
             l="__pool_relay_${y[$_I9KG_PHID]}[$_I9KG_SEEDS_XML]"
