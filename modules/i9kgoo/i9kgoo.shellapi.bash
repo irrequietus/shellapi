@@ -97,3 +97,35 @@ function i9kgoo_load() {
         } || x="${x#*,}"
     done
 }
+
+#;
+# @desc Get a list of i9kg XML files inside a poolconf
+# @ptip $1  The name of the pool whose i9kg XML files are requested,
+#           defaults to "prime" when none is set.
+# @arrv I9KGOO_LIST : global array where the results of the operation
+#       are stored
+#;
+function i9kgoo_list_xml() {
+    I9KGOO_LIST=()
+    local v x="$(odsel_gph "${1:-prime}")" y z
+    _isfunction "_init_pool_$x" || {
+        [[ -e $POOL_RELAY_CACHE/functions/$x.poolconf.bash ]] \
+            && . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash" \
+            || {
+                _emsg "${FUNCNAME}: @[$2]: cache $(_dotstr $x) not found"
+                return 1
+            }
+    }
+    _init_pool_$x
+    y="__pool_relay_$x[$_I9KG_SEEDS_XML]"
+    shopt -s nullglob dotglob
+    pushd "${!y}" &> /dev/null && {
+        I9KGOO_LIST=(*.i9kg.xml)
+        I9KGOO_LIST=("${I9KGOO_LIST[@]/.i9kg.*/}")
+        v=${#I9KGOO_LIST[@]}
+        popd &> /dev/null
+    } || _fatal "${FUNCNAME}: i9kg XML seeds directory not found"
+    shopt -u nullglob dotglob
+    (($v > -1))
+}
+
