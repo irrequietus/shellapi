@@ -856,6 +856,17 @@ function _isavailable() {
 }
 
 #;
+# @desc Apply a [[ -z ]] operation to any global variable
+# @ptip $1  Global variable name reference
+# @note This is an interesting idiom; it can be used within function bodies
+#       for their local variables who by default, cannot be passed to this
+#       function.
+#;
+function _isnullref() {
+    [[ -z ${!1} ]] || return 1
+}
+
+#;
 # @desc Transform a string or an array containing newline characters into
 #       a new array where each member variable is the result of parsing by \n.
 # @ptip $1  name of the array / string global (pass by reference)
