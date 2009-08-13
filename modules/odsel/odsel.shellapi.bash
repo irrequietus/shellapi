@@ -495,11 +495,10 @@ function odsel_relay() {
     x=$(_ssbfind POOL_RELAYS "$1") && {
     # if it is already in the pool relays, just load it up
         _isfunction "_init_pool_$1" || {
-            [[ -e "$_s" ]] \
-                && . "$_s" || {
-                    _emsg "${FUNCNAME}: $1 in pool relays, not available in cache"
-                    return 1
-                }
+            . "$_s"  &> /dev/null || {
+                _emsg "${FUNCNAME}: $1 in pool relays, not available in cache"
+                return 1
+            }
         }
         _init_pool_$1
     } || {
