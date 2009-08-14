@@ -641,7 +641,7 @@ function _odsel_() {
 # @ptip $2  odsel pli metadata array where to search for the resource
 #;
 function odsel_getfn() {
-    odsel_ifind "$1" "${2:-}" && {
+    odsel_ifind "$1" "$2" && {
         FNPREP_ARRAY=()
         ODSEL_FN="_odself_$(_hsos "$1")"
         while read -r j; do
