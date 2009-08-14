@@ -45,50 +45,54 @@ function i9kgoo_load() {
             && y=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
             || y=("${x/,*/}" "prime")
         y=($(_odsel_i9kg_header "${y[0]}[${y[1]}]"))
-        m="${y[$_I9KG_RLAY]}[${y[$_I9KG_POOL]}]"
-        r=$(_dotstr ${y[$_I9KG_RHID]})
-        p=$(_dotstr ${y[$_I9KG_PHID]})
-        eval "! ((__LOCK__pool_${y[$_I9KG_PHID]}))" && {
-            _isfunction "_init_pool_${y[$_I9KG_PHID]}" || {
-                . "$POOL_RELAY_CACHE/functions/${y[$_I9KG_PHID]}.poolconf.bash" &> /dev/null || {
-                    _emsg "@[${y[$_I9KG_POOL]}] : $p failed"
-                    return 1
+        eval "((__LOCK__i9kg_${y[$_I9KG_RHID]}))" \
+        && _wmsg "reusing: ${y[$_I9KG_RLAY]}[${y[$_I9KG_POOL]}]" || {
+            m="${y[$_I9KG_RLAY]}[${y[$_I9KG_POOL]}]"
+            r=$(_dotstr ${y[$_I9KG_RHID]})
+            p=$(_dotstr ${y[$_I9KG_PHID]})
+            eval "__LOCK__i9kg_${y[$_I9KG_RHID]}=1
+                  ! ((__LOCK__pool_${y[$_I9KG_PHID]}))" && {
+                _isfunction "_init_pool_${y[$_I9KG_PHID]}" || {
+                    . "$POOL_RELAY_CACHE/functions/${y[$_I9KG_PHID]}.poolconf.bash" &> /dev/null || {
+                        _emsg "@[${y[$_I9KG_POOL]}] : $p failed"
+                        return 1
+                    }
+                    _eqmsg "@[${y[$_I9KG_POOL]}] : $p complete"
                 }
-                _eqmsg "@[${y[$_I9KG_POOL]}] : $p complete"
+                _init_pool_${y[$_I9KG_PHID]}
+                eval "__LOCK__pool_${y[$_I9KG_PHID]}=1"
             }
-            _init_pool_${y[$_I9KG_PHID]}
-            eval "__LOCK__pool_${y[$_I9KG_PHID]}=1"
-        }
-        _ckmsg "requesting $m ?= $r"
-        n="__pool_relay_${y[$_I9KG_PHID]}[$_FCACHE]"
-        n="${!n}/__i9kg_init_${y[$_I9KG_RHID]}.odsel.bash"
-        . "$n" &> /dev/null && {
-            _isfunction "__i9kg_init_${y[$_I9KG_RHID]}" \
-                && "__i9kg_init_${y[$_I9KG_RHID]}" \
-                || {
-                    _emsg "${FUNCNAME}: corrupt i9kg cache: $r"
-                    return 1
-                }
-        } || {
-            l="__pool_relay_${y[$_I9KG_PHID]}[$_I9KG_SEEDS_XML]"
-            l="${!l}/${y[$_I9KG_RLAY]}.i9kg.xml"
-            [[ -e $l ]] && {
-                _nmsg "extracting $m -> $r"
-                odsel_xmla \
-                    "$l" \
-                    "__i9kg_rcache_${y[$_I9KG_RHID]}" \
-                    && \
-                odsel_i9kg_objc \
-                    "__i9kg_rcache_${y[$_I9KG_RHID]}" \
-                    ${y[$_I9KG_RHID]} > "$n" \
-                    && _eqmsg "$m: ok" \
+            _ckmsg "requesting $m ?= $r"
+            n="__pool_relay_${y[$_I9KG_PHID]}[$_FCACHE]"
+            n="${!n}/__i9kg_init_${y[$_I9KG_RHID]}.odsel.bash"
+            . "$n" &> /dev/null && {
+                _isfunction "__i9kg_init_${y[$_I9KG_RHID]}" \
+                    && "__i9kg_init_${y[$_I9KG_RHID]}" \
                     || {
-                        _emsg "${FUNCNAME}: $m: fail"
+                        _emsg "${FUNCNAME}: corrupt i9kg cache: $r"
                         return 1
                     }
             } || {
-                _emsg "${FUNCNAME}: does not exist: $m"
-                return 1
+                l="__pool_relay_${y[$_I9KG_PHID]}[$_I9KG_SEEDS_XML]"
+                l="${!l}/${y[$_I9KG_RLAY]}.i9kg.xml"
+                [[ -e $l ]] && {
+                    _nmsg "extracting $m -> $r"
+                    odsel_xmla \
+                        "$l" \
+                        "__i9kg_rcache_${y[$_I9KG_RHID]}" \
+                        && \
+                    odsel_i9kg_objc \
+                        "__i9kg_rcache_${y[$_I9KG_RHID]}" \
+                        ${y[$_I9KG_RHID]} > "$n" \
+                        && _eqmsg "$m: ok" \
+                        || {
+                            _emsg "${FUNCNAME}: $m: fail"
+                            return 1
+                        }
+                } || {
+                    _emsg "${FUNCNAME}: does not exist: $m"
+                    return 1
+                }
             }
         }
         [ "$x" = "${x#*,}" ] && {
