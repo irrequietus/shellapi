@@ -863,7 +863,7 @@ function _isavailable() {
 #       function.
 #;
 function _isnullref() {
-    [[ -z ${!1} ]] || return 1
+    [[ -z ${!1} ]]
 }
 
 #;
