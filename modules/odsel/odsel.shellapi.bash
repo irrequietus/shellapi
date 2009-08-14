@@ -216,7 +216,7 @@ function odsel_depquery() {
         }
         ((k++))
     done
-    _emsg "${FUNCNAME}: undefined error"
+    printf "%s\n" "${FUNCNAME}: undefined error"
     return 1
 }
 
