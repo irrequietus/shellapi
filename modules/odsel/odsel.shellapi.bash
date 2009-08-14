@@ -229,6 +229,7 @@ function odsel_depquery() {
 function odsel_ifind() {
     local x="$1" a="${2:-"__pool_relay_$(odsel_gph "prime")[$_RPLI]"}"\
         r=0 m=0 t=0 b=" " o m n matches=()
+    [[ -z $2 ]] && a=${!a}
     local h="$(($(_asof $a)/7 - 1))"
     local s=$h
     POOL_ITEM=()
