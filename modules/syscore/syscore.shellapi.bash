@@ -159,7 +159,7 @@ function _dtf_mixed_plus() {
 function _genf_var_rewire() {
     local x y z="${2//[[:space:]]/}," w r
     while [[ $z =~ ([^=]*)=([^=]*), ]]; do
-       y[${#y[@]}]="${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+       y+=("${BASH_REMATCH[1]} ${BASH_REMATCH[2]}")
        z=${z#*${BASH_REMATCH[2]},}
     done
     while read -r x; do
@@ -220,7 +220,7 @@ function _genf_fdump_all() {
 # @ptip $1  error message to store
 #;
 function _emsg() {
-    SHELLAPI_ERROR[${#SHELLAPI_ERROR[@]}]="$1"
+    SHELLAPI_ERROR+=("$1")
 }
 
 #;
@@ -268,7 +268,7 @@ function _xml2bda() {
                     esac
                 }
                 x=${#g[@]}
-                g[${#g[@]}]=" $u$_n=\""
+                g+=(" $u$_n=\"")
                 [[ $l == */\> ]] && {
                     g[$x]="${g[$x]}\""
                     z=0
@@ -323,7 +323,7 @@ function _xml2bda() {
                     t1="&&"
                     t2="||"
                 }
-                g[${#g[@]}]=" $_n=()"
+                g+=(" $_n=()")
                 ;;
             \<index\> | \<index\ *)
                 [[ $l =~ [[:space:]]*name[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
@@ -331,13 +331,13 @@ function _xml2bda() {
                     && _i="${BASH_REMATCH[1]}" \
                     || _i=
                 [[ -z $_i ]] && {
-                    g[${#g[@]}]="  $_n[\${#$_n[@]}]=\""
+                    g+=("  $_n[\${#$_n[@]}]=\"")
                     z=3
                 } || {
                     [[ -z $_w ]] || {
                         [[ $u == reuse ]] \
-                            && g[${#g[@]}]=" ! [[ -z \$$_p$_i ]] $t1 {" \
-                            || g[${#g[@]}]=" [[ -z \$$_p$_i ]] $t1 {"
+                            && g+=(" ! [[ -z \$$_p$_i ]] $t1 {") \
+                            || g+=(" [[ -z \$$_p$_i ]] $t1 {")
                     }
                     [[ $u == reuse ]] \
                         && g[$((x=${#g[@]}))]=" $_n[\$$_p$_i]=\"" \
@@ -345,7 +345,7 @@ function _xml2bda() {
                     [[ $l == */\> ]] && {
                         g[$x]="${g[$x]}\""
                         [[ -z $_w ]] \
-                            || g[${#g[@]}]=" } $t2 $_w : $_p$_i\""
+                            || g+=(" } $t2 $_w : $_p$_i\"")
                         z=
                     } ||  z=1
                 }
@@ -355,12 +355,12 @@ function _xml2bda() {
                     g[$x]="${g[$x]}\""
                     [[ -z $_i ]] \
                         || [[ -z $_w ]] \
-                        || g[${#g[@]}]=" } $t2 $_w : $_p$_i\""
+                        || g+=(" } $t2 $_w : $_p$_i\"")
                 } || {
                     g[$((${#g[@]}-1))]="${g[$((${#g[@]}-1))]}\""
                     [[ -z $_i ]] \
                         || [[ -z $_w ]] \
-                        || g[${#g[@]}]=" } $t2 $_w : $_p$_i\""
+                        || g+=(" } $t2 $_w : $_p$_i\"")
                 }
                 z=0
                 ;;
@@ -383,7 +383,7 @@ function _xml2bda() {
                 ;;
             *)
                 case "$z" in
-                    2)  g[${#g[@]}]="$l" ;;
+                    2)  g+=("$l") ;;
                     1)  g[$x]="${g[$x]}$l"; z=2 ;;
                     3)  z=$((${#g[@]}-1))
                         g[$z]="${g[$z]}$l"
@@ -508,7 +508,7 @@ function _xmlpnseq() {
 function _xmlgerd() {
     local l g=()
     while read -r l; do
-        g[${#g[@]}]="$l"
+        g+=("$l")
     done< <(while read -r l; do
             [[  $l =~ \<!ENTITY[[:space:]]*([a-zA-Z0-9\-]*)[[:space:]]*\"([^\"]*)\"[[:space:]]*\> \
             ||  $l =~ \<!ENTITY[[:space:]]*([a-zA-Z0-9\-]*)[[:space:]]*\'([^\']*)\'[[:space:]]*\> \
@@ -558,7 +558,7 @@ function _include_fcheck() {
             type -t ${BASH_REMATCH[1]} &> /dev/null
             (($?)) && \
                 _fatal "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_FNSET]}: ${BASH_REMATCH[1]}"
-            SHELLAPI_LFUNC[${#SHELLAPI_LFUNC[@]}]="${BASH_REMATCH[1]}"
+            SHELLAPI_LFUNC+=("${BASH_REMATCH[1]}")
         }
     done < "$1"
 }
@@ -581,7 +581,7 @@ function _include() {
             _wmsg "${SHCORE_MSGL[$_SHCORE_ALLRD]}: $1"
             return
         } || {
-            SHELLAPI_MODULES[${#SHELLAPI_MODULES[@]}]="$1"
+            SHELLAPI_MODULES+=("$1")
             eval "__LOCK__$1=1"
             [[ -e $l ]] && {
                 _xml2bda "$l" # create the locale shell script
@@ -877,7 +877,7 @@ function _arraygen_nls() {
     local j a=() b="${2-$1}"
     while read -r j; do
         ! [[ -z $j ]] \
-            && a[${#a[@]}]="$j"
+            && a+=("$j")
     done< <(for j in $(_xsof $1); do
                 j="$1[$j]"
                 printf "%s\n" "${!j}"
@@ -1072,8 +1072,8 @@ function _vers_gt() {
     a=(${v[1]}) b=(${v[2]})
     x=$((${#a[@]}-${#b[@]}))
     ((x < 0)) \
-        && while (($((x++)))); do a[${#a[@]}]=0; done \
-        || while (($((x--)))); do b[${#b[@]}]=0; done
+        && while (($((x++)))); do a+=(0); done \
+        || while (($((x--)))); do b+=(0); done
     for x in ${!a[@]}; do
         ((${a[$x]} >= ${b[$x]})) && y="1$y"
         ((${a[$x]} > ${b[$x]}))  && break

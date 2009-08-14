@@ -247,7 +247,7 @@ function odsel_ifind() {
             matches=("$n")
         else
             while [[ ${n%:*} == $x || $n == $x ]]; do
-                matches[${#matches[@]}]="${n#*:}"
+                matches+=("${n#*:}")
                 n="$a[$((r++))]"
                 n="${!n/|*/}"
             done
@@ -338,7 +338,7 @@ function odsel_pppli() {
                         _version="snapshot/$_alias$_version"
                         ;;
                 esac
-                QPOOL_RLA[${#QPOOL_RLA[@]}]="$_version $b"
+                QPOOL_RLA+=("$_version $b")
                 _cksum=
                 _version=
             } && continue
@@ -374,9 +374,9 @@ function odsel_pppli() {
                 ;;
             esac
         case "$z" in
-            $_PREGET)  _pre_l[${#_pre_l[@]}]="$l"   ;;
-            $_POSTGET) _post_l[${#_post_l[@]}]="$l" ;;
-            $_UPDATE)  _updt_l[${#_updt_l[@]}]="$l" ;;
+            $_PREGET)  _pre_l+=("$l")   ;;
+            $_POSTGET) _post_l+=("$l") ;;
+            $_UPDATE)  _updt_l+=("$l") ;;
             z)
                 unset _pre_l[0]
                 unset _post_l[0]
@@ -413,7 +413,7 @@ function odsel_pppli() {
                 a[$l]="${a[$l]:1}"
                 _pre_l=()
                 _post_l=()
-                QPOOL_RLA[${#QPOOL_RLA[@]}]="$_version $b"
+                QPOOL_RLA+=("$_version $b")
             ;;
             zz)
                 break;
@@ -504,7 +504,7 @@ function odsel_relay() {
     } || {
         while read -r z; do
             POOL_RELAYS[$((y++))]="$z"
-        done< <(POOL_RELAYS[${#POOL_RELAYS[@]}]="$1"
+        done< <(POOL_RELAYS+=("$1")
                 for x in ${!POOL_RELAYS[@]}; do
                     printf "%s\n" "${POOL_RELAYS[$x]}" 
                 done | sort)
@@ -646,17 +646,17 @@ function odsel_getfn() {
         ODSEL_FN="_odself_$(_hsos "$1")"
         while read -r j; do
             [[ -z $j ]] \
-                || FNPREP_ARRAY[${#FNPREP_ARRAY[@]}]="$j"
+                || FNPREP_ARRAY+=("$j")
         done< <(printf "%s\n%s\n%s\n" \
                 "${POOL_ITEM[$_PREGET]}" \
                 "$(odsel_ifetch "${POOL_ITEM[$_ENTRY]}")"\
                 "${POOL_ITEM[$_POSTGET]}" )
         local f=$(mktemp)
         [[ -z ${POOL_ITEM[$_CHECKSUM]} ]] \
-            || FNPREP_ARRAY[${#FNPREP_ARRAY[@]}]=\
+            || FNPREP_ARRAY+=(\
 "_cfx ${POOL_ITEM[$_ENTRY]##*/} ${POOL_ITEM[$_CHECKSUM]} && \\\
 fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
-\$(_dotstr "${POOL_ITEM[$_CHECKSUM]}") : ok\""
+\$(_dotstr "${POOL_ITEM[$_CHECKSUM]}") : ok\"")
         fnapi_genblock "$ODSEL_FN" "pool request: $1" \
             FNPREP_ARRAY "pool request: $1" fatal > "$f"
         unset FNPREP_ARRAY
@@ -1081,18 +1081,18 @@ function odsel_scli() {
                         [[ $_p =~ ${ODSEL_REGEXP[2]} ]] && {
                             _r="${_r#*${BASH_REMATCH[2]/(*/}}"
                             _r="${_r%${BASH_REMATCH[3]/(*/}*}"
-                            _b[${#_b[@]}]="${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]${rhs}"
+                            _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]${rhs}")
                             for _c in ${_r}; do
-                                 _b[${#_b[@]}]="${lhs}[${vhs}@${BASH_REMATCH[1]}:$_c]${rhs}" 
+                                 _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:$_c]${rhs}") 
                             done
-                             _b[${#_b[@]}]="${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]${rhs}"
+                             _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]${rhs}")
                         }
                     ;;
                     *\>*)
                         _fatal "${FUNCNAME}: incorrect syntax"
                     ;;
                     *)
-                         _b[${#_b[@]}]="${lhs}[${vhs}${BASH_REMATCH[1]}]${rhs}"
+                         _b+=("${lhs}[${vhs}${BASH_REMATCH[1]}]${rhs}")
                     ;;
                 esac
                 _l=${_l#*"$_p",}
@@ -1100,23 +1100,23 @@ function odsel_scli() {
             ;;
         *\[*:\{@*)
                 [[ $_l =~ ${ODSEL_REGEXP[3]} ]] \
-                    &&   _b[${#_b[@]}]="${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}" \
+                    &&   _b+=("${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}") \
                     || _fatal "${FUNCNAME}: failed to recognize: $_l"
             ;;
         *\[*@*:*)
                 [[ $_l =~ ${ODSEL_REGEXP[4]} ]] \
-                    &&   _b[${#_b[@]}]="${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}" \
+                    &&   _b+=("${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}") \
                     || _fatal "${FUNCNAME}: failed to recognize: $_l"
             ;;
         *\[*:*\]*)
                 [[ $_l =~ ${ODSEL_REGEXP[5]} ]] \
-                    &&  _b[${#_b[@]}]="${lhs}[${BASH_REMATCH[1]}@stable:${BASH_REMATCH[2]}]${rhs}" \
+                    &&  _b+=("${lhs}[${BASH_REMATCH[1]}@stable:${BASH_REMATCH[2]}]${rhs}") \
                     || _fatal "${FUNCNAME}: failed to recognize: $_l"
             ;;
         *\[*\]*)
                 [[ $_l =~ ${ODSEL_REGEXP[6]} ]] && {
                     for _c in ${I9KG_PRESETS[@]}; do
-                        _b[${#_b[@]}]="${lhs}[${BASH_REMATCH[1]}@stable:$_c]${rhs}" 
+                        _b+=("${lhs}[${BASH_REMATCH[1]}@stable:$_c]${rhs}") 
                     done
                 } || _fatal "${FUNCNAME}: failed to recognize: $_l"
             ;;
@@ -1147,7 +1147,7 @@ function odsel_xmla() {
             fnm="${1##*[!/]/}"
             fnm="${fnm/.*/}"
     while read -r li; do
-        xarray[${#xarray[@]}]="$li"
+        xarray+=("$li")
         case "${li}" in
             \<action\ *)
                 [[  $li =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
@@ -1157,10 +1157,10 @@ function odsel_xmla() {
             ;;
             \</action\>)
                 ((${#_pt[@]})) && {
-                    #_A[${#_A[@]}]="${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}] ${_pt[@]}"
-                    ((${#c[@]})) && _A[${#_A[@]}]="${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:code ${c[@]}"
-                    ((${#t[@]})) && _A[${#_A[@]}]="${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:text ${t[@]}"
-                    _actions[${#_actions[@]}]=$p
+                    #_A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}] ${_pt[@]}")
+                    ((${#c[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:code ${c[@]}")
+                    ((${#t[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:text ${t[@]}")
+                    _actions+=($p)
                     _pt=()
                     t=()
                     c=()
@@ -1213,9 +1213,9 @@ function odsel_xmla() {
                 q=$((${#xarray[@]}-1))
                 p=${#_rvfx[@]}
                 [[ ${li} == \</code\> ]] \
-                    && c[${#c[@]}]=$p \
-                    || t[${#t[@]}]=$p
-                _A[${#_A[@]}]="${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}(:$((k++)))]:${li:2:4} $p"
+                    && c+=($p) \
+                    || t+=($p)
+                _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}(:$((k++)))]:${li:2:4} $p")
                 x="${xarray[$v]//\$/\\\$}"
                 x="${x//\`/\\\`}"
                 _rvfx[$p]="${x//\"/\\\"}"
@@ -1225,7 +1225,7 @@ function odsel_xmla() {
                    x="${x//\`/\\\`}"
                    _rvfx[$p]="${_rvfx[$p]}$(printf "\n%s" "${x//\"/\\\"}")"
                 done
-                _pt[${#_pt[@]}]="$p" # events are split into single transactions
+                _pt+=("$p") # events are split into single transactions
            ;;
            \<instance\ *)
                 [[  $li =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
@@ -1242,7 +1242,7 @@ function odsel_xmla() {
     done< <(_xmlpnseq "$1")
     _finals=()
     while read -r l; do
-        _finals[${#_finals[@]}]="$l"
+        _finals+=("$l")
     done< <(for l in ${!_A[@]}; do
                 printf "%s\n" "${_A[$l]}"
             done | sort -k1,1 -t\ )
