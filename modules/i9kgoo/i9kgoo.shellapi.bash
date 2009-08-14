@@ -143,19 +143,19 @@ function i9kgoo_list_xml() {
 #       in "chained" mode.
 #;
 function i9kgoo_pcache() {
-    local   x y="${2:-$(odsel_gph "${1:-prime}")}"
+    local   x="${1:-prime}" y="${2:-$(odsel_gph "${1:-prime}")}"
     _isnullref "__pool_relay_$y" && {
         _isfunction _init_pool_$y && _init_pool_$y || {
             . "${POOL_RELAY_CACHE}/functions/$y.poolconf.bash" &> /dev/null \
                 && _isfunction _init_pool_$y \
                 && _init_pool_$y \
                 || {
-                    _emsg "${FUNCNAME}: @[${1:-prime}] poolconf corrupt or missing: $(_dotstr $y)"
+                    _emsg "${FUNCNAME}: @[$x] poolconf corrupt or missing: $(_dotstr $y)"
                     return 1
                 }
         }
     }
-    i9kgoo_list_xml "${1:-prime}" "$y"
+    i9kgoo_list_xml "$x" "$y"
     x="${I9KGOO_LIST[@]}"
     i9kgoo_load "${x// /,}" \
         || _emsg "${FUNCNAME}: could not create caches"
