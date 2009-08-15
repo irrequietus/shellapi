@@ -342,7 +342,7 @@ function odsel_pppli() {
             \<preget\>)   z=${_PREGET} ;;
             \<postget\>)  z=${_POSTGET} ;;
             \<update\ *)
-                z=${_QPOOL_UPDATE}
+                z=${_UPDATE}
                 [[  $l =~ [[:space:]]*target[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                     $l =~ [[:space:]]*target[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && _updt_target="${BASH_REMATCH[1]}"
