@@ -197,7 +197,7 @@ function odsel_depquery() {
     } || y=__i9kg_rcache_$3
     x="$y[0]"
     x="$y[$((q=${!x/* /}))]"
-    case "$2" in
+    case "${2:-[rpli]}" in
         \[\] | \[rpli\]);;
         \[dbld\])   f=1 ;;
         \[drun\])   f=2 ;;
