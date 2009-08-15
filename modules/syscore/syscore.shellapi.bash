@@ -900,7 +900,7 @@ function _fatal() {
         done
     }
     [[ -z $1 ]] \
-        || printf "\033[1;31;40m[~]\033[0m: %s\n" "$1"
+        || printf "\033[1;31m[~]\033[0m: %s\n" "$1"
     exit 1
 }
 
