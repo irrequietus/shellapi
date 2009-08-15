@@ -324,11 +324,9 @@ function odsel_pppli() {
                             && _version="clone/$_alias$_version|0" \
                             || {
                                 _version="pristine/$_alias$_version|0"
-                                ! [[ -z $_tagged ]] && {
-                                  _tagged=
-                                  _version="pristine/$_alias|0"
-                                }
-                                }
+                                [[ -z $_tagged ]] \
+                                    || _tagged="pristine/$_alias|0"
+                               }
                     ;;
                     mirror)
                         odsel_ispli_repo "$_entry" \
@@ -340,6 +338,10 @@ function odsel_pppli() {
                         ;;
                 esac
                 QPOOL_RLA+=("$_version $b")
+                [[ -z $_tagged ]] || {
+                    QPOOL_RLA+=("$_tagged $b")
+                    _tagged=
+                }
                 _cksum=
                 _version=
             } && continue
