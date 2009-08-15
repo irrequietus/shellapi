@@ -165,13 +165,6 @@ function odsel_init() {
     ODSEL_OPRT=( [$(_opsolve ">>")]="mm"
                  [$(_opsolve "->")]="pm"
                  [$(_opsolve "~>")]="rm" )
-    _QPOOL_ALIAS=0
-    _QPOOL_ENTRY=1
-    _QPOOL_IDF=2
-    _QPOOL_HASH=3
-    _QPOOL_PREGET=4
-    _QPOOL_POSTGET=5
-    _QPOOL_UPDATE=6
     _HPAGE=0
     _CHECKSUM=1
     _ENTRY=2
