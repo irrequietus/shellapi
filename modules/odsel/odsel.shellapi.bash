@@ -62,8 +62,8 @@ function odsel_ifetch() {
         #       as per convention; the more elaborate reporting scheme
         #       must replace the following code.
         *)
-            _isfunction "_pool_handler_${1/:\/\/*/}" \
-                && e=$(_pool_handler_${1/:\/\/*/} "$1") \
+            _isfunction "_odsel_handler_${1/:\/\/*/}" \
+                && e=$(_odsel_handler_${1/:\/\/*/} "$1") \
                 || return 1
             ;;
     esac
