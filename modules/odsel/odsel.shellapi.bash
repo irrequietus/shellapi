@@ -226,6 +226,7 @@ function odsel_ifind() {
     f="$a[0]"
     f=(${!f})
     local h="$(($(_asof $a)/7+${#f[@]}))"
+    ((h++))
     local s=$h
     POOL_ITEM=()
     while (($r<$h)); do
@@ -255,7 +256,7 @@ function odsel_ifind() {
             _emsg "${FUNCNAME}: unique version identifier (uvid) is not set: $x:?"
             return 1
         }
-        r=$((s+${!t/* /}+1))
+        r=$((s+${!t/* /}))
         for x in $_HPAGE $_CHECKSUM $_ENTRY $_UPDATE $_PREGET $_POSTGET; do
             t="$a[$((r+x))]"
             POOL_ITEM[$x]="${!t}"
