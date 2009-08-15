@@ -221,9 +221,11 @@ function odsel_depquery() {
 #;
 function odsel_ifind() {
     local x="$1" a="${2:-"__pool_relay_$(odsel_gph "prime")[$_RPLI]"}"\
-        r=0 m=0 t=0 b=" " o m n matches=()
+        r=1 m=0 t=0 b=" " f o m n matches=()
     [[ -z $2 ]] && a=${!a}
-    local h="$(($(_asof $a)/7 - 1))"
+    f="$a[0]"
+    f=(${!f})
+    local h="$(($(_asof $a)/7+${#f[@]}))"
     local s=$h
     POOL_ITEM=()
     while (($r<$h)); do
@@ -275,7 +277,7 @@ function odsel_pppli() {
     _version= \
     _alias= \
     _idf= _cksum= _hpag= \
-    o=0 a=() x= _tagged=
+    o=0 a=() x= _tagged= k=()
     QPOOL_RLA=()
     while read -r l; do
         case "$l" in
@@ -333,6 +335,7 @@ function odsel_pppli() {
                 QPOOL_RLA+=("$_version $b")
                 [[ -z $_tagged ]] || {
                     QPOOL_RLA+=("$_tagged $b")
+                    k+=($b)
                     _tagged=
                 }
                 _cksum=
@@ -422,10 +425,11 @@ function odsel_pppli() {
     done< <(for x in ${!QPOOL_RLA[@]}; do
                 printf "%s\n" "${QPOOL_RLA[$x]}"
             done | sort -k1,1 -t\|)
+    k="${k[@]}"
     [[ -z $2 ]] \
-        && eval "QPOOL_RLA=(\"\${QPOOL_RLA[@]}\" \"\${a[@]}\")" \
+        && eval "QPOOL_RLA=(\"\$k\" \"\${QPOOL_RLA[@]}\" \"\${a[@]}\")" \
         || {
-            eval "$2=(\"\${QPOOL_RLA[@]}\" \"\${a[@]}\")"
+            eval "$2=(\"\$k\" \"\${QPOOL_RLA[@]}\" \"\${a[@]}\")"
             QPOOL_RLA=()
         }
 }
