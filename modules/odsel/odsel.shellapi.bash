@@ -214,6 +214,20 @@ function odsel_depquery() {
 }
 
 #;
+# @desc Calculate the number of entries in a pool rcache array
+#       of a particular pool.
+# @ptip $1  Name of the pool, required.
+# @ptip $2  When set, overrides $1 as __pool_relay_* lock.
+# @note The pool must already be included and initialized in runspace,
+#       with __pool_relay_* array having valid entries.
+#;
+function odsel_prc_num() {
+    local x="${2:-__pool_relay_$(odsel_gph "$1")[$_RPLI]}" y=
+    y="${!x}[0]";y=(${!y})
+    printf "%d\n" "$(($(_asof ${!x})/7+${#y[@]}+1))"
+}
+
+#;
 # @desc Retrieve a particular pool item from the pool relay and store
 #       the result into the POOL_ITEM global array; the pool relay must
 #       be initialized.
