@@ -161,3 +161,31 @@ function i9kgoo_pcache() {
         || _emsg "${FUNCNAME}: could not create caches"
     ! ((${#SHELLAPI_ERROR[@]}))
 }
+
+#;
+# @desc Some simple statistics about a pool rcache. The pool must be
+#       completely canonical (initialized in runspace, $_RPLI set)
+# @ptip $1  Name of the pool to analyze
+# @echo prints out a string of the form: <clones>[[:space:]]<pristine>
+#;
+function i9kgoo_pool_analyze() {
+    local   x="__pool_relay_$(odsel_gph "$1")[$_RPLI]" \
+            f= o= t=\| c=() p=()
+    local   h="$(odsel_prc_num "" "$x")"
+    x="${!x}"
+    for ((o=1;o<h;o++)); do
+        f="$x[$o]"
+        f="${!f/|*/}"
+        case "$f" in
+            pristine/*)
+                [[ $t != ${f#*/} ]] && \
+                    p+=("${f#*/}") && \
+                    t="${f#*/}"
+            ;;
+            clone/*)
+                c+=("${f#*/}")
+            ;;
+        esac
+    done
+    printf "%s\n" "${#c[@]} ${#p[@]}"
+}
