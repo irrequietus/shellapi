@@ -225,8 +225,7 @@ function odsel_ifind() {
     [[ -z $2 ]] && a=${!a}
     f="$a[0]"
     f=(${!f})
-    local h="$(($(_asof $a)/7+${#f[@]}))"
-    ((h++))
+    local h="$(($(_asof $a)/7+${#f[@]}+1))"
     local s=$h
     POOL_ITEM=()
     while (($r<$h)); do
