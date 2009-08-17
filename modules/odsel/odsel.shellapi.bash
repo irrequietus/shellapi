@@ -900,6 +900,30 @@ function odsel_create() {
 }
 
 #;
+# @desc Remove a series of pools from the runspace
+# @ptip $1  comma separated list of pool names
+#;
+function odsel_remove() {
+    local x y
+    _split "${1//[[:space:]]/}"
+    for x in ${!SPLIT_STRING[@]}; do
+        x="${SPLIT_STRING[$x]}"
+        case "$x" in
+            \* | '')
+                _emsg "${FUNCNAME}: \$1 must be set to a specific pool"
+                return 1
+            ;;
+            *)
+                local y=$(odsel_gph "$x")
+                rm -rf  "$POOL_RELAY_CACHE/xml/$y.poolconf.xml" \
+                        "$POOL_RELAY_CACHE/functions/$y.poolconf.bash" \
+                        "${I9KG_DEFS[$_POOLSETS]}/$x"
+            ;;
+        esac
+    done
+}
+
+#;
 # @desc Convert a pull expression to a specific resource within a pool
 # @ptip $1  pull expression to be processed
 # @devs import new implementation
