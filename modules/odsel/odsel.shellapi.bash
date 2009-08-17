@@ -820,7 +820,7 @@ function odsel_enable() {
                 return 1
             }
             eval "__pool_relay_${x}[\$_RHID]=\"$x\"
-                    __pool_relay_${x}[\$_RPLI]=\"__pool_rcache_$x\""
+                  __pool_relay_${x}[\$_RPLI]=\"__pool_rcache_$x\""
         else
             _nmsg "@[$1]: caching xml relay : $(_dotstr "$x")"
             [[ -e ${POOL_RELAY_CACHE}/xml/$x.poolconf.xml ]] && {
