@@ -848,7 +848,9 @@ function odsel_enable() {
 #;
 # @desc Create a pool, either within the poolset or at a path of your
 #       option. A function cache is created for the XML description file
-#       as well.
+#       as well. If a pool is followed by the [] operator, retrieval of
+#       the metabase and its processing takes place. The pool gets enabled
+#       on creation (in a way similar to odsel_enable)
 # @ptip $1  Comma separated pool list
 #;
 function odsel_create() {
