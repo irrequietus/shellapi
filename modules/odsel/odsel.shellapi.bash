@@ -851,8 +851,7 @@ function odsel_enable() {
 # @ptip $1  Comma separated pool list
 #;
 function odsel_create() {
-    local x y z
-    local f= l= t= k= h=
+    local x y z f l t k h
     _split "${1//[[:space:]]/}"
     for y in ${SPLIT_STRING[@]}; do
         [[ "$y" = *\[\] ]] \
@@ -874,7 +873,7 @@ function odsel_create() {
             printf  "<bashdata fni=\"_init_pool_$h\">
  <array name=\"%s\" check=\"reuse\">\n" \
                     "__pool_relay_$h"
-            k=("${I9KG_PRIME[$_RHID]}" "${I9KG_PRIME[$_RPLI]}")
+            z=("${I9KG_PRIME[$_RHID]}" "${I9KG_PRIME[$_RPLI]}")
             unset I9KG_PRIME[$_RPLI] I9KG_PRIME[$_RHID]
             for x in ${!I9KG_PRIME[@]}; do
                 l="${I9KG_PRIME[$x]##*/prime}"
@@ -886,15 +885,18 @@ function odsel_create() {
             printf  "  <index name=\"RPLI\">__pool_rcache_%s</index>
   <index name=\"RHID\">%s</index>\n </array>\n</bashdata>\n" \
                     "$h" "$h"
-            I9KG_PRIME[$_RHID]="${k[0]}"
-            I9KG_PRIME[$_RPLI]="${k[1]}"
+            I9KG_PRIME[$_RHID]="${z[0]}"
+            I9KG_PRIME[$_RPLI]="${z[1]}"
         } > "$f" 2> /dev/null || {
             _emsg "${FUNCNAME}: could not create: $y"
             rm -rf "$f"
         }
         ! [[ -e $t ]] \
             && _xml2bda "$f" "$t" \
-            || _emsg "${FUNCNAME}: function cache already present: $t"
+            && _init_pool_$h || {
+                _emsg "${FUNCNAME}: function cache already present: $t"
+                return 1
+            }
     done
     ! ((${#SHELLAPI_ERROR[@]}))
 }
