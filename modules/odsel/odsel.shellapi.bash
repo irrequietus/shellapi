@@ -851,19 +851,19 @@ function odsel_enable() {
 # @ptip $1  Comma separated pool list
 #;
 function odsel_create() {
-    local x y z="${I9KG_DEFS[$_POOLSETS]}"
-    local f= l= t= k=
+    local x y z
+    local f= l= t= k= h=
     _split "${1//[[:space:]]/}"
     for y in ${SPLIT_STRING[@]}; do
         [[ "$y" = *\[\] ]] \
-            && k=("${y%[*}" 1) \
+            && k=("${y/\[*/}" 1) \
             || k=("$y")
         y="$(_ifnot_jpath "${k[0]}" "${I9KG_POOLSPACE}")"
-        l=$(_hsos "$y")
-        f="$POOL_RELAY_CACHE/xml/$l.poolconf.xml"
-        t="$POOL_RELAY_CACHE/functions/$l.poolconf.bash"
+        h=$(_hsos "$y")
+        f="$POOL_RELAY_CACHE/xml/$h.poolconf.xml"
+        t="$POOL_RELAY_CACHE/functions/$h.poolconf.bash"
         [[ -e $f ]] \
-            && _emsg "${FUNCNAME}: xml pool description already available: $(_dotstr "$l")" \
+            && _emsg "${FUNCNAME}: xml pool description already available: $(_dotstr "$h")" \
             && return 1
         ! mkdir "$y" 2> /dev/null &&  {
              [[ -d $y ]] \
@@ -871,15 +871,23 @@ function odsel_create() {
                 || _emsg "${FUNCNAME}: could not create: $y"
                 return 1
         } || {
-            printf  "<bashdata fni=\"_init_pool_$l\">\n <array name=\"%s\" check=\"reuse\">\n" \
-                    "__pool_relay_$l"
+            printf  "<bashdata fni=\"_init_pool_$h\">
+ <array name=\"%s\" check=\"reuse\">\n" \
+                    "__pool_relay_$h"
+            k=("${I9KG_PRIME[$_RHID]}" "${I9KG_PRIME[$_RPLI]}")
+            unset I9KG_PRIME[$_RPLI] I9KG_PRIME[$_RHID]
             for x in ${!I9KG_PRIME[@]}; do
-                mkdir -p "${y}/${I9KG_PRIME[$x]##*/prime}"
+                l="${I9KG_PRIME[$x]##*/prime}"
+                mkdir -p "$y$l"
                 printf  "  <index name=\"%s\">%s</index>\n" \
                         "${I9KG_ALIASES[$x]}" \
-                        "${I9KG_PRIME[$x]/$i/$y}"
+                        "$y$l"
             done 2> /dev/null
-            printf " </array>\n</bashdata>\n"
+            printf  "  <index name=\"RPLI\">__pool_rcache_%s</index>
+  <index name=\"RHID\">%s</index>\n </array>\n</bashdata>\n" \
+                    "$h" "$h"
+            I9KG_PRIME[$_RHID]="${k[0]}"
+            I9KG_PRIME[$_RPLI]="${k[1]}"
         } > "$f" 2> /dev/null || {
             _emsg "${FUNCNAME}: could not create: $y"
             rm -rf "$f"
