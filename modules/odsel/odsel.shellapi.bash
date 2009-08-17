@@ -810,7 +810,7 @@ function odsel_gph() {
 #;
 function odsel_enable() {
     local x=$(odsel_gph "$1")
-    local y="${2:-__pool_relay_$x}" z
+    local y="__pool_relay_$x" z
     _isfunction "_init_pool_$x" && _init_pool_$x || {
         if [[ -e $POOL_RELAY_CACHE/functions/$x.poolconf.bash ]]; then
             _imsg "@[$1]: loading configuration cache $(_dotstr "$x")"
