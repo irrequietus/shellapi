@@ -1308,9 +1308,10 @@ function odsel_xmla() {
 
 #;
 # @desc Performs Complete function cache removal for relays
+# @ptip $1  hash id for the relay cache function
 #;
 function odsel_rrfcache() {
-    rm -rf "${POOL_RELAY_CACHE}"/functions/*.poolconf.bash
+    rm -rf "${POOL_RELAY_CACHE}/functions/${1:-*}.poolconf.bash"
 }
 
 #;
