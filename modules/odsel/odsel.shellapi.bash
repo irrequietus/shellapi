@@ -914,7 +914,7 @@ function odsel_remove() {
                 return 1
             ;;
             *)
-                local y=$(odsel_gph "$x")
+                y=$(odsel_gph "$x")
                 rm -rf  "$POOL_RELAY_CACHE/xml/$y.poolconf.xml" \
                         "$POOL_RELAY_CACHE/functions/$y.poolconf.bash" \
                         "${I9KG_DEFS[$_POOLSETS]}/$x"
