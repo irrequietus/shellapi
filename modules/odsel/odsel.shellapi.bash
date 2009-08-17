@@ -809,8 +809,7 @@ function odsel_gph() {
 # @ptip $1  pool relay to activate
 #;
 function odsel_enable() {
-    local x=$(odsel_gph "$1")
-    local y="__pool_relay_$x" z
+    local x=$(odsel_gph "$1") z
     _isfunction "_init_pool_$x" && _init_pool_$x || {
         if [[ -e $POOL_RELAY_CACHE/functions/$x.poolconf.bash ]]; then
             _imsg "@[$1]: loading configuration cache $(_dotstr "$x")"
@@ -820,12 +819,8 @@ function odsel_enable() {
                 _emsg "${FUNCNAME}: invalid cache: $(_dotstr "$x")"
                 return 1
             }
-            [[ $y != __pool_relay_$x ]] \
-                && eval "$y=(\"\${__pool_relay_$x[@]}\"
-                             [\$_RHID]="$x"
-                             [\$_RPLI]=\"__pool_rcache_$x\")" \
-                || eval "__pool_relay_${x}[\$_RHID]=\"$x\"
-                         __pool_relay_${x}[\$_RPLI]=\"__pool_rcache_$x\""
+            eval "__pool_relay_${x}[\$_RHID]=\"$x\"
+                    __pool_relay_${x}[\$_RPLI]=\"__pool_rcache_$x\""
         else
             _nmsg "@[$1]: caching xml relay : $(_dotstr "$x")"
             [[ -e ${POOL_RELAY_CACHE}/xml/$x.poolconf.xml ]] && {
