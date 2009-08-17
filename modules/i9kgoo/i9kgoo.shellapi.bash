@@ -192,3 +192,25 @@ function i9kgoo_pool_analyze() {
         esac
     done
 }
+
+#;
+# @desc Generate a simulation instance to be part of an i9kg file, using
+#       the XML implementation for i9kg out of a rpli item.
+# @ptips $1 rpli item to use "<name>:<version>"
+# @note The function prints output to stdout
+#;
+function i9kgoo_sim_prseq_xml() {
+    local x
+    printf "    <instance alias=\"default\" version=\"%s\">
+        <materials>
+            <rpli item=\"%s\"/>
+        </materials>
+        <sequence variant=\"stable\">\n" "${1/*:/}" "$1"
+    for x in ${I9KG_PRESETS[@]}; do
+        printf "            <action mode=\"%s\">
+                <code>printf \"%s://default[%s@stable:%s] simulating: \$RANDOM events\\\n\"</code>
+                <text>This is text for the %s event!</text>
+            </action>\n" "$x" "${1/:*/}" "${1/*:/}" "$x" "$x"
+    done
+    printf "        </sequence>\n    </instance>\n"
+}
