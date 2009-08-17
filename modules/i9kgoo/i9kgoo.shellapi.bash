@@ -166,12 +166,16 @@ function i9kgoo_pcache() {
 # @desc Some simple statistics about a pool rcache. The pool must be
 #       completely canonical (initialized in runspace, $_RPLI set)
 # @ptip $1  Name of the pool to analyze
-# @echo prints out a string of the form: <clones>[[:space:]]<pristine>
+# @ptip $2  Global where to store results
+# @note The global arrays POOL_PRISTINE and POOL_CLONES containg pristine
+#       and clone rpli items respectively
 #;
 function i9kgoo_pool_analyze() {
     local   x="__pool_relay_$(odsel_gph "$1")[$_RPLI]" \
-            f= o= t=\| c=() p=()
+            f= o= t=\|
     local   h="$(odsel_prc_num "" "$x")"
+    POOL_PRISTINE=()
+    POOL_CLONES=()
     x="${!x}"
     for ((o=1;o<h;o++)); do
         f="$x[$o]"
@@ -179,13 +183,12 @@ function i9kgoo_pool_analyze() {
         case "$f" in
             pristine/*)
                 [[ $t != ${f#*/} ]] && \
-                    p+=("${f#*/}") && \
+                    POOL_PRISTINE+=("${f#*/}") && \
                     t="${f#*/}"
             ;;
             clone/*)
-                c+=("${f#*/}")
+                POOL_CLONES+=("${f#*/}")
             ;;
         esac
     done
-    printf "%s\n" "${#c[@]} ${#p[@]}"
 }
