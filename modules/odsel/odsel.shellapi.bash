@@ -901,7 +901,18 @@ function odsel_create() {
         ((${k[1]})) && {
             z="__pool_relay_$h[$_METABASE]"
             rm -rf "${!z}"
-            git clone git://gitorious.org/odreex/metabase.git "${!z}" &> /dev/null
+            _nmsg "@[${k[0]}]: retrieving metabase"
+            git clone git://gitorious.org/odreex/metabase.git "${!z}" &> /dev/null \
+                && _eqmsg "@[${k[0]}]: metabase retrieved" \
+                || {
+                    _emsg "${FUNCNAME}: could not retrieve metabase"
+                    return 1
+                }
+            _imsg "@[${k[0]}]: updating, reloading configuration cache $(_dotstr "$h")"
+            odsel_pppli "${!z}/metabase.xml" __pool_rcache_$h \
+                && odsel_pobjc __pool_relay_$h > "$POOL_RELAY_CACHE/functions/$h.poolconf.bash"
+            . "$POOL_RELAY_CACHE/functions/$h.poolconf.bash"
+            _init_pool_$h
         }
     done
     ! ((${#SHELLAPI_ERROR[@]}))
