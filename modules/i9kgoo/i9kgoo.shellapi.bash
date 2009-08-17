@@ -214,3 +214,42 @@ function i9kgoo_sim_prseq_xml() {
     done
     printf "        </sequence>\n    </instance>\n"
 }
+
+#;
+# @desc Create a series of standard i9kg files from the contents
+#       of a single metabase in an under instantiation pool. The files
+#       in this case are non - functional templates that contain pseudo
+#       code and sample text and serve as an example.
+# @ptip $1  pool name where the files must be created (using $_I9KG_SEEDS_XML);
+#           defaults to prime.
+# @ptip $2
+# @note The pool must already be initialized in runspace.
+#;
+function i9kgoo_sim_metabase_xml() {
+    local   a="${2:-__pool_relay_$(odsel_gph "${1:-prime}")[$_RPLI]}" \
+            z=() o=  x=0 y=0 l= n=
+    i9kgoo_pool_analyze "${1:-prime}" "$a"
+    n="${POOL_PRISTINE[0]/:*/}"
+    l=${a/\[*\]/[$_I9KG_SEEDS_XML]}
+    l="${!l}"
+    unset POOL_PRISTINE[0]
+    z+=("$n")
+    for x in ${!POOL_PRISTINE[@]} ${#POOL_PRISTINE[@]}0; do
+        x="${POOL_PRISTINE[$x]:-_${POOL_PRISTINE[${#POOL_PRISTINE[@]}]}}"
+        [[ $x = *:* ]] && {
+            [[ $n = ${x/:*/} ]] && z+=("$x") || {
+                printf "<!DOCTYPE i9kg SYSTEM \"http://odreex.org/dtd/i9kg.dtd\">
+    <!-- File initially generated using i9kgoo_sim_i9kg_metabase_xml
+            as template output.
+    -->
+    <i9kg name=\"%s\">\n" "$n" > "$l/$n.i9kg.xml"
+                for y in ${!z[@]}; do
+                    i9kgoo_sim_prseq_xml "${z[y]}"
+                done >> "$l/$n.i9kg.xml"
+                printf "</i9kg>\n" >> "$l/$n.i9kg.xml"
+                z=("$x")
+            }
+            n="${x/:*/}"
+        }
+    done
+}
