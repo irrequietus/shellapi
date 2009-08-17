@@ -165,13 +165,13 @@ function i9kgoo_pcache() {
 #;
 # @desc Some simple statistics about a pool rcache. The pool must be
 #       completely canonical (initialized in runspace, $_RPLI set)
-# @ptip $1  Name of the pool to analyze
-# @ptip $2  Global where to store results
+# @ptip $1  Name of the pool to analyze (defaults to [prime])
+# @ptip $2  When set, overrides $1 as __pool_relay_* lock.
 # @note The global arrays POOL_PRISTINE and POOL_CLONES containg pristine
 #       and clone rpli items respectively
 #;
 function i9kgoo_pool_analyze() {
-    local   x="__pool_relay_$(odsel_gph "$1")[$_RPLI]" \
+    local   x="${2:-__pool_relay_$(odsel_gph "${1:-prime}")[$_RPLI]}" \
             f= o= t=\|
     local   h="$(odsel_prc_num "" "$x")"
     POOL_PRISTINE=()
