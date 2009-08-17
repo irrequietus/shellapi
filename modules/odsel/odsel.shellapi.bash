@@ -810,6 +810,7 @@ function odsel_gph() {
 #;
 function odsel_enable() {
     local x=$(odsel_gph "$1") z
+    local y="${2:-__pool_relay_$x}"
     _isfunction "_init_pool_$x" && _init_pool_$x || {
         if [[ -e $POOL_RELAY_CACHE/functions/$x.poolconf.bash ]]; then
             _imsg "@[$1]: loading configuration cache $(_dotstr "$x")"
@@ -828,7 +829,7 @@ function odsel_enable() {
                 _init_pool_$x
                 z="__pool_relay_$x[$_METABASE]"
                 eval "$y=(\"\${__pool_relay_$x[@]}\"
-                            [\$_RHID]="$x"
+                            [\$_RHID]=\"$x\"
                             [\$_RPLI]=\"__pool_rcache_$x\")"
                 odsel_pppli "${!z}/metabase.xml" __pool_rcache_$x \
                     && odsel_pobjc $y > "$POOL_RELAY_CACHE/functions/$x.poolconf.bash"
@@ -856,7 +857,7 @@ function odsel_create() {
     for y in ${SPLIT_STRING[@]}; do
         [[ "$y" = *\[\] ]] \
             && k=("${y/\[*/}" 1) \
-            || k=("$y")
+            || k=("$y" 0)
         y="$(_ifnot_jpath "${k[0]}" "${I9KG_POOLSPACE}")"
         h=$(_hsos "$y")
         f="$POOL_RELAY_CACHE/xml/$h.poolconf.xml"
@@ -897,6 +898,11 @@ function odsel_create() {
                 _emsg "${FUNCNAME}: function cache already present: $t"
                 return 1
             }
+        ((${k[1]})) && {
+            z="__pool_relay_$h[$_METABASE]"
+            rm -rf "${!z}"
+            git clone git://gitorious.org/odreex/metabase.git "${!z}" &> /dev/null
+        }
     done
     ! ((${#SHELLAPI_ERROR[@]}))
 }
