@@ -848,13 +848,17 @@ function odsel_enable() {
 # @desc Create a pool, either within the poolset or at a path of your
 #       option. A function cache is created for the XML description file
 #       as well.
-# @ptip $1  name for the new pool or path to it
+# @ptip $1  Comma separated pool list
 #;
 function odsel_create() {
     local x y z="${I9KG_DEFS[$_POOLSETS]}"
-    local f= l= t=
-    for y in ${@}; do
-        y="$(_ifnot_jpath "$y" "${I9KG_POOLSPACE}")"
+    local f= l= t= k=
+    _split "${1//[[:space:]]/}"
+    for y in ${SPLIT_STRING[@]}; do
+        [[ "$y" = *\[\] ]] \
+            && k=("${y%[*}" 1) \
+            || k=("$y")
+        y="$(_ifnot_jpath "${k[0]}" "${I9KG_POOLSPACE}")"
         l=$(_hsos "$y")
         f="$POOL_RELAY_CACHE/xml/$l.poolconf.xml"
         t="$POOL_RELAY_CACHE/functions/$l.poolconf.bash"
