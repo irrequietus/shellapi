@@ -640,6 +640,21 @@ function _dotstr() {
 }
 
 #;
+# @desc Split string into an array, using a particular character as delimiter
+# @ptip $1  string to split
+# @ptip $2  optional, character to use as delimiter (defaults to comma)
+# @note Stores results to the SPLIT_STRING global array
+#;
+function _split() {
+    local x="${1}" y="${2:-,}"
+    x="$x$y"
+    SPLIT_STRING=()
+    while read -r -d "$y" x; do
+        SPLIT_STRING+=("$x")
+    done< <(printf "%s\n" "$x")
+}
+
+#;
 # @desc The shellapi core initializer
 # @note This function initializes the shellapi core and the various modules 
 #       that are marked as active to use within a shellapi script flow. For
