@@ -709,6 +709,14 @@ function _init() {
 }
 
 #;
+# @desc Retrieve an uuid from /proc/sys/kernel/random/uuid
+# @echo An uuid value
+#;
+function _uuidg() {
+    printf "%s\n"$(< "/proc/sys/kernel/random/uuid")
+}
+
+#;
 # @desc Setup a shellapi runspace layout
 # @ptip $1  directory where to setup the layout; must not exist
 #;
