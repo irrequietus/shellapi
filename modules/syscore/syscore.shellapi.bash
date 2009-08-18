@@ -663,8 +663,10 @@ function _split() {
 #       is made.
 #;
 function _init() {
+    clear
     export LC_ALL=C
     SHCORE_START=$(_dtfs)
+    SHCORE_VERSION="0.x-pre1"
     _VERSTR=(alpha beta rc)
     [[ -z $SHELLAPI_HOME ]] \
         && _fatal "${FUNCNAME}: home not set"
@@ -693,6 +695,7 @@ function _init() {
         [$(_opsolve "!=")]="neq"
         [$(_opsolve "==")]="eqt"
     )
+    _imsg "odreex :: shellapi[$SHCORE_VERSION] core loaded"
     while read -r l; do
         case "$l" in
             '' | \#*)   ;;
@@ -701,7 +704,7 @@ function _init() {
     done < "${SHELLAPI_MODULES_DIR}/shellapi.conf"
     [[ -d ${SHELLAPI_TARGET:=$1} ]] || {
         _wmsg "shellapi runspace >> [$SHELLAPI_TARGET]"
-        _setup_layout "$1"
+        _setup_layout "${SHELLAPI_TARGET}"
     }
 }
 
