@@ -664,15 +664,24 @@ function _split() {
 #;
 function _init() {
     clear
+    [[ -z $SHELLAPI_HOME ]] \
+        && _fatal "${FUNCNAME}: home not set"
     export LC_ALL=C
     SHCORE_START=$(_dtfs)
     SHCORE_VERSION="0.x-pre1"
     _VERSTR=(alpha beta rc)
-    [[ -z $SHELLAPI_HOME ]] \
-        && _fatal "${FUNCNAME}: home not set"
     SHELLAPI_MODULES_DIR="${SHELLAPI_HOME}/modules"
     SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}
     SHELLAPI_LDOT=${SHELLAPI_LDOT:-10}
+    SHELLAPI_TARGET="${SHELLAPI_TARGET:-"$(pwd)/$(_uuidg)"}"
+    VERSION_OPERATORS=(
+        [$(_opsolve "<")]="lt"
+        [$(_opsolve ">")]="gt"
+        [$(_opsolve ">=")]="gte"
+        [$(_opsolve "<=")]="lte"
+        [$(_opsolve "!=")]="neq"
+        [$(_opsolve "==")]="eqt"
+    )
     local l="$SHELLAPI_MODULES_DIR/syscore/locales/syscore.locale.$SHELLAPI_LOCALE.xml"
     local f="$SHELLAPI_MODULES_DIR/syscore/extra/syscore.config.xml"
     [[ -e $l ]] \
@@ -684,26 +693,18 @@ function _init() {
     ((${#SHELLAPI_ERRORS[@]})) && _fatal
     _xml2bda "$l"
     _xml2bda "$f"
+    _eventdef
     _initglobals_syscore
     _syscore_intl_$SHELLAPI_LOCALE
-    _eventdef
-    VERSION_OPERATORS=(
-        [$(_opsolve "<")]="lt"
-        [$(_opsolve ">")]="gt"
-        [$(_opsolve ">=")]="gte"
-        [$(_opsolve "<=")]="lte"
-        [$(_opsolve "!=")]="neq"
-        [$(_opsolve "==")]="eqt"
-    )
-    _imsg "odreex :: shellapi[$SHCORE_VERSION] core loaded"
+    _imsg "odreex::(shellapi -> [$SHCORE_VERSION])"
     while read -r l; do
         case "$l" in
             '' | \#*)   ;;
             *)  _include "$l" ;;
         esac
     done < "${SHELLAPI_MODULES_DIR}/shellapi.conf"
-    [[ -d ${SHELLAPI_TARGET:=$1} ]] || {
-        _wmsg "shellapi runspace >> [$SHELLAPI_TARGET]"
+    [[ -d ${SHELLAPI_TARGET} ]] || {
+        _wmsg "shellapi runspace >> [${SHELLAPI_TARGET##*/}]"
         _setup_layout "${SHELLAPI_TARGET}"
     }
 }
@@ -713,7 +714,7 @@ function _init() {
 # @echo An uuid value
 #;
 function _uuidg() {
-    printf "%s\n"$(< "/proc/sys/kernel/random/uuid")
+    printf "%s\n" "$(< "/proc/sys/kernel/random/uuid")"
 }
 
 #;

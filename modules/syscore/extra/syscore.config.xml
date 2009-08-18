@@ -11,7 +11,6 @@
     <var name="SHCORE_MLOG">${SHELLAPI_HOME}/logging/shellapi.log</var>
     <var name="SHELLAPI_HASH_MODES">${SHELLAPI_HASH_MODES:=sha1sum}</var>
     <var name="SHELLAPI_HASH">${SHELLAPI_HASH_MODES}</var>
-    <var name="SHELLAPI_TARGET">${SHELLAPI_TARGET:=$(pwd)/rspace}</var>
     <var name="SHELLAPI_RSPACE">${SHELLAPI_TARGET}/shellrun</var>
     <var name="I9KG_POOLSPACE">${SHELLAPI_TARGET}/poolset</var>
     <array name="SHELLAPI_MODULES"/>
