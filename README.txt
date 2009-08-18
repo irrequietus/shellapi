@@ -29,15 +29,18 @@ An odreex pool is collection of resources related to build instructions. Several
 odreex pools may be initialized and used in a variety of ways, through the interface
 offered by a custom DSL named "odsel". The odsel language is redundantly (and partialy)
 implemented in GNU bash for the purpose of using a pure GNU bash based solution when
-the end user desires to.
+the end user desires to. The easiest way to see what a pool is is to run the following
+command after an _init call is made:
 
-2.1. Currently only the [prime] pool is allowed to exist for the time being; this pool is
-     the reserved one that is to be the end user's own modification of another third -
-     party pool or created by the end user from start.
-2.2. To create [prime] run "odsel_setup_pool" with no arguments inside a script compliant
-     with {1.1, 1.2, 1.3} or {1.x} if no "runspace" has ever been created. The metabase.xml
-     file required in the metabase directory of the pool and containing the various rpli
-     links for the time being, must be put manually in position. See http://odreex.org
-     for more details.
+odsel_create "prime[]"
+
+The command above retrieves the metabase XML descriptor from the official repository and
+initializes the function and configuration caches of the prime pool; these caches are
+located within the relays subdirectories of the runspace selected.
+
+If you have not set a SHELLAPI_TARGET global, the prime pool will be located inside
+the runspace created during the first run. If you wish to use that runspace, remember
+to set it as one your SHELLAPI_TARGET global, pointing to the directory where that
+runspace is found.
 
 
