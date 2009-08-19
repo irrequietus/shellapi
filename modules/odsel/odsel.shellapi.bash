@@ -232,11 +232,12 @@ function odsel_prc_num() {
 #       the result into the POOL_ITEM global array; the pool relay must
 #       be initialized.
 # @ptip $1  odsel rpli target to retrieve
+# @ptip $2  pool relay hash identifier
 #;
 function odsel_ifind() {
-    local x="$1" a="${2:-"__pool_relay_$(odsel_gph "prime")[$_RPLI]"}"\
+    local x="$1" a="__pool_relay_${2:-"$(odsel_gph "prime")"}[$_RPLI]"\
         r=1 m=0 t=0 b=" " f o m n matches=()
-    [[ -z $2 ]] && a=${!a}
+    a="${!a}"
     f="$a[0]"
     f=(${!f})
     local h="$(($(_asof $a)/7+${#f[@]}+1))"
@@ -652,10 +653,10 @@ function _odsel_() {
 # @desc Generate and use a function for retrieving a particular
 #       resource.
 # @ptip $1  odsel pli shortcut identifying the resource
-# @ptip $2  odsel pli metadata array where to search for the resource
+# @ptip $2  pool hash identifier, defaults to using prime
 #;
 function odsel_getfn() {
-    odsel_ifind "$1" "$2" && {
+    odsel_ifind "$1" "${2:-$(odsel_gph "prime")}" && {
         FNPREP_ARRAY=()
         ODSEL_FN="_odself_$(_hsos "$1")"
         while read -r j; do
@@ -675,8 +676,12 @@ fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
             FNPREP_ARRAY "pool request: $1" fatal > "$f"
         unset FNPREP_ARRAY
         . "$f"
-        rm -rf $f
-        $ODSEL_FN
+        rm -rf "$f"
+        f="$(odsel_rtarg "$1" "${2:-$(odsel_gph "prime")}")" && {
+            pushd "$f" &> /dev/null
+            $ODSEL_FN
+            popd &> /dev/null
+        } || _emsg "${FUNCNAME}: could not deduce retrieval target"
     } || _emsg "${FUNCNAME}: [function()] --> $1 ?"
     ! ((${#SHELLAPI_ERRORS[@]}))
 }
