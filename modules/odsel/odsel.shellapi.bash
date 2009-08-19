@@ -1047,7 +1047,7 @@ function odsel_iassign() {
          ;;
     esac
     [[ -z $x ]] && {
-        t="${2:-${I9KG_PRIME[$_SNAPSHOTS]}}/${s##*/}-snapshot.$(dtff).tar.${SHELLAPI_PAYLOAD//[ip]/}"
+        t="${2:-${I9KG_PRIME[$_SNAPSHOTS]}}/${s##*/}-snapshot.$(_dtff).tar.${SHELLAPI_PAYLOAD//[ip]/}"
         {
             pushd "${s%/*}" > /dev/null
             tar cf - "${s##*/}" | ${SHELLAPI_PAYLOAD} --best -c - > "$t"
