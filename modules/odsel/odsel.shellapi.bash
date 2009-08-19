@@ -663,7 +663,7 @@ function odsel_getfn() {
     for x in ${!SPLIT_STRING[@]}; do
         x="${SPLIT_STRING[$x]}"
         odsel_ifind "$x" "${2:-$(odsel_gph "prime")}" && {
-            o="_odself_$(_hsos "$1")"
+            o="_odself_$(_hsos "$x")"
             while read -r j; do
                 [[ -z $j ]] \
                     || FNPREP_ARRAY+=("$j")
