@@ -750,14 +750,20 @@ function poolcli() {
 # @echo Prints the path where odsel_getfn gets executed
 #;
 function odsel_rtarg() {
-    local x="${1//[[:space:]]/}" y="__pool_relay_${2:-$(odsel_gph "prime")}"
-    case "$x" in
+    local x= y="__pool_relay_${2:-$(odsel_gph "prime")}"
+    case "${1//[[:space:]]/}" in
         pristine/*) x="$y[$_PRISTINE]"
             ;;
         clone/*) x="$y[$_CLONES]"
             ;;
     esac
-    printf "%s\n" "${!x}"
+    [[ -z ${!x} ]] || {
+        [[ -d ${!x} ]] && {
+            printf "%s\n" "${!x}"
+            return
+        }
+    }
+    ! :
 }
 
 #;
