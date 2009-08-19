@@ -171,7 +171,7 @@ function i9kgoo_pcache() {
 #       and clone rpli items respectively
 #;
 function i9kgoo_pool_analyze() {
-    local   x="${2:-__pool_relay_$(odsel_gph "${1:-prime}")[$_RPLI]}" \
+    local   x="__pool_relay_${2:-$(odsel_gph "${1:-prime}")}[$_RPLI]" \
             f= o= t=\|
     local   h="$(odsel_prc_num "" "$x")"
     POOL_PRISTINE=()
