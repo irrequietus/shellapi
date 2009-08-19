@@ -236,7 +236,7 @@ function odsel_prc_num() {
 #;
 function odsel_ifind() {
     local x="$1" a="__pool_relay_${2:-"$(odsel_gph "prime")"}[$_RPLI]"\
-        r=1 m=0 t=0 b=" " f o m n matches=()
+        r=1 m=0 t=0 f= o= n=
     a="${!a}"
     f="$a[0]"
     f=(${!f})
@@ -255,16 +255,17 @@ function odsel_ifind() {
         n="$a[$((r++))]"
         n="${!n/|*/}"
         if [[ $n == $x ]]; then
-            matches=("$n")
+            m=("$n")
         else
+            m=()
             while [[ ${n%:*} == $x || $n == $x ]]; do
-                matches+=("${n#*:}")
+                m+=("${n#*:}")
                 n="$a[$((r++))]"
                 n="${!n/|*/}"
             done
         fi
-        ((${#matches[@]} != 1)) && {
-            for h in ${matches[@]}; do
+        ((${#m[@]} != 1)) && {
+            for h in ${m[@]}; do
                 _emsg "${FUNCNAME}: non - unique version for $x --> ${h#*/}"
             done
             _emsg "${FUNCNAME}: unique version identifier (uvid) is not set: $x:?"
