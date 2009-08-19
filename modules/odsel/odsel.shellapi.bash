@@ -904,7 +904,7 @@ function odsel_create() {
             z="__pool_relay_$h[$_METABASE]"
             rm -rf "${!z}"
             _nmsg "@[${k[0]}]: retrieving metabase"
-            git clone git://gitorious.org/odreex/metabase.git "${!z}" &> /dev/null \
+             wget http://odreex.org/metabase/metabase.xml --directory-prefix="${!z}" &> /dev/null \
                 && _eqmsg "@[${k[0]}]: metabase retrieved" \
                 || {
                     _emsg "${FUNCNAME}: could not retrieve metabase"
