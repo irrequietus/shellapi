@@ -758,10 +758,9 @@ function poolcli() {
 function odsel_rtarg() {
     local x= y="__pool_relay_${2:-$(odsel_gph "prime")}"
     case "${1//[[:space:]]/}" in
-        pristine/*) x="$y[$_PRISTINE]"
-            ;;
-        clone/*) x="$y[$_CLONES]"
-            ;;
+        pristine/*) x="$y[$_PRISTINE]"  ;;
+        clone/*)    x="$y[$_CLONES]"    ;;
+        snapshot/*) x="$y[$_SNAPSHOTS]" ;;
     esac
     [[ -z ${!x} ]] || {
         [[ -d ${!x} ]] && {
