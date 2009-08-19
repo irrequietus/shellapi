@@ -693,10 +693,9 @@ function _init() {
     ((${#SHELLAPI_ERRORS[@]})) && _fatal
     _xml2bda "$l"
     _xml2bda "$f"
-    _eventdef
     _initglobals_syscore
+    _bashok
     _syscore_intl_$SHELLAPI_LOCALE
-    _imsg "odreex::(shellapi -> [$SHCORE_VERSION])"
     while read -r l; do
         case "$l" in
             '' | \#*)   ;;
@@ -715,6 +714,25 @@ function _init() {
 #;
 function _uuidg() {
     printf "%s\n" "$(< "/proc/sys/kernel/random/uuid")"
+}
+
+#;
+# @desc Allowing execution only if certain conditions are met
+# @retv 0 / 1
+#;
+function _bashok() {
+    ((${BASH_VERSINFO[0]} >= 3))  && \
+    ((${BASH_VERSINFO[1]} >= 2))  && \
+    ((${BASH_VERSINFO[2]} >= 48)) || \
+        _fatal "odreex :: (shellapi) : your GNU bash version is not compatible (< 3.2.48)"
+    _eventdef
+    _imsg "odreex::(shellapi -> [$SHCORE_VERSION])"
+    case "$(shopt -q compat313 2>&1)" in
+        '') (($?)) || _fatal "compat31 is set to on, abborting"
+        ;;
+        *) _wmsg "for GNU bash: ${BASH_VERSION}: assuming compat31 = off"
+        ;;
+    esac
 }
 
 #;
