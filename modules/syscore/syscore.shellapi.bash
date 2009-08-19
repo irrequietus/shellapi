@@ -718,7 +718,6 @@ function _uuidg() {
 
 #;
 # @desc Allowing execution only if certain conditions are met
-# @retv 0 / 1
 #;
 function _bashok() {
     ((${BASH_VERSINFO[0]} >= 3))  && \
@@ -727,7 +726,7 @@ function _bashok() {
         _fatal "odreex :: (shellapi) : your GNU bash version is not compatible (< 3.2.48)"
     _eventdef
     _imsg "odreex::(shellapi -> [$SHCORE_VERSION])"
-    case "$(shopt -q compat313 2>&1)" in
+    case "$(shopt -q compat31 2>&1)" in
         '') (($?)) || _fatal "compat31 is set to on, abborting"
         ;;
         *) _wmsg "for GNU bash: ${BASH_VERSION}: assuming compat31 = off"
