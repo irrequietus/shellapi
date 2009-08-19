@@ -743,6 +743,24 @@ function poolcli() {
 }
 
 #;
+# @desc Decide the target of a retrieved resource
+# @ptip $1  The pli link identifying the resource within a pool
+# @ptip $2  Hash identifier for the pool of the resource, defaults
+#           to [prime] if none is set
+# @echo Prints the path where odsel_getfn gets executed
+#;
+function odsel_rtarg() {
+    local x="${1//[[:space:]]/}" y="__pool_relay_${2:-$(odsel_gph "prime")}"
+    case "$x" in
+        pristine/*) x="$y[$_PRISTINE]"
+            ;;
+        clone/*) x="$y[$_CLONES]"
+            ;;
+    esac
+    printf "%s\n" "${!x}"
+}
+
+#;
 # @desc Create an pool function cache initializer "object"
 # @ptip $1  Variable containing pool structural data
 # @echo outputs a complete function body
