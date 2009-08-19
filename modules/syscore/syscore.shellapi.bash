@@ -727,7 +727,7 @@ function _bashok() {
     _eventdef
     _imsg "odreex::(shellapi -> [$SHCORE_VERSION])"
     case "$(shopt -q compat31 2>&1)" in
-        '') (($?)) || _fatal "compat31 is set to on, abborting"
+        '') (($?)) || _fatal "compat31 is set to on, aborting"
         ;;
         *) _wmsg "for GNU bash: ${BASH_VERSION}: assuming compat31 = off"
         ;;
