@@ -652,38 +652,43 @@ function _odsel_() {
 
 #;
 # @desc Generate and use a function for retrieving a particular
-#       resource.
-# @ptip $1  odsel pli shortcut identifying the resource
+#       set of resources.
+# @ptip $1  comma separated list of pli resources
 # @ptip $2  pool hash identifier, defaults to using prime
 #;
 function odsel_getfn() {
-    odsel_ifind "$1" "${2:-$(odsel_gph "prime")}" && {
-        FNPREP_ARRAY=()
-        ODSEL_FN="_odself_$(_hsos "$1")"
-        while read -r j; do
-            [[ -z $j ]] \
-                || FNPREP_ARRAY+=("$j")
-        done< <(printf "%s\n%s\n%s\n" \
-                "${POOL_ITEM[$_PREGET]}" \
-                "$(odsel_ifetch "${POOL_ITEM[$_ENTRY]}")"\
-                "${POOL_ITEM[$_POSTGET]}" )
-        local f=$(mktemp)
-        [[ -z ${POOL_ITEM[$_CHECKSUM]} ]] \
-            || FNPREP_ARRAY+=(\
+    local x f o
+    FNPREP_ARRAY=()
+    _split "${1//[[:space:]]/}"
+    for x in ${!SPLIT_STRING[@]}; do
+        x="${SPLIT_STRING[$x]}"
+        odsel_ifind "$x" "${2:-$(odsel_gph "prime")}" && {
+            o="_odself_$(_hsos "$1")"
+            while read -r j; do
+                [[ -z $j ]] \
+                    || FNPREP_ARRAY+=("$j")
+            done< <(printf "%s\n%s\n%s\n" \
+                    "${POOL_ITEM[$_PREGET]}" \
+                    "$(odsel_ifetch "${POOL_ITEM[$_ENTRY]}")"\
+                    "${POOL_ITEM[$_POSTGET]}")
+            f="$(mktemp)"
+            [[ -z ${POOL_ITEM[$_CHECKSUM]} ]] \
+                || FNPREP_ARRAY+=(\
 "_cfx ${POOL_ITEM[$_ENTRY]##*/} ${POOL_ITEM[$_CHECKSUM]} && \\\
 fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
 \$(_dotstr "${POOL_ITEM[$_CHECKSUM]}") : ok\"")
-        fnapi_genblock "$ODSEL_FN" "pool request: $1" \
-            FNPREP_ARRAY "pool request: $1" fatal > "$f"
-        unset FNPREP_ARRAY
-        . "$f"
-        rm -rf "$f"
-        f="$(odsel_rtarg "$1" "${2:-$(odsel_gph "prime")}")" && {
-            pushd "$f" &> /dev/null
-            $ODSEL_FN
-            popd &> /dev/null
-        } || _emsg "${FUNCNAME}: could not deduce retrieval target"
-    } || _emsg "${FUNCNAME}: [function()] --> $1 ?"
+            fnapi_genblock "$o" "pool request: $x" \
+                FNPREP_ARRAY "pool request: $x" fatal > "$f"
+            unset FNPREP_ARRAY
+            . "$f"
+            rm -rf "$f"
+            f="$(odsel_rtarg "$x" "${2:-$(odsel_gph "prime")}")" && {
+                pushd "$f" &> /dev/null
+                $o
+                popd &> /dev/null
+            } || _emsg "${FUNCNAME}: could not deduce retrieval target"
+        } || _emsg "${FUNCNAME}: [function()] --> $x ?"
+    done
     ! ((${#SHELLAPI_ERRORS[@]}))
 }
 
