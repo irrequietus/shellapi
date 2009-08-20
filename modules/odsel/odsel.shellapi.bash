@@ -777,6 +777,35 @@ function odsel_rtarg() {
 }
 
 #;
+# @desc A splitter for a comma separated list of odsel expressions,
+#       according to specific rules for {*} and [*]
+# @ptip $1  The list to split
+#;
+function odsel_expr() {
+    local x="${1//[[:space:]]/}," y
+    ODSEL_EXPR=()
+    while [[ "$x" =~ ([,}{]) ]]; do
+        case "${BASH_REMATCH[1]}" in
+             ,) y=("${x/,*/}")
+                ;;
+            \{) [[ "${x:0:1}" = [[:alpha:]] ]] && {
+                    y="${x#*]}"
+                    y="${x/]*/}]${y/,*/}"
+                } || {
+                    y="${x#"${x/\}*/}"}"
+                    y="${x/\}*/}${y/,*/}"
+                }
+                ;;
+            \}) _emsg "${FUNCNAME}: illegal expression"
+                return 1
+                ;;
+        esac
+        x="${x#"$y",}"
+        ODSEL_EXPR+=("$y")
+    done
+}
+
+#;
 # @desc Create an pool function cache initializer "object"
 # @ptip $1  Variable containing pool structural data
 # @echo outputs a complete function body
