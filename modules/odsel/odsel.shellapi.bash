@@ -797,6 +797,7 @@ function odsel_expr() {
                 }
                 ;;
             \}) _emsg "${FUNCNAME}: illegal expression"
+                ODSEL_EXPR=()
                 return 1
                 ;;
         esac
