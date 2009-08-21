@@ -636,8 +636,17 @@ function _odsel_pm() {
     local x=("${@}")
     [[ ${x[0]} = \[*\] ]] \
         && _emsg "odsel: in A -> B with A=\"${x[0]}\" is not in context"
-    [[ ${x[2]} = \[[\&@%]\] ]] \
-        || _emsg "odsel: in A -> B with B=\"${x[2]}\" is not in context"
+    case "${x[2]}" in
+        \[\])
+            ;;
+        \[*\])
+            [[ "${x[2]//[\[\]]/}" =~ ^(\$|\&|@|%|pristine|snapshot|build|clone) ]] \
+                || _emsg "odsel: in A -> B with B=\"${x[2]}\" is not in context"
+            ;;
+        *)
+            _emsg "odsel: expression has no meaning"
+        ;;
+    esac
     ((${#SHELLAPI_ERROR[@]})) \
         && _fatal "${x[0]}${x[1]} -> ${x[2]}${x[3]} is not a valid expression"
     _imsg "${x[0]}${x[1]} -> ${x[2]}${x[3]} is a valid expression"
