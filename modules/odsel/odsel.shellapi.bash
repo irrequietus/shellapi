@@ -629,11 +629,18 @@ function odsel_act() {
 }
 
 #;
-# @desc
-# @devs FIXME: import implementation
+# @desc The internal event handler for the -> operator for rpli instructions
+# @ptip $@  The array "passed" through _odsel_rpli_i
 #;
 function _odsel_pm() {
-    _decoy_this "${FUNCNAME}"
+    local x=("${@}")
+    [[ ${x[0]} = \[*\] ]] \
+        && _emsg "odsel: in A -> B with A=\"${x[0]}\" is not in context"
+    [[ ${x[2]} = \[[\&@%]\] ]] \
+        || _emsg "odsel: in A -> B with B=\"${x[2]}\" is not in context"
+    ((${#SHELLAPI_ERROR[@]})) \
+        && _fatal "${x[0]}${x[1]} -> ${x[2]}${x[3]} is not a valid expression"
+    _imsg "${x[0]}${x[1]} -> ${x[2]}${x[3]} is a valid expression"
 }
 
 #;
