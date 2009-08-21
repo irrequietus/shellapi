@@ -633,15 +633,16 @@ function odsel_act() {
 # @ptip $@  The array "passed" through _odsel_rpli_i
 #;
 function _odsel_pm() {
-    local x=("${@}")
+    local x=("${@}") y="" z
     [[ ${x[0]} = \[*\] ]] \
         && _emsg "odsel: in A -> B with A=\"${x[0]}\" is not in context"
-    case "${x[2]}" in
+    case "${x[z=$((${#x[@]}>4?3:2))]}" in
         \[\])
             ;;
         \[*\])
-            [[ "${x[2]//[\[\]]/}" =~ ^(\$|\&|@|%|pristine|snapshot|build|clone) ]] \
-                || _emsg "odsel: in A -> B with B=\"${x[2]}\" is not in context"
+            [[ "${x[$z]//[\[\]]/}" =~ ^(\$|\&|@|%|pristine|snapshot|build|clone) ]] \
+                || _emsg "odsel: in A -> B with B=\"${x[$z]}\" is not in context"
+            y="${BASH_REMATCH[1]}"
             ;;
         *)
             _emsg "odsel: expression has no meaning"
@@ -650,6 +651,27 @@ function _odsel_pm() {
     ((${#SHELLAPI_ERROR[@]})) \
         && _fatal "${x[0]}${x[1]} -> ${x[2]}${x[3]} is not a valid expression"
     _imsg "${x[0]}${x[1]} -> ${x[2]}${x[3]} is a valid expression"
+    case "$y" in
+        \$|pristine|'')
+            _ckmsg "requested to put into pristine"
+             y="pristine/${x[0]}:${x[1]}"
+            ;;
+        \&|snapshot)
+            _ckmsg "requested to make a snapshot"
+            y=
+            ;;
+        @|build)
+            _ckmsg "materials put into buildspace"
+            y=
+            ;;
+        %|clone)
+            _ckmsg "creating a clone of the repository"
+            y="clone/${x[0]}"
+            ;;
+    esac
+    [[ -z $y ]] \
+        && _wmsg "operation valid but not active yet" \
+        || odsel_getfn "$y"
 }
 
 #;
