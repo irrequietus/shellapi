@@ -104,6 +104,22 @@ function odsel_si() {
 }
 
 #;
+# @desc The odsel rpli instruction decoy
+# @ptip $1  The rpli instruction to process, as passed by odsel_si
+#;
+function _odsel_rpli_i() {
+    _decoy_this "${FUNCNAME}: processing a rpli instruction"
+}
+
+#;
+# @desc The odsel i9kg instruction decoy
+# @ptip $1  The i9kg instruction to process, as passed by odsel_si
+#;
+function _odsel_i9kg_i() {
+    _decoy_this "${FUNCNAME}: processing an i9kg instruction"
+}
+
+#;
 # @desc Check if a pli is a http(s) / ftp link
 # @ptip $1  pli metalink
 # @retv 0/1
