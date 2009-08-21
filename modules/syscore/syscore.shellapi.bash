@@ -721,7 +721,7 @@ function _uuidg() {
 #;
 function _bashok() {
     ((${BASH_VERSINFO[0]} > 3)) || {
-        ((${BASH_VERSINFO[0]} = 3))  && \
+        ((${BASH_VERSINFO[0]} == 3))  && \
         ((${BASH_VERSINFO[1]} >= 2))  && \
         ((${BASH_VERSINFO[2]} >= 32)) || \
             _fatal "odreex :: (shellapi) : your GNU bash version is not compatible (< 3.2.48)"
