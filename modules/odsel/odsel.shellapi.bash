@@ -108,7 +108,28 @@ function odsel_si() {
 # @ptip $1  The rpli instruction to process, as passed by odsel_si
 #;
 function _odsel_rpli_i() {
-    _decoy_this "${FUNCNAME}: processing a rpli instruction"
+    [[  "$1" =~ ([^=\~\>\-]*):\((.*)\)([=\~\>\-]\>)([^=\~\>\-]*):\((.*)\) || \
+        "$1" =~ ([^=\~\>\-]*):\((.*)\)([=\~\>\-]\>)([^=\~\>\-]*) || \
+        "$1" =~ ([^=\~\>\-]*)([=\~\>\-]\>)([^=\~\>\-]*) || \
+        "$1" =~ ([^=\~\>\-]*):\((.*)\) || \
+        "$1" =~ ([^=\~\>\-]*) ]] && {
+            case "$((${#BASH_REMATCH[@]}-1))" in
+                5 | 4)
+                    _odsel_${ODSEL_OPRT[$(_opsolve "${BASH_REMATCH[3]}")]} \
+                        ${BASH_REMATCH[@]:1:2} "" ${BASH_REMATCH[@]:4:5} "" \
+                        || return 1
+                    ;;
+                3)
+                    _odsel_${ODSEL_OPRT[$(_opsolve "${BASH_REMATCH[2]}")]} \
+                        ${BASH_REMATCH[1]} "" ${BASH_REMATCH[3]} "" \
+                        || return 1
+                    ;;
+                2 | 1)
+                    _decoy_this "${FUNCNAME}: single block instruction?"
+                    ;;
+                *) ;;
+            esac
+    }
 }
 
 #;
@@ -738,52 +759,6 @@ function odsel_expand() {
             _odsel_${VERSION_OPERATORS[$(_opsolve "${BASH_REMATCH[2]:0:2}")]}
         } || odsel_getfn "$vsection/$vexp" "${!x}"
     }
-}
-
-#;
-# @desc A pool expression interpeter, in bash
-# @ptip $1  pool expression to intepret
-# @devs DEPRECATED: non canonical, to be included into odsel_si
-#;
-function poolcli() {
-    local x="${1//[[:space:]]/}" y z a op=
-    case "$x" in
-        @\[*\]\://*)
-            odsel_expand "$x"
-        ;;
-        @\:\:\{*\})
-            x="${x#*{}"
-            x="${x%?},"
-            while [[ $x =~ ([^,]*),([^,]*) ]]; do
-                y="${BASH_REMATCH[1]}"
-                [[  $y =~ ([^=\~\>\-]*):\((.*)\)([=\~\>\-]\>)([^=\~\>\-]*):\((.*)\) || \
-                    $y =~ ([^=\~\>\-]*):\((.*)\)([=\~\>\-]\>)([^=\~\>\-]*) || \
-                    $y =~ ([^=\~\>\-]*)([=\~\>\-]\>)([^=\~\>\-]*) || \
-                    $y =~ ([^=\~\>\-]*):\((.*)\) || \
-                    $y =~ ([^=\~\>\-]*)
-                ]] && {
-                    a=("${BASH_REMATCH[@]:1}")
-                    case "${#a[@]}" in
-                        5 | 4)
-                            _odsel_${ODSEL_OPRT[$(_opsolve "${a[2]}")]} \
-                                "${BASH_REMATCH[@]:1:2}" "${BASH_REMATCH[@]:3:4}" \
-                                    || return 1
-                            ;;
-                        3)
-                            _odsel_${ODSEL_OPRT[$(_opsolve "${a[1]}")]}  \
-                                "${BASH_REMATCH[1]}" "${BASH_REMATCH[3]}" \
-                                    || return 1
-                            ;;
-                        2 | 1)
-                                echo NOTHING HERE
-                            ;;
-                        *) ;;
-                    esac
-                }
-                x="${x#*,}"
-            done
-        ;;
-    esac
 }
 
 #;
