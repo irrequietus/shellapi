@@ -796,6 +796,7 @@ function _eventdef() {
     __e=(
         "ckmsg,1;34m,+"
         "eqmsg,1;32m,="
+        "omsg,1;36m,O"
         "imsg,1;36m,i"
         "kmsg,1;30m,c"
         "imsg_start,1;34m,@"
