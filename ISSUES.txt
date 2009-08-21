@@ -2,7 +2,7 @@
 - Compatibility is guaranteed only with GNU Bash 3.2.x and above.
 
 - It is advised that you use latest patched 3.2.x in 3.2.x versions
-  with the official fixes; shellapi is currently being tested on 3.2.48+
+  with the official fixes; shellapi is currently being tested on 3.2.32+
   versions.
 
 - Use of GNU bash 4.x specific features is in the roadmap.
