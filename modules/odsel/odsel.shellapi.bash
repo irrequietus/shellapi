@@ -81,9 +81,26 @@ function odsel_clone_update() {
 
 #;
 # @desc An odsel interpreter in pure GNU bash (3.x, 4.x compatible)
+# @ptip $1 A valid odsel expression
 #;
 function odsel_si() {
-    _decoy_this "${FUNCNAME}: odsel_si reviewed in a private git branch"
+    local x
+    odsel_expr "$1"
+    for x in ${!ODSEL_EXPR[@]}; do
+        x="${ODSEL_EXPR[$x]}"
+        case "${x:0:1}" in
+            @)
+                _odsel_rpli_i "${x:1}"
+            ;;
+            [[:alpha:]])
+                _odsel_i9kg_i "$x"
+            ;;
+            *)
+                _emsg "${FUNCNAME}: invalid expression"
+                return 1
+            ;;
+        esac
+    done
 }
 
 #;
