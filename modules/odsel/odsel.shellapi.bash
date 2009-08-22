@@ -166,6 +166,7 @@ function odsel_ispli_repo() {
 
 #;
 # @desc The init implementation for this module
+# @warn Same fix as in _init for _opsolve (bash 4.x related)
 # @devs FIXME: import XML - driven implementation for this one as well
 # @devs FIXME: port globals into the XML configuration file (syscore - specs like)
 #;
@@ -216,9 +217,9 @@ function odsel_init() {
                    '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
                    '\[([^@{}>,-]*):([^@{}>,-]*)\]'
                    '\[([^@{}>,:]*)\]' )
-    ODSEL_OPRT=( [$(_opsolve ">>")]="mm"
-                 [$(_opsolve "->")]="pm"
-                 [$(_opsolve "~>")]="rm" )
+    ODSEL_OPRT[$(_opsolve ">>")]="mm"
+    ODSEL_OPRT[$(_opsolve "->")]="pm"
+    ODSEL_OPRT[$(_opsolve "~>")]="rm"
     _HPAGE=0
     _CHECKSUM=1
     _ENTRY=2

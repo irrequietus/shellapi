@@ -696,6 +696,9 @@ function _bsplit() {
 #       the time being, there is no reuse of the function cache as generated.
 # @warn Do not use in any other occasion but before any other shellapi call
 #       is made.
+# @warn In bash 4.x, the VERSION_OPERATORS=( [$(_opsolve ">")]="" ... ) syntax
+#       does not work. One of the alternatives is to pass it down value by value
+#       in the usual way instead of =().
 #;
 function _init() {
     [[ -z $SHELLAPI_HOME ]] \
@@ -708,14 +711,13 @@ function _init() {
     SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}
     SHELLAPI_LDOT=${SHELLAPI_LDOT:-10}
     SHELLAPI_TARGET="${SHELLAPI_TARGET:-"$(pwd)/$(_uuidg)"}"
-    VERSION_OPERATORS=(
-        [$(_opsolve "<")]="lt"
-        [$(_opsolve ">")]="gt"
-        [$(_opsolve ">=")]="gte"
-        [$(_opsolve "<=")]="lte"
-        [$(_opsolve "!=")]="neq"
-        [$(_opsolve "==")]="eqt"
-    )
+    VERSION_OPERATORS=()
+    VERSION_OPERATORS[$(_opsolve "<")]="lt"
+    VERSION_OPERATORS[$(_opsolve ">")]="gt"
+    VERSION_OPERATORS[$(_opsolve ">=")]="gte"
+    VERSION_OPERATORS[$(_opsolve "<=")]="lte"
+    VERSION_OPERATORS[$(_opsolve "!=")]="neq"
+    VERSION_OPERATORS[$(_opsolve "==")]="eqt"
     local l="$SHELLAPI_MODULES_DIR/syscore/locales/syscore.locale.$SHELLAPI_LOCALE.xml"
     local f="$SHELLAPI_MODULES_DIR/syscore/extra/syscore.config.xml"
     [[ -e $l ]] \
