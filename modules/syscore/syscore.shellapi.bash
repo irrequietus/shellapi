@@ -698,7 +698,6 @@ function _bsplit() {
 #       is made.
 #;
 function _init() {
-    clear
     [[ -z $SHELLAPI_HOME ]] \
         && _fatal "${FUNCNAME}: home not set"
     export LC_ALL=C
