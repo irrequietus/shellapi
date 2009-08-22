@@ -662,19 +662,22 @@ function _split() {
 # @note Stores results to the SPLIT_STRING global array
 #;
 function _bsplit() {
-    local x="$1" y z="${2:-,}"
+    local x="$1" y z="${2:-,}" k
     x="$x$z"
     SPLIT_STRING=()
     while [[ "$x" =~ ([$z}{]) ]]; do
         case "${BASH_REMATCH[1]}" in
              $z)
-                y="${x/$z*/}"
-                x="${x#*$z}"
+                y="${x/"$z"*/}"
+                x="${x#*"$z"}"
              ;;
             \{)
                 y="${x/\}*/}"
                 y="${x/{*/}{${y#*\{}}"
-                x="${x#*\}}"
+                k="${x#*"$y"}"
+                k="${k/"$z"*/}"
+                y="${x/{*/}{${y#*\{}${k/"$z"*/}"
+                x="${x#*\}"$k"}"
                 ;;
             \})
                 _emsg "${FUNCNAME}: } not expected, aborting"
