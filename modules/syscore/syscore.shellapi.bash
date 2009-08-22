@@ -754,16 +754,28 @@ function _uuidg() {
 
 #;
 # @desc Allowing execution only if certain conditions are met
+# @warn Because certain VALID constructs have bugs in bash 4.x, a warning was added.
+#
+#       ALWAYS USE LATEST PATCHES FOR BASH 4.0.x BECAUSE BASH 4.0.x COULD STILL HAVE
+#       ISSUES OF ITS OWN IN SIMPLE CONSTRUCTS WHERE 3.2.x DOES ABSOLUTELY FINE.
+#
+#       The 4.x warning will be waived once 4.x port will commence but until then it
+#       is "won't fix" if reporting a bug from 4.0.x without all the latest patches
+#       used.
 #;
 function _bashok() {
-    ((${BASH_VERSINFO[0]} > 3)) || {
+    local x=
+    ((${BASH_VERSINFO[0]} > 3)) && \
+    x="odreex::(shellapi) : Using GNU Bash ${BASH_VERSINFO[0]}.x is in
+roadmap but not currently supported" || {
         ((${BASH_VERSINFO[0]} == 3))  && \
         ((${BASH_VERSINFO[1]} >= 2))  && \
         ((${BASH_VERSINFO[2]} >= 32)) || \
-            _fatal "odreex :: (shellapi) : your GNU bash version is not compatible (< 3.2.48)"
+            _fatal "odreex::(shellapi) : your GNU bash version is not compatible (< 3.2.32)"
     }
     _eventdef
     _imsg "odreex::(shellapi -> [$SHCORE_VERSION])"
+    [[ -z $x ]] || _wmsg "$x"
     case "$(shopt -q compat31 2>&1)" in
         '') (($?)) || _fatal "compat31 is set to on, aborting"
         ;;
