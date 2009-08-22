@@ -766,8 +766,7 @@ function _uuidg() {
 function _bashok() {
     local x=
     ((${BASH_VERSINFO[0]} > 3)) && \
-    x="odreex::(shellapi) : Using GNU Bash ${BASH_VERSINFO[0]}.x is in
-roadmap but not currently supported" || {
+    x="odreex::(shellapi) : Using GNU Bash ${BASH_VERSINFO[0]}.x is in roadmap but not reccomended" || {
         ((${BASH_VERSINFO[0]} == 3))  && \
         ((${BASH_VERSINFO[1]} >= 2))  && \
         ((${BASH_VERSINFO[2]} >= 32)) || \
