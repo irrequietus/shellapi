@@ -830,6 +830,7 @@ function _opsolve() {
         \?\?)   n=13;;
         \!\?)   n=14;;
         \!\!)   n=15;;
+        \<-)    n=16;;
         *)      n=0 ;;
     esac
     printf "%d" $n
