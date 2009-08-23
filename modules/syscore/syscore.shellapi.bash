@@ -991,7 +991,7 @@ function _arraygen_nls() {
 # @ptip $1  (optional)  final statement
 #;
 function _fatal() {
-    ((${#SHELLAPI_ERROR[@]} > 0)) && {
+    if ((${#SHELLAPI_ERROR[@]})); then
         local x
         printf "\033[1;31m[~]\033[0m: ${SHCORE_MSGL[$_SHCORE_FATAL]}:\n"
         for x in ${!SHELLAPI_ERROR[@]};do
@@ -999,9 +999,11 @@ function _fatal() {
                 "$x" \
                 "${SHELLAPI_ERROR[$x]}"
         done
-    }
-    [[ -z $1 ]] \
-        || printf "\033[1;31m[~]\033[0m: %s\n" "$1"
+        [[ -z $1 ]] \
+            || printf "\033[1;31m[~]\033[0m: %s\n" "$1"
+    else
+        printf "\033[1;31m[~]\033[0m: %s\n" "${1:-...undefined error}"
+    fi
     exit 1
 }
 
