@@ -751,11 +751,12 @@ function _odsel_() {
 # @ptip $2  pool hash identifier, defaults to using prime
 #;
 function odsel_getfn() {
-    local x f o
+    local x f o a
     FNPREP_ARRAY=()
     _split "${1//[[:space:]]/}"
-    for x in ${!SPLIT_STRING[@]}; do
-        x="${SPLIT_STRING[$x]}"
+    a=("${SPLIT_STRING[@]}")
+    for x in ${!a[@]}; do
+        x="${a[$x]}"
         odsel_ifind "$x" "${2:-$(odsel_gph "prime")}" && {
             o="_odself_$(_hsos "$x")"
             while read -r j; do
@@ -966,9 +967,10 @@ function odsel_enable() {
 # @ptip $1  Comma separated pool list
 #;
 function odsel_create() {
-    local x y z f l t k h
+    local x y z f l t k h a
     _split "${1//[[:space:]]/}"
-    for y in ${SPLIT_STRING[@]}; do
+    a=("${SPLIT_STRING[@]}")
+    for y in ${a[@]}; do
         [[ "$y" = *\[\] ]] \
             && k=("${y/\[*/}" 1) \
             || k=("$y" 0)
@@ -1037,10 +1039,11 @@ function odsel_create() {
 # @ptip $1  comma separated list of pool names
 #;
 function odsel_remove() {
-    local x y
+    local x y a
     _split "${1//[[:space:]]/}"
-    for x in ${!SPLIT_STRING[@]}; do
-        x="${SPLIT_STRING[$x]}"
+    a=("${SPLIT_STRING[@]}")
+    for x in ${!a[@]}; do
+        x="${a[$x]}"
         case "$x" in
             \* | '')
                 _emsg "${FUNCNAME}: \$1 must be set to a specific pool"
