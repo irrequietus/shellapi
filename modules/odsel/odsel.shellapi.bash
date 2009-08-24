@@ -278,7 +278,7 @@ function odsel_depquery() {
 #       with __pool_relay_* array having valid entries.
 #;
 function odsel_prc_num() {
-    local x="${2:-__pool_relay_$(odsel_gph "$1")[$_RPLI]}" y=
+    local x="__pool_relay_${2:-$(odsel_gph "${1:-prime}")}[$_RPLI]" y=
     y="${!x}[0]";y=(${!y})
     printf "%d\n" "$(($(_asof ${!x})/7+${#y[@]}+1))"
 }
@@ -966,7 +966,7 @@ function odsel_enable() {
 #       on creation (in a way similar to odsel_enable)
 # @ptip $1  Comma separated pool list
 #;
-function odsel_create() {
+function odsel_new() {
     local x y z f l t k h a
     _split "${1//[[:space:]]/}"
     a=("${SPLIT_STRING[@]}")
@@ -1038,7 +1038,7 @@ function odsel_create() {
 # @desc Remove a series of pools from the runspace
 # @ptip $1  comma separated list of pool names
 #;
-function odsel_remove() {
+function odsel_del() {
     local x y a
     _split "${1//[[:space:]]/}"
     a=("${SPLIT_STRING[@]}")
@@ -1443,12 +1443,12 @@ function odsel_rrfcache() {
 }
 
 #;
-# @desc A wrapper function for odsel_create
+# @desc A wrapper function for odsel_new
 # @ptip $1  pool identifier
 #;
 function odsel_setup_pool() {
     _nmsg "creating @[${1:-prime}]" \
-        && odsel_create "${1:-prime}" \
+        && odsel_new "${1:-prime}" \
         || {
             _emsg "${FUNCNAME}: creating @[${1:-prime}] failed"
             return 1

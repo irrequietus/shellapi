@@ -106,8 +106,8 @@ function i9kgoo_load() {
 # @desc Get a list of i9kg XML files inside a poolconf
 # @ptip $1  The name of the pool whose i9kg XML files are requested,
 #           defaults to "prime" when none is set.
-# @ptip $2  A hash identifier for the pool hash; when set, it overrides
-#           $1.
+# @ptip $2  (optional): A hash identifier for the pool hash; when set, it overrides
+#           the presence of $1.
 # @arrv I9KGOO_LIST : global array where the results of the operation
 #       are stored
 #;
@@ -157,7 +157,7 @@ function i9kgoo_pcache() {
     }
     i9kgoo_list_xml "$x" "$y"
     x="${I9KGOO_LIST[@]}"
-    i9kgoo_load "${x// /,}" \
+    i9kgoo_load "${x// /[${1:-prime}],}[${1:-prime}]" \
         || _emsg "${FUNCNAME}: could not create caches"
     ! ((${#SHELLAPI_ERROR[@]}))
 }
@@ -166,16 +166,18 @@ function i9kgoo_pcache() {
 # @desc Some simple statistics about a pool rcache. The pool must be
 #       completely canonical (initialized in runspace, $_RPLI set)
 # @ptip $1  Name of the pool to analyze (defaults to [prime])
-# @ptip $2  When set, overrides $1 as __pool_relay_* lock.
-# @note The global arrays POOL_PRISTINE and POOL_CLONES containg pristine
+# @ptip $2  (optional) The pool hash identifier; When set, overrides $1 as
+#           __pool_relay_* lock.
+# @note The global arrays POOL_PRISTINE and POOL_CLONES containing pristine
 #       and clone rpli items respectively
 #;
 function i9kgoo_pool_analyze() {
-    local   x="__pool_relay_${2:-$(odsel_gph "${1:-prime}")}[$_RPLI]" \
+    local   x="${2:-$(odsel_gph "${1:-prime}")}" \
             f= o= t=\|
     local   h="$(odsel_prc_num "" "$x")"
     POOL_PRISTINE=()
     POOL_CLONES=()
+    x="__pool_relay_$x[$_RPLI]"
     x="${!x}"
     for ((o=1;o<h;o++)); do
         f="$x[$o]"
@@ -222,19 +224,25 @@ function i9kgoo_sim_prseq_xml() {
 #       code and sample text and serve as an example.
 # @ptip $1  pool name where the files must be created (using $_I9KG_SEEDS_XML);
 #           defaults to prime.
-# @ptip $2
+# @ptip $2  (optional) The pool hash identifier; When set, overrides $1 as
+#           __pool_relay_* lock.
 # @note The pool must already be initialized in runspace.
 #;
 function i9kgoo_sim_metabase_xml() {
-    local   a="${2:-__pool_relay_$(odsel_gph "${1:-prime}")[$_RPLI]}" \
-            z=() o=  x=0 y=0 l= n=
-    i9kgoo_pool_analyze "${1:-prime}" "$a"
+    local   a="${2:-$(odsel_gph "${1:-prime}")}" \
+            z=() o=  x=0 y=0 l= n= c=
+    i9kgoo_pool_analyze "" "$a"
+    _omsg \
+        "@[${1:-prime}]: $(_emph simulation) pristine(${#POOL_PRISTINE[@]}),clones(${#POOL_CLONES[@]})"
+    c=("${I9KG_PRESETS[@]}")
+    odsel_presets_all
     n="${POOL_PRISTINE[0]/:*/}"
-    l=${a/\[*\]/[$_I9KG_SEEDS_XML]}
+    l="__pool_relay_$a[$_I9KG_SEEDS_XML]"
     l="${!l}"
     unset POOL_PRISTINE[0]
     z+=("$n")
-    for x in ${!POOL_PRISTINE[@]} ${#POOL_PRISTINE[@]}0; do
+    o=$((${#POOL_PRISTINE[@]}+1))
+    for x in ${!POOL_PRISTINE[@]} $o; do
         x="${POOL_PRISTINE[$x]:-_${POOL_PRISTINE[${#POOL_PRISTINE[@]}]}}"
         [[ $x = *:* ]] && {
             [[ $n = ${x/:*/} ]] && z+=("$x") || {
@@ -252,4 +260,6 @@ function i9kgoo_sim_metabase_xml() {
             n="${x/:*/}"
         }
     done
+    I9KG_PRESETS=("${c[@]}")
+    i9kgoo_pcache "${1:-prime}"
 }

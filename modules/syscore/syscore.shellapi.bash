@@ -1027,6 +1027,14 @@ function _wshow() {
 }
 
 #;
+# @desc A simple message intensifier
+# @ptip Argument to intensify in printout
+#;
+function _emph() {
+    printf "\033[1;37m[%s]\033[0m" "$1"
+}
+
+#;
 # @desc A sorting algorithm using a function as a comparison predicate
 # @ptip $1     comparison predicate (ascending/descending)
 # @ptip ${@:2} list of variables to sort
