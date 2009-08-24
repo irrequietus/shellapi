@@ -917,6 +917,19 @@ function _xsof() {
 }
 
 #;
+# @desc         A "for each" for global arrays         
+# @ptip $1      The global array we work with
+# @ptip ${@:2}  Function to apply
+#;
+function _for_each() {
+    local n
+    for n in $(_xsof "$1"); do
+        n="$1[$n]"
+        "${@:2}" "${!n}"
+    done
+}
+
+#;
 # @desc Find if a variable is an integer
 # @ptip $1  bash variable
 # @retv 0/1
