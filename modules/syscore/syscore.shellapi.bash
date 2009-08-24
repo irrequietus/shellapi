@@ -233,42 +233,42 @@ function _emsg() {
 # @ptip $3  
 #;
 function _xml2bda() {
-    local   _i _n _f _l x u= \
-            _c=0 g=() z=0 _p=_ _w= ig= \
-            _a="${2:-$(mktemp)}" t1= t2=
+    local   i n f l x u= \
+            c=0 g=() z=0 p=_ w= \
+            a="${2:-$(mktemp)}" t1= t2=
     while read -r l; do
         case "$l" in
             \<bashdata\ *)
                 [[ $l =~ [[:space:]]*fni[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                    $l =~ [[:space:]]*fni[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _f="${BASH_REMATCH[1]}" \
+                    && f="${BASH_REMATCH[1]}" \
                     || _fatal "${FUNCNAME}: attribute not found: fni"
-                g=("function $_f() {")
+                g=("function $f() {")
                 ;;
             \<var\ *)
                 [[ $l =~ [[:space:]]*name[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                    $l =~ [[:space:]]*name[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _n="${BASH_REMATCH[1]}" \
+                    && n="${BASH_REMATCH[1]}" \
                     || _fatal "${FUNCNAME}: attribute not found: name"
                 [[ $l =~ [[:space:]]*check[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                    $l =~ [[:space:]]*check[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
                     u="${BASH_REMATCH[1]}"
                     case "$u" in
                         warn)
-                            u="! [[ -z \$$_n ]] && _wmsg \"\${FUNCNAME}: resetting: $_n\" && "
+                            u="! [[ -z \$$n ]] && _wmsg \"\${FUNCNAME}: resetting: $n\" && "
                             ;;
                         ignore)
                             u=
                             ;;
                         fatal)
-                            u="! [[ -z \$$_n ]] && _fatal \"\${FUNCNAME}: already set: $_n\" || "
+                            u="! [[ -z \$$n ]] && _fatal \"\${FUNCNAME}: already set: $n\" || "
                             ;;
                         *) u=
                             ;;
                     esac
                 }
                 x=${#g[@]}
-                g+=(" $u$_n=\"")
+                g+=(" $u$n=\"")
                 [[ $l == */\> ]] && {
                     g[$x]="${g[$x]}\""
                     z=0
@@ -281,35 +281,35 @@ function _xml2bda() {
                 z=0
                 for x in ${!g[@]}; do
                     printf "%s\n" "${g[$x]}"
-                done >> "$_a"
+                done >> "$a"
                 g=()
                 u=
                 ;;
             \<array\ *)
                 [[ $l =~ [[:space:]]*name[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                    $l =~ [[:space:]]*name[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _n="${BASH_REMATCH[1]}" \
+                    && n="${BASH_REMATCH[1]}" \
                     || _fatal "${FUNCNAME}: attribute not found: name"
                 [[ $l =~ [[:space:]]*prefixall[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                    $l =~ [[:space:]]*prefixall[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
-                    _p="_${BASH_REMATCH[1]}_"
-                    _n="${BASH_REMATCH[1]}_$_n"
-                } || _p=_
+                    p="_${BASH_REMATCH[1]}_"
+                    n="${BASH_REMATCH[1]}_$n"
+                } || p=_
                 [[ $l =~ [[:space:]]*check[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                    $l =~ [[:space:]]*check[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
                     u=${BASH_REMATCH[1]}
                     case "$u" in
-                        warn)   _w="_wmsg \"\${FUNCNAME}: already set, resetting"
+                        warn)   w="_wmsg \"\${FUNCNAME}: already set, resetting"
                                 t1="||"
                                 t2="&&"
                             ;;
-                        ignore) _w=
+                        ignore) w=
                             ;;
-                        fatal)  _w="_fatal \"\${FUNCNAME}: already set"
+                        fatal)  w="_fatal \"\${FUNCNAME}: already set"
                                 t1="&&"
                                 t2="||"
                             ;;
-                        reuse)  _w="_fatal \"\${FUNCNAME}: cannot reuse, because not set"
+                        reuse)  w="_fatal \"\${FUNCNAME}: cannot reuse, because not set"
                                 t1="&&"
                                 t2="||"
                             ;;
@@ -319,33 +319,33 @@ function _xml2bda() {
                             ;;
                     esac
                 } || {
-                    _w="_fatal \"\${FUNCNAME}: already set"
+                    w="_fatal \"\${FUNCNAME}: already set"
                     t1="&&"
                     t2="||"
                 }
-                g+=(" $_n=()")
+                g+=(" $n=()")
                 ;;
             \<index\> | \<index\ *)
                 [[ $l =~ [[:space:]]*name[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                    $l =~ [[:space:]]*name[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _i="${BASH_REMATCH[1]}" \
-                    || _i=
-                [[ -z $_i ]] && {
-                    g+=("  $_n[\${#$_n[@]}]=\"")
+                    && i="${BASH_REMATCH[1]}" \
+                    || i=
+                [[ -z $i ]] && {
+                    g+=("  $n[\${#$n[@]}]=\"")
                     z=3
                 } || {
-                    [[ -z $_w ]] || {
+                    [[ -z $w ]] || {
                         [[ $u == reuse ]] \
-                            && g+=(" ! [[ -z \$$_p$_i ]] $t1 {") \
-                            || g+=(" [[ -z \$$_p$_i ]] $t1 {")
+                            && g+=(" ! [[ -z \$$p$i ]] $t1 {") \
+                            || g+=(" [[ -z \$$p$i ]] $t1 {")
                     }
                     [[ $u == reuse ]] \
-                        && g[$((x=${#g[@]}))]=" $_n[\$$_p$_i]=\"" \
-                        || g[$((x=${#g[@]}))]=" $_n[\$(($_p$_i=\${#$_n[@]}))]=\""
+                        && g[$((x=${#g[@]}))]=" $n[\$$p$i]=\"" \
+                        || g[$((x=${#g[@]}))]=" $n[\$(($p$i=\${#$n[@]}))]=\""
                     [[ $l == */\> ]] && {
                         g[$x]="${g[$x]}\""
-                        [[ -z $_w ]] \
-                            || g+=(" } $t2 $_w : $_p$_i\"")
+                        [[ -z $w ]] \
+                            || g+=(" } $t2 $w : $p$i\"")
                         z=
                     } ||  z=1
                 }
@@ -353,30 +353,30 @@ function _xml2bda() {
             \</index\>)
                 (($x + 1 == ${#g[@]})) && {
                     g[$x]="${g[$x]}\""
-                    [[ -z $_i ]] \
-                        || [[ -z $_w ]] \
-                        || g+=(" } $t2 $_w : $_p$_i\"")
+                    [[ -z $i ]] \
+                        || [[ -z $w ]] \
+                        || g+=(" } $t2 $w : $p$i\"")
                 } || {
                     g[$((${#g[@]}-1))]="${g[$((${#g[@]}-1))]}\""
-                    [[ -z $_i ]] \
-                        || [[ -z $_w ]] \
-                        || g+=(" } $t2 $_w : $_p$_i\"")
+                    [[ -z $i ]] \
+                        || [[ -z $w ]] \
+                        || g+=(" } $t2 $w : $p$i\"")
                 }
                 z=0
                 ;;
             \</array\>)
                 for x in ${!g[@]}; do
                     printf "%s\n" "${g[$x]}"
-                done >> "$_a"
+                done >> "$a"
                 g=()
-                _c=0
+                c=0
                 u=
                 ;;
             \</bashdata\>)
                 u=
-                printf "}\n" >> "$_a"
-                . "$_a"
-                [[ -z $2 ]] && rm -rf "$_a"
+                printf "}\n" >> "$a"
+                . "$a"
+                [[ -z $2 ]] && rm -rf "$a"
                 ;;
             \<*)
                 _fatal "${FUNCNAME}: unexpected XML element in stream: $l"
@@ -394,7 +394,7 @@ function _xml2bda() {
                 esac
         esac
     done< <(_xmlpnseq "$1")
-    [[ -z $2 ]] && rm -rf "$_a" || :
+    [[ -z $2 ]] && rm -rf "$a" || :
 }
 
 #;
@@ -449,51 +449,51 @@ function _bda2plain() {
 #       not meant to be an ultimate solution because there is no need to.
 #;
 function _xmlpnseq() {
-    local li bf cm aw x
-    while read -r li; do
-        li="$bf$li";
-        case "$li" in
+    local l b c a x
+    while read -r l; do
+        l="$b$l";
+        case "$l" in
             *\<!--*--\>*)
-                while [[ $li =~ \<\!--\(.*\)--\> ]]; do
-                    li="${li/"${BASH_REMATCH[0]}"/}"
+                while [[ $l =~ \<\!--\(.*\)--\> ]]; do
+                    l="${l/"${BASH_REMATCH[0]}"/}"
                 done
                 ;;
             *\<!--*)
-                bf="$bf${li/<!--*/}"
-                cm=_
+                b="$b${l/<!--*/}"
+                c=_
                 continue
                 ;;
             *--\>*)
-                cm=
-                li="${li/*-->/} "
+                c=
+                l="${l/*-->/} "
                 ;;
         esac
-        [[ -z $aw  ]] && {
-            li="${li#"${li%%[! ]*}"}"
-            while [[ "$li" =~ \<[^\>]*\> ]]; do
-                x=${li%%"${BASH_REMATCH[0]}"*}
+        [[ -z $a  ]] && {
+            l="${l#"${l%%[! ]*}"}"
+            while [[ "$l" =~ \<[^\>]*\> ]]; do
+                x=${l%%"${BASH_REMATCH[0]}"*}
                 [[ ! -z $x ]] && printf "%s\n" "$x"
-                [[ -z $cm ]] && {
+                [[ -z $c ]] && {
                     x="${BASH_REMATCH[0]#"${BASH_REMATCH[0]%%[! ]*}"}"
                     case "$x" in
                         \<\?*) ;;
-                        \<!DOCTYPE*) aw=_ ;;
+                        \<!DOCTYPE*) a=_ ;;
                         \<\!*) ;;
                         '') ;;
                         *) printf "%s\n" "$x" ;;
                     esac
                 }
-                li="${li#*>}"; 
+                l="${l#*>}"; 
             done
-            bf=
-            case "$li" in
-                *\<*)   bf="${li#"${li%%[! ]*}"} " ;;
-                *\]\>*) aw=; bf="${li#*]>}"   ;;
+            b=
+            case "$l" in
+                *\<*)   b="${l#"${l%%[! ]*}"} " ;;
+                *\]\>*) a=; b="${l#*]>}"   ;;
                 '') ;;
-                *)      [[ -z $cm$li ]] \
-                            || printf "%s\n" "${li#[[:space:]+]}" ;;
+                *)      [[ -z $c$l ]] \
+                            || printf "%s\n" "${l#[[:space:]+]}" ;;
             esac
-        } || [[ $li = *\]\>* ]] && aw=;
+        } || [[ $l = *\]\>* ]] && a=;
     done < "$1"
 }
 
@@ -593,7 +593,7 @@ function _include() {
             }
             . "$i"
             _isfunction $1_init && $1_init
-            [[ $SHELLAPI_FNOIMP = y ]] && _include_fcheck $i
+            [[ $SHELLAPI_FNOIMP = y ]] && _include_fcheck "$i"
             _xmsg "${SHCORE_MSGL[$_SHCORE_INCLUDE]}: $1"
             [[ -d ${SHELLAPI_MODULES_DIR}/$1/handlers ]] && {
                 local z y x=0
