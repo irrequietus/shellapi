@@ -471,7 +471,7 @@ function _xmlpnseq() {
         [[ -z $a  ]] && {
             l="${l#"${l%%[! ]*}"}"
             while [[ "$l" =~ \<[^\>]*\> ]]; do
-                x=${l%%"${BASH_REMATCH[0]}"*}
+                x="${l%%"${BASH_REMATCH[0]}"*}"
                 [[ ! -z $x ]] && printf "%s\n" "$x"
                 [[ -z $c ]] && {
                     x="${BASH_REMATCH[0]#"${BASH_REMATCH[0]%%[! ]*}"}"
@@ -769,7 +769,7 @@ function _bashok() {
     x="odreex::(shellapi) : Using GNU Bash ${BASH_VERSINFO[0]}.x is in roadmap but not reccomended" || {
         ((${BASH_VERSINFO[0]} == 3))  && \
         ((${BASH_VERSINFO[1]} >= 2))  && \
-        ((${BASH_VERSINFO[2]} >= 32)) || \
+        ((${BASH_VERSINFO[2]} >= 10)) || \
             _fatal "odreex::(shellapi) : your GNU bash version is not compatible (< 3.2.32)"
     }
     _eventdef
