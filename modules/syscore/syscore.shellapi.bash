@@ -766,11 +766,11 @@ function _uuidg() {
 function _bashok() {
     local x=
     ((${BASH_VERSINFO[0]} > 3)) && \
-    x="odreex::(shellapi) : Using GNU Bash ${BASH_VERSINFO[0]}.x is in roadmap but not reccomended" || {
+    x="odreex::(shellapi) : Using GNU Bash ${BASH_VERSINFO[0]}.x (current 3.2.10+ specific)" || {
         ((${BASH_VERSINFO[0]} == 3))  && \
         ((${BASH_VERSINFO[1]} >= 2))  && \
         ((${BASH_VERSINFO[2]} >= 10)) || \
-            _fatal "odreex::(shellapi) : your GNU bash version is not compatible (< 3.2.32)"
+            _fatal "odreex::(shellapi) : your GNU bash version is not compatible (< 3.2.10)"
     }
     _eventdef
     _imsg "odreex::(shellapi -> [$SHCORE_VERSION])"
