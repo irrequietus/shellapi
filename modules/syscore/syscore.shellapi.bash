@@ -732,12 +732,22 @@ function _init() {
     _initglobals_syscore
     _bashok
     _syscore_intl_$SHELLAPI_LOCALE
+    [[ -e ${SHELLAPI_MODULES_DIR}/shellapi.profile ]] && {
+        f="${SHELLAPI_MODULES_DIR}/shellapi.profile"
+        l="loading personal profile"
+    } || {
+        [[ -e ${SHELLAPI_MODULES_DIR}/shellapi.defaults ]] \
+            && f="${SHELLAPI_MODULES_DIR}/shellapi.defaults" \
+            || _fatal "${FUNCNAME}: shellapi configuration defaults missing"
+        l="loading default profile"
+    }
+    _imsg "$(_emph "shellapi"): $l"
     while read -r l; do
         case "$l" in
             '' | \#*)   ;;
             *)  _include "$l" ;;
         esac
-    done < "${SHELLAPI_MODULES_DIR}/shellapi.conf"
+    done < "$f"
     [[ -d ${SHELLAPI_TARGET} ]] || {
         _wmsg "shellapi runspace >> [${SHELLAPI_TARGET##*/}]"
         _setup_layout "${SHELLAPI_TARGET}"
