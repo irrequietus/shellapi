@@ -724,8 +724,6 @@ function _init() {
         || _emsg "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_NOLOCINIT]:-invalid locale}"
     [[ -e $f ]] \
         || _emsg "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_NOGLOBCONF]:-no globals set}"
-    [[ -e $SHELLAPI_MODULES_DIR/shellapi.conf ]] \
-        || _emsg "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_NOCONFF]:-no config set}: shellapi.conf"
     ((${#SHELLAPI_ERRORS[@]})) && _fatal
     _xml2bda "$l"
     _xml2bda "$f"
