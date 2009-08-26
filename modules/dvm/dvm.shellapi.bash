@@ -32,7 +32,9 @@ function dvm_bashbseq() {
         return 1
     }
     rm -rf bash-${bv}*
+    _omsg "get: bash-${bv}.tar.gz"
     wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}.tar.gz
+    _omsg "got: bash-${bv}.tar.gz"
     mkdir bash-$bv-patches
     pushd bash-$bv-patches &> /dev/null
     while read -r -d\> l; do
@@ -41,7 +43,9 @@ function dvm_bashbseq() {
             &&  case "${BASH_REMATCH[1]}" in
                     bash${bv//./}-???)
                         x="${BASH_REMATCH[1]}"
-                        wget http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/$x
+                        _omsg "get: bash-${bv}.tar.gz"
+                        wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/$x
+                        _omsg "get: bash-${bv}.tar.gz"
                         IFS="$(printf "\n")"
                         while read -r l; do
                             [[ $l =~ ^\*\*\*[[:space:]]*([\./][^[:space:]]*) ]] && {
@@ -70,11 +74,13 @@ function dvm_bashbseq() {
                         popd &> /dev/null
                         tar zxf bash-${bv}.tar.gz
                         pushd bash-$bv-patches &> /dev/null
+                        _omsg "patching: bash-$bv -> bash-$bv.$z"
                         for x in *.patch; do
                             patch -p0 < $x
-                        done
+                        done > /dev/null
+                        _omsg "patched : bash-$bv -> bash-$bv.$z"
                         popd &> /dev/null
-                        find ./bash-$bv -regextype posix-egrep -regex ".*\.orig|.*~" -exec rm '{}' \; -print
+                        find ./bash-$bv -regextype posix-egrep -regex ".*\.orig|.*~" -exec rm '{}' \;
                         mv bash-$bv bash-$bv.$((z++))
                         pushd bash-$bv-patches &> /dev/null
                         ;;
@@ -82,6 +88,7 @@ function dvm_bashbseq() {
     done < <(wget -q -O - http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/)
     popd &> /dev/null
     tar zxf bash-${bv}.tar.gz
+    _omsg "creating incremental patches $bv.0 -> $bv.$((z-1))"
     for((x=1;x<z;++x)); do
         diff -Nrup bash-$bv bash-$bv.$x >> bash-${bv}.$x.patch
     done
