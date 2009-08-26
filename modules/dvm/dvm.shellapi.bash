@@ -22,7 +22,7 @@
 # @ptip $2  The path to the directory where all operations take place
 #;
 function dvm_bashbseq() {
-    local bv="$1" p=() l h="$IFS" t v z=1
+    local bv="$1" p=() l h="$IFS" t v x z=1
     [[ -z $2 ]] && {
         _emsg "${FUNCNAME}: target directory not set"
         return 1
@@ -45,7 +45,7 @@ function dvm_bashbseq() {
                         x="${BASH_REMATCH[1]}"
                         _omsg "get: bash-${bv}.tar.gz"
                         wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/$x
-                        _omsg "get: bash-${bv}.tar.gz"
+                        _omsg "got: bash-${bv}.tar.gz"
                         IFS="$(printf "\n")"
                         while read -r l; do
                             [[ $l =~ ^\*\*\*[[:space:]]*([\./][^[:space:]]*) ]] && {
@@ -90,7 +90,13 @@ function dvm_bashbseq() {
     tar zxf bash-${bv}.tar.gz
     _omsg "creating incremental patches $bv.0 -> $bv.$((z-1))"
     for((x=1;x<z;++x)); do
-        diff -Nrup bash-$bv bash-$bv.$x >> bash-${bv}.$x.patch
+        {
+            printf "notice   : Aggregate of versions %s.0 to %s.%s\n" "$bv" "$bv" "$x"
+            printf "origin   : Automatically generated from the official bash patches\n"
+            printf "generator: The dvm_bashbseq() shellapi function (http://odreex.org)\n"
+            printf "generated: %s\n\n" "$(date -R)"
+            diff -Naur bash-$bv bash-$bv.$x
+        } > bash-${bv}.$x.patch
     done
     popd &> /dev/null
 }
