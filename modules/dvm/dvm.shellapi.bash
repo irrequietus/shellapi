@@ -89,6 +89,7 @@ function dvm_bashbseq() {
     popd &> /dev/null
     tar zxf bash-${bv}.tar.gz
     _omsg "creating incremental patches $bv.0 -> $bv.$((z-1))"
+    rm -rf bash-$bv-patches/*
     for((x=1;x<z;++x)); do
         {
             printf "notice   : Aggregate of versions %s.0 to %s.%s\n" "$bv" "$bv" "$x"
@@ -96,8 +97,9 @@ function dvm_bashbseq() {
             printf "generator: The dvm_bashbseq() shellapi function (http://odreex.org)\n"
             printf "generated: %s\n\n" "$(date -R)"
             diff -Naur bash-$bv bash-$bv.$x
-        } > bash-${bv}.$x.patch
+        } > bash-$bv-patches/bash-${bv}.$x.patch
     done
+    _omsg "$(_emph "bash $bv.x"): $((--x)) incremental patches created"
     popd &> /dev/null
 }
 
