@@ -34,7 +34,7 @@ function dvm_bashbseq() {
     rm -rf bash-${bv}*
     wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}.tar.gz
     mkdir bash-$bv-patches
-    pushd bash-$bv-patches
+    pushd bash-$bv-patches &> /dev/null
     while read -r -d\> l; do
         [[  $l =~ \<a[[:space:]]*href[[:space:]]*=[[:space:]]*\"([^\"\<\>]*)\" \
         ||  $l =~ \<a[[:space:]]*href[[:space:]]*=[[:space:]]*\'([^\'\<\>]*)\' ]] \
@@ -67,24 +67,24 @@ function dvm_bashbseq() {
                             } || printf "%s\n" "$l" >> $x.patch
                         done < $x
                         IFS="$h"
-                        popd
+                        popd &> /dev/null
                         tar zxf bash-${bv}.tar.gz
-                        pushd bash-$bv-patches
+                        pushd bash-$bv-patches &> /dev/null
                         for x in *.patch; do
                             patch -p0 < $x
                         done
-                        popd
+                        popd &> /dev/null
                         find ./bash-$bv -regextype posix-egrep -regex ".*\.orig|.*~" -exec rm '{}' \; -print
                         mv bash-$bv bash-$bv.$((z++))
-                        pushd bash-$bv-patches
+                        pushd bash-$bv-patches &> /dev/null
                         ;;
                 esac
     done < <(wget -q -O - http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/)
-    popd
+    popd &> /dev/null
     tar zxf bash-${bv}.tar.gz
     for((x=1;x<z;++x)); do
         diff -Nrup bash-$bv bash-$bv.$x >> bash-${bv}.$x.patch
     done
-    popd
+    popd &> /dev/null
 }
 
