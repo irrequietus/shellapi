@@ -313,7 +313,7 @@ function fnapi_to_xml() {
 #       is performed when these commands are executed within the wrapper
 # @ptip $1  Function name to assign to the wrapper
 # @ptip $2  Message prefix to present when informing about progress
-# @ptip $3  Array / variable to which command sequence is found.
+# @ptip $3  Array / variable in which the command sequence is found.
 # @ptip $4  Identifier appearing in the warning message if attempting to run again
 #           after a failure. If this is active, it overrides $1
 # @note This function treats newline whitespace within the variables as significant.
@@ -363,6 +363,40 @@ function fnapi_genblock() {
 \$(_dotstr \${FNAPI_HEADER[\$_FNAPI_FHASH]})\" \n}\n" \
     "$2" "${4:-"\${FUNCNAME}"}" "${5:-wshow}" \
     "${4:-"\${FUNCNAME}"}" "${4:-"\${FUNCNAME}"}"
+}
+
+#;
+# @desc Create an instruction cascade out of an array containing an instruction
+#       per array variable member.
+# @ptip $1  Function name to assign to the wrapper
+# @ptip $2  Message prefix to present when informing about the function
+# @ptip $3  Array / variable in which a command sequence is found.
+# @note This function treats newline whitespace within the variables as significant.
+#;
+function fnapi_gencascade() {
+    local x y z=$(_asof $3) a=
+    [[ -z $2 ]] && a="$2: "
+    printf "function %s() {
+    fnapi_makeheader \"\${FUNCNAME}\" \"\${@}\"
+    local f=\"\${FNAPI_HEADER[\$_FNAPI_FHASH]}\"
+    rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.*
+    fnapi_allows_flock \"\$f\" && {
+        _omsg \"\$(_emph \${FUNCNAME}): %s\$(_dotstr \$f): 0/$z\"\n" "$1" "$2"
+    for x in $(_xsof $3); do
+        printf "        _nmsg \"\$(_emph \"\${FUNCNAME}|%s\"): inpr\"
+        {\n" "$x"
+        while read -r y; do
+            printf "            %s && \\\\\n" "${y}"
+        done< <(y="$3[$x]"; printf "%s\n" "${!y}")
+        printf "            : || ! :
+        } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/output-%s.log && {
+            _cmsg \"\$(_emph \"\${FUNCNAME}|%s\"): pass\"
+        } || {
+            _fail \"\$(_emph \"\${FUNCNAME}|%s\"): fail\"
+        }\n" "$x" "$x" "$x"
+    done
+    printf "    }\n    _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n"
+
 }
 
 #;
