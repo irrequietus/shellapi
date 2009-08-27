@@ -379,27 +379,35 @@ function fnapi_gencascade() {
     printf "function %s() {
     fnapi_makeheader \"\${FUNCNAME}\" \"\${@}\"
     local f=\"\${FNAPI_HEADER[\$_FNAPI_FHASH]}\"
-    rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.*
     fnapi_allows_flock \"\$f\" && {
+        rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass
         _omsg \"\$(_emph \${FUNCNAME}): %s\$(_dotstr \$f): 0/$z\"\n" "$1" "$2"
     for x in $(_xsof $3); do
         printf "        {\n"
         printf "            _nmsg \"\$(_emph \"\${FUNCNAME}|%s\"): inpr\"
-            {\n" "$x"
+            printf \"inpr: %%s\\\\n\" \"\$(date -R)\" >> \\
+            \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing-%s.log\"
+            {\n" "$x" "$x"
         while read -r y; do
             printf "                %s && \\\\\n" "${y}"
         done< <(y="$3[$x]"; printf "%s\n" "${!y}")
         printf "                : || ! :
             } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/output-%s.log && {
                 _cmsg \"\$(_emph \"\${FUNCNAME}|%s\"): pass\"
+                printf \"pass: %%s\\\\n\" \"\$(date -R)\" >> \\
+                \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing-%s.log\"
             } || {
                 _fail \"\$(_emph \"\${FUNCNAME}|%s\"): fail\"
+                printf \"fail: %%s\\\\n\" \"\$(date -R)\" >> \\
+                \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing-%s.log\"
                 ! :
-            }\n" "$x" "$x" "$x"
+            }\n" "$x" "$x" "$x" "$x" "$x"
         printf "        } &&"
     done
     printf "    : || {
             _emsg \"\$(_emph \"\${FUNCNAME}|$z\"): \$(_dotstr \$f)\"
+            mv  \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr\" \\
+                \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.fail\"
             _fatal \"instruction cascade failure\"\n        }
     }\n    _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n"
 }
