@@ -325,7 +325,7 @@ function fnapi_genblock() {
     fnapi_makeheader \"\${FUNCNAME}\" \"\${@}\"
     local f=\"\${FNAPI_HEADER[\$_FNAPI_FHASH]}\"
     fnapi_allows_flock \"\$f\" && {
-        local _cdir=\"\$(pwd)\"
+        pushd . &> /dev/null
         rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass
         _nmsg \"%s: \$(_dotstr \$f): in progress\"
         printf \"inpr: %%s\\\\n\" \"\$(date -R)\" >> \\
@@ -338,7 +338,7 @@ function fnapi_genblock() {
     done
     printf "            : || ! : 
         } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/output.log && {
-            cd \"\$_cdir\"
+            popd &> /dev/null
             rm -rf \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass\"
             printf \"pass: %%s\\\\n\" \"\$(date -R)\" >> \\
                 \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing.log\"
@@ -348,7 +348,7 @@ function fnapi_genblock() {
             _cmsg \"%s: \$(_dotstr \$f): is complete\"
             return
         } || {
-            cd \"\$_cdir\"
+            popd &> /dev/null
             rm -rf \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.fail\"
             printf \"fail: %%s\\\\n\" \"\$(date -R)\" >> \\
                 \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing.log\"
@@ -381,6 +381,7 @@ function fnapi_gencascade() {
     local f=\"\${FNAPI_HEADER[\$_FNAPI_FHASH]}\"
     fnapi_allows_flock \"\$f\" && {
         rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass
+        pushd . &> /dev/null
         _omsg \"\$(_emph \${FUNCNAME}): %s\$(_dotstr \$f): 0/$z\"\n" "$1" "$2"
     for x in $(_xsof $3); do
         printf "        {\n"
@@ -405,6 +406,7 @@ function fnapi_gencascade() {
         printf "        } &&"
     done
     printf "    : || {
+            popd &> /dev/null
             _emsg \"\$(_emph \"\${FUNCNAME}|$z\"): \$(_dotstr \$f)\"
             mv  \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr\" \\
                 \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.fail\"
@@ -415,6 +417,7 @@ function fnapi_gencascade() {
 \$(_dotstr \${FNAPI_HEADER[\$_FNAPI_FHASH]})\"
         return \$f
     }
+    popd &> /dev/null
     mv  \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr\" \\
         \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass\"
     _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n" \
