@@ -694,6 +694,8 @@ function _bsplit() {
 # @note This function initializes the shellapi core and the various modules 
 #       that are marked as active to use within a shellapi script flow. For
 #       the time being, there is no reuse of the function cache as generated.
+# @ptip $1  The name of the profile to load, defaults to [shellapi] or uses
+#           the shellapi.defaults if none is offered.
 # @warn Do not use in any other occasion but before any other shellapi call
 #       is made.
 # @warn In bash 4.x, the VERSION_OPERATORS=( [$(_opsolve ">")]="" ... ) syntax
@@ -730,14 +732,16 @@ function _init() {
     _initglobals_syscore
     _bashok
     _syscore_intl_$SHELLAPI_LOCALE
-    [[ -e ${SHELLAPI_MODULES_DIR}/shellapi.profile ]] && {
-        f="${SHELLAPI_MODULES_DIR}/shellapi.profile"
-        l="loading personal profile"
+    l="${1:-shellapi}"
+    [[ -e ${SHELLAPI_MODULES_DIR}/$l.profile ]] && {
+        f="${SHELLAPI_MODULES_DIR}/$l.profile"
+        l="loading profile: $l"
     } || {
+        [[ $l != shellapi ]] && _fatal "${FUNCNAME}: profile does not exist: $1"
         [[ -e ${SHELLAPI_MODULES_DIR}/shellapi.defaults ]] \
             && f="${SHELLAPI_MODULES_DIR}/shellapi.defaults" \
             || _fatal "${FUNCNAME}: shellapi configuration defaults missing"
-        l="loading default profile"
+        l="loading configuration defaults"
     }
     _imsg "$(_emph "shellapi"): $l"
     while read -r l; do
