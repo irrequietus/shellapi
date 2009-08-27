@@ -41,9 +41,9 @@ function dvm_bash_pseq() {
     }
     _omsg "$(_emph bash-$bv.x): creating patch series"
     rm -rf bash-${bv}* bash-patches-$bv
-    _omsg "get: bash-${bv}.tar.gz"
+    _omsg "* get: bash-${bv}.tar.gz"
     wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}.tar.gz \
-        && _omsg "got: bash-${bv}.tar.gz" \
+        && _omsg "* got: bash-${bv}.tar.gz" \
         || _fatal "${FUNCNAME}: $bv is an invalid series identifier"
     mkdir bash-patches-$bv
     pushd bash-patches-$bv &> /dev/null
@@ -54,9 +54,9 @@ function dvm_bash_pseq() {
                     bash${bv//./}-???)
                         x="${BASH_REMATCH[1]}"
                         p="bash-${bv}.$((z+1))"
-                        _omsg "get patch: $p"
+                        _omsg "* get patch: $p"
                         wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/$x
-                        _omsg "got patch: $p"
+                        _omsg "* got patch: $p"
                         IFS="$(printf "\n")"
                         while read -r l; do
                             [[ $l =~ ^\*\*\*[[:space:]]*([\./][^[:space:]]*) ]] && {
@@ -99,7 +99,7 @@ function dvm_bash_pseq() {
     done < <(wget -q -O - http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/)
     popd &> /dev/null
     tar zxf bash-${bv}.tar.gz
-    _omsg "creating incremental patches $bv.0 -> $bv.$((z-1))"
+    _omsg "* creating incremental patches $bv.0 -> $bv.$((z-1))"
     rm -rf bash-patches-$bv/*
     for((x=1;x<z;++x)); do
         {
