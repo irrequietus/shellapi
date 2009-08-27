@@ -27,6 +27,8 @@
 #;
 function dvm_bash_pseq() {
     local bv="$1" p l h="$IFS" t v x z=1
+    [[ $1 =~ ^[3-4]?\.[0-9]? ]] \
+        || _fatal "${FUNCNAME}: $bv is an invalid series identifier"
     [[ -z $2 ]] && {
         _emsg "${FUNCNAME}: target directory not set"
         return 1
