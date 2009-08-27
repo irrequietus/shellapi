@@ -383,20 +383,25 @@ function fnapi_gencascade() {
     fnapi_allows_flock \"\$f\" && {
         _omsg \"\$(_emph \${FUNCNAME}): %s\$(_dotstr \$f): 0/$z\"\n" "$1" "$2"
     for x in $(_xsof $3); do
-        printf "        _nmsg \"\$(_emph \"\${FUNCNAME}|%s\"): inpr\"
-        {\n" "$x"
+        printf "        {\n"
+        printf "            _nmsg \"\$(_emph \"\${FUNCNAME}|%s\"): inpr\"
+            {\n" "$x"
         while read -r y; do
-            printf "            %s && \\\\\n" "${y}"
+            printf "                %s && \\\\\n" "${y}"
         done< <(y="$3[$x]"; printf "%s\n" "${!y}")
-        printf "            : || ! :
-        } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/output-%s.log && {
-            _cmsg \"\$(_emph \"\${FUNCNAME}|%s\"): pass\"
-        } || {
-            _fail \"\$(_emph \"\${FUNCNAME}|%s\"): fail\"
-        }\n" "$x" "$x" "$x"
+        printf "                : || ! :
+            } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/output-%s.log && {
+                _cmsg \"\$(_emph \"\${FUNCNAME}|%s\"): pass\"
+            } || {
+                _fail \"\$(_emph \"\${FUNCNAME}|%s\"): fail\"
+                ! :
+            }\n" "$x" "$x" "$x"
+        printf "        } &&"
     done
-    printf "    }\n    _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n"
-
+    printf "    : || {
+            _emsg \"\$(_emph \"\${FUNCNAME}|$z\"): \$(_dotstr \$f)\"
+            _fatal \"instruction cascade failure\"\n        }
+    }\n    _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n"
 }
 
 #;
