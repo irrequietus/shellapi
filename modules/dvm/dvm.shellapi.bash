@@ -22,6 +22,8 @@
 #       containing all of them.
 # @ptip $1  GNU Bash series to build (from .0 to current .x)
 # @ptip $2  The path to the directory where all operations take place
+# @ptip $3  [keepall|keep|clean] : choose whether to keep everything, only the patches or
+#           clean everything from the target directory. Defaults to [keep].
 # @devs This technique can be adjusted to serve patch series creation for
 #       other packages as well. Possible abstraction target.
 #;
@@ -112,6 +114,13 @@ function dvm_bash_pseq() {
     z="$(_emph "bash $bv.x")"
     _omsg "$z: patch total: $x -> bash-patches-$bv.$x.tar.bz2"
     _omsg "$z: * $SHELLAPI_HASH -> $(_hsof bash-patches-$bv.$x.tar.bz2)"
+    case "${3:-keep}" in
+        keep)   rm -rf bash-$bv* bash-patches-$bv.$x ;;
+        clean)  rm -rf bash-$bv* bash-patches-$bv*   ;;
+        keepall) ;;
+        *) _wmsg "${FUNCNAME}: ignoring: $3, reverting to keepall"
+    esac
+    _omsg "$z housekeeping complete"
     popd &> /dev/null
 }
 
