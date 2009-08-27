@@ -17,12 +17,16 @@
 # along with shellapi. If not, see <http://www.gnu.org/licenses/>.
 
 #;
-# @desc Retrieve upstream materials for a given bash series (3.0, 3.1, ...)
+# @desc Retrieve upstream materials for a given bash series (3.0, 3.1, ...).
+#       Once all the patches have been created, a compressed tarball is created
+#       containing all of them.
 # @ptip $1  GNU Bash series to build (from .0 to current .x)
 # @ptip $2  The path to the directory where all operations take place
+# @devs This technique can be adjusted to serve patch series creation for
+#       other packages as well. Possible abstraction target.
 #;
-function dvm_bashbseq() {
-    local bv="$1" p=() l h="$IFS" t v x z=1
+function dvm_bash_pseq() {
+    local bv="$1" p l h="$IFS" t v x z=1
     [[ -z $2 ]] && {
         _emsg "${FUNCNAME}: target directory not set"
         return 1
@@ -31,21 +35,24 @@ function dvm_bashbseq() {
         _emsg "${FUNCNAME}: cannot change to target: $2"
         return 1
     }
-    rm -rf bash-${bv}*
+    _omsg "$(_emph bash-$bv.x): creating patch series"
+    rm -rf bash-${bv}* bash-patches-$bv
     _omsg "get: bash-${bv}.tar.gz"
-    wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}.tar.gz
-    _omsg "got: bash-${bv}.tar.gz"
-    mkdir bash-$bv-patches
-    pushd bash-$bv-patches &> /dev/null
+    wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}.tar.gz \
+        && _omsg "got: bash-${bv}.tar.gz" \
+        || _fatal "${FUNCNAME}: $bv is an invalid series identifier"
+    mkdir bash-patches-$bv
+    pushd bash-patches-$bv &> /dev/null
     while read -r -d\> l; do
         [[  $l =~ \<a[[:space:]]*href[[:space:]]*=[[:space:]]*\"([^\"\<\>]*)\" \
         ||  $l =~ \<a[[:space:]]*href[[:space:]]*=[[:space:]]*\'([^\'\<\>]*)\' ]] \
             &&  case "${BASH_REMATCH[1]}" in
                     bash${bv//./}-???)
                         x="${BASH_REMATCH[1]}"
-                        _omsg "get: bash-${bv}.tar.gz"
+                        p="bash-${bv}.$((z+1))"
+                        _omsg "get patch: $p"
                         wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/$x
-                        _omsg "got: bash-${bv}.tar.gz"
+                        _omsg "got patch: $p"
                         IFS="$(printf "\n")"
                         while read -r l; do
                             [[ $l =~ ^\*\*\*[[:space:]]*([\./][^[:space:]]*) ]] && {
@@ -73,33 +80,36 @@ function dvm_bashbseq() {
                         IFS="$h"
                         popd &> /dev/null
                         tar zxf bash-${bv}.tar.gz
-                        pushd bash-$bv-patches &> /dev/null
-                        _omsg "patching: bash-$bv -> bash-$bv.$z"
+                        pushd bash-patches-$bv &> /dev/null
+                        _omsg "* patching: bash-$bv -> $p"
                         for x in *.patch; do
                             patch -p0 < $x
                         done > /dev/null
-                        _omsg "patched : bash-$bv -> bash-$bv.$z"
+                        _omsg "* patched : bash-$bv -> $p"
                         popd &> /dev/null
                         find ./bash-$bv -regextype posix-egrep -regex ".*\.orig|.*~" -exec rm '{}' \;
                         mv bash-$bv bash-$bv.$((z++))
-                        pushd bash-$bv-patches &> /dev/null
+                        pushd bash-patches-$bv &> /dev/null
                         ;;
                 esac
     done < <(wget -q -O - http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/)
     popd &> /dev/null
     tar zxf bash-${bv}.tar.gz
     _omsg "creating incremental patches $bv.0 -> $bv.$((z-1))"
-    rm -rf bash-$bv-patches/*
+    rm -rf bash-patches-$bv/*
     for((x=1;x<z;++x)); do
         {
             printf "notice   : Aggregate of versions %s.0 to %s.%s\n" "$bv" "$bv" "$x"
             printf "origin   : Automatically generated from the official bash patches\n"
-            printf "generator: The dvm_bashbseq() shellapi function (http://odreex.org)\n"
+            printf "generator: The ${FUNCNAME}() shellapi function (http://odreex.org)\n"
             printf "generated: %s\n\n" "$(date -R)"
             diff -Naur bash-$bv bash-$bv.$x
-        } > bash-$bv-patches/bash-${bv}.$x.patch
+        } > bash-patches-$bv/bash-${bv}.$x.patch
     done
-    _omsg "$(_emph "bash $bv.x"): $((--x)) incremental patches created"
+    tar cjf bash-patches-$bv.$((--x)).tar.bz2 bash-patches-$bv
+    z="$(_emph "bash $bv.x")"
+    _omsg "$z: patch total: $x -> bash-patches-$bv.$x.tar.bz2"
+    _omsg "$z: * $SHELLAPI_HASH -> $(_hsof bash-patches-$bv.$x.tar.bz2)"
     popd &> /dev/null
 }
 
