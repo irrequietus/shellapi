@@ -409,7 +409,14 @@ function fnapi_gencascade() {
             mv  \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr\" \\
                 \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.fail\"
             _fatal \"instruction cascade failure\"\n        }
-    }\n    _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n"
+    } || {
+        _wmsg \"%s: \
+\${FNAPI_MSGL[((\$((f=\$?))>\${#FNAPI_MSGL[@]}?\$((\${#FNAPI_MSGL[@]}-1)):\$f))]}: \
+\$(_dotstr \${FNAPI_HEADER[\$_FNAPI_FHASH]})\"
+        return \$f
+    }
+    _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n" \
+    "$1"
 }
 
 #;
