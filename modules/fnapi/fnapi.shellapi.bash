@@ -382,7 +382,7 @@ function fnapi_gencascade() {
     fnapi_allows_flock \"\$f\" && {
         rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass
         pushd . &> /dev/null
-        _omsg \"\$(_emph \${FUNCNAME}): %s\$(_dotstr \$f): 0/$z\"\n" "$1" "$2"
+        _omsg \"\$(_emph \${FUNCNAME}): %s\$(_dotstr \$f): 0/$z\"\n" "$1" "$a"
     for x in $(_xsof $3); do
         printf "        {\n"
         printf "            _nmsg \"\$(_emph \"\${FUNCNAME}|%s\"): inpr\"
