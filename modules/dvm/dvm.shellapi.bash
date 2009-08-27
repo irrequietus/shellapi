@@ -41,6 +41,28 @@ function dvm_bash_b2pit() {
 }
 
 #;
+# @desc The serial bash binary builder; give it a series to build and it
+#       will happily end up creating all the necessary patches as well
+#       as placing the resulting binaries to the "bashpit"
+# @ptip $1  The bash series to build (3.0, 3.1, ..., 4.0, ...)
+# @ptip $2  The directory where you want all the operations to take place
+#;
+function dvm_bash_sbuilder() {
+    (($# != 2)) && _fatal "${FUNCNAME}: wrong number of arguments: $#"
+    dvm_bash_pseq "$1" "$2" keepall && {
+        local x
+        pushd "$2" &> /dev/null
+        for x in bash-$1*; do
+            [[ $x != *.tar.* ]] && {
+                dvm_bash_b2pit "$x" "$2" \
+                    || _emsg "${FUNCNAME}: failed for series: $1"
+            }
+        done
+        popd &> /dev/null
+    }
+}
+
+#;
 # @desc Retrieve upstream materials for a given bash series (3.0, 3.1, ...).
 #       Once all the patches have been created, a compressed tarball is created
 #       containing all of them.
