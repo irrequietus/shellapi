@@ -313,7 +313,7 @@ function fnapi_to_xml() {
 #       is performed when these commands are executed within the wrapper
 # @ptip $1  Function name to assign to the wrapper
 # @ptip $2  Message prefix to present when informing about progress
-# @ptip $3  Array / variable to which command sequence is found.
+# @ptip $3  Array / variable in which the command sequence is found.
 # @ptip $4  Identifier appearing in the warning message if attempting to run again
 #           after a failure. If this is active, it overrides $1
 # @note This function treats newline whitespace within the variables as significant.
@@ -325,7 +325,7 @@ function fnapi_genblock() {
     fnapi_makeheader \"\${FUNCNAME}\" \"\${@}\"
     local f=\"\${FNAPI_HEADER[\$_FNAPI_FHASH]}\"
     fnapi_allows_flock \"\$f\" && {
-        local _cdir=\"\$(pwd)\"
+        pushd . &> /dev/null
         rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass
         _nmsg \"%s: \$(_dotstr \$f): in progress\"
         printf \"inpr: %%s\\\\n\" \"\$(date -R)\" >> \\
@@ -338,7 +338,7 @@ function fnapi_genblock() {
     done
     printf "            : || ! : 
         } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/output.log && {
-            cd \"\$_cdir\"
+            popd &> /dev/null
             rm -rf \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass\"
             printf \"pass: %%s\\\\n\" \"\$(date -R)\" >> \\
                 \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing.log\"
@@ -348,7 +348,7 @@ function fnapi_genblock() {
             _cmsg \"%s: \$(_dotstr \$f): is complete\"
             return
         } || {
-            cd \"\$_cdir\"
+            popd &> /dev/null
             rm -rf \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.fail\"
             printf \"fail: %%s\\\\n\" \"\$(date -R)\" >> \\
                 \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing.log\"
@@ -363,6 +363,65 @@ function fnapi_genblock() {
 \$(_dotstr \${FNAPI_HEADER[\$_FNAPI_FHASH]})\" \n}\n" \
     "$2" "${4:-"\${FUNCNAME}"}" "${5:-wshow}" \
     "${4:-"\${FUNCNAME}"}" "${4:-"\${FUNCNAME}"}"
+}
+
+#;
+# @desc Create an instruction cascade out of an array containing an instruction
+#       per array variable member.
+# @ptip $1  Function name to assign to the wrapper
+# @ptip $2  Message prefix to present when informing about the function
+# @ptip $3  Array / variable in which a command sequence is found.
+# @note This function treats newline whitespace within the variables as significant.
+#;
+function fnapi_gencascade() {
+    local x y z=$(_asof $3) a=
+    [[ -z $2 ]] && a="$2: "
+    printf "function %s() {
+    fnapi_makeheader \"\${FUNCNAME}\" \"\${@}\"
+    local f=\"\${FNAPI_HEADER[\$_FNAPI_FHASH]}\"
+    fnapi_allows_flock \"\$f\" && {
+        rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass
+        pushd . &> /dev/null
+        _omsg \"\$(_emph \${FUNCNAME}): %s\$(_dotstr \$f): 0/$z\"\n" "$1" "$a"
+    for x in $(_xsof $3); do
+        printf "        {\n"
+        printf "            _nmsg \"\$(_emph \"\${FUNCNAME}|%s\"): inpr\"
+            printf \"inpr: %%s\\\\n\" \"\$(date -R)\" >> \\
+            \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing-%s.log\"
+            {\n" "$x" "$x"
+        while read -r y; do
+            printf "                %s && \\\\\n" "${y}"
+        done< <(y="$3[$x]"; printf "%s\n" "${!y}")
+        printf "                : || ! :
+            } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/output-%s.log && {
+                _cmsg \"\$(_emph \"\${FUNCNAME}|%s\"): pass\"
+                printf \"pass: %%s\\\\n\" \"\$(date -R)\" >> \\
+                \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing-%s.log\"
+            } || {
+                _fail \"\$(_emph \"\${FUNCNAME}|%s\"): fail\"
+                printf \"fail: %%s\\\\n\" \"\$(date -R)\" >> \\
+                \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr/timing-%s.log\"
+                ! :
+            }\n" "$x" "$x" "$x" "$x" "$x"
+        printf "        } &&"
+    done
+    printf "    : || {
+            popd &> /dev/null
+            _emsg \"\$(_emph \"\${FUNCNAME}|$z\"): \$(_dotstr \$f)\"
+            mv  \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr\" \\
+                \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.fail\"
+            _fatal \"instruction cascade failure\"\n        }
+    } || {
+        _wmsg \"%s: \
+\${FNAPI_MSGL[((\$((f=\$?))>\${#FNAPI_MSGL[@]}?\$((\${#FNAPI_MSGL[@]}-1)):\$f))]}: \
+\$(_dotstr \${FNAPI_HEADER[\$_FNAPI_FHASH]})\"
+        return \$f
+    }
+    popd &> /dev/null
+    mv  \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr\" \\
+        \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass\"
+    _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n" \
+    "$1"
 }
 
 #;
