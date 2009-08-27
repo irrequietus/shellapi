@@ -17,6 +17,30 @@
 # along with shellapi. If not, see <http://www.gnu.org/licenses/>.
 
 #;
+# @desc A specialized, developer - oriented bash binaries builder which
+#       also installs the resulting binary to a "bashpit" folder
+# @ptip $1  directory where the bash source is located
+# @ptip $2  full path of where the bashpit is to be created
+#;
+function dvm_bash_b2pit() {
+    local x="$1" t="$2/bashpit"
+    mkdir -p "$t/buildlogs"
+    _nmsg "* $(_emph $x) is being prepared"
+    pushd "$x" > /dev/null
+    {
+        ./configure --prefix="$t/${x#*-}" && \
+        make && \
+        make install
+    } &> "$t/buildlogs/build.$x.log" || {
+        _fail "$(_emph $x) failed -> $t/buildlogs/build.$x.log"
+        popd > /dev/null
+        return 1
+    }
+    popd > /dev/null
+    _cmsg "* $(_emph $x) was placed into the bashpit"
+}
+
+#;
 # @desc Retrieve upstream materials for a given bash series (3.0, 3.1, ...).
 #       Once all the patches have been created, a compressed tarball is created
 #       containing all of them.
@@ -53,7 +77,7 @@ function dvm_bash_pseq() {
             &&  case "${BASH_REMATCH[1]}" in
                     bash${bv//./}-???)
                         x="${BASH_REMATCH[1]}"
-                        p="bash-${bv}.$((z+1))"
+                        p="bash-${bv}.$z"
                         _omsg "* get patch: $p"
                         wget -q -c http://ftp.gnu.org/gnu/bash/bash-${bv}-patches/$x
                         _omsg "* got patch: $p"
