@@ -415,6 +415,8 @@ function fnapi_gencascade() {
 \$(_dotstr \${FNAPI_HEADER[\$_FNAPI_FHASH]})\"
         return \$f
     }
+    mv  \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.inpr\" \\
+        \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass\"
     _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n" \
     "$1"
 }
