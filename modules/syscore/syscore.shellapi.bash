@@ -851,8 +851,6 @@ function _opsolve() {
 #;
 # @desc Define a series of internal event - informing functions
 #       to be used by the system.
-# @note This function is to be DEPRECATED, in favor of a more generic
-#       and highly configurable solution.
 #;
 function _eventdef() {
     local FORMAT=(

@@ -17,7 +17,7 @@
 # along with shellapi. If not, see <http://www.gnu.org/licenses/>.
 
 #;
-# @desc The init implementation for this module
+# @desc The init handle for this module
 #;
 function fnapi_init() {
     FNAPI_CHECKSUM="${SHELLAPI_HASH_MODES}"

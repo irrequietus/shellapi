@@ -55,12 +55,6 @@ function odsel_ifetch() {
         bzr\://*)
             e="bzr branch $1"
             ;;
-        # special handlers go here
-        # TODO: explain how shellapi module event handlers work,
-        #       this one seems like a good example
-        # FIXME: _pool_handler_* functions must become _odsel_handler_*
-        #       as per convention; the more elaborate reporting scheme
-        #       must replace the following code.
         *)
             _isfunction "_odsel_handler_${1/:\/\/*/}" \
                 && e=$(_odsel_handler_${1/:\/\/*/} "$1") \
@@ -1338,7 +1332,6 @@ function odsel_xmla() {
             ;;
             \</action\>)
                 ((${#_pt[@]})) && {
-                    #_A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}] ${_pt[@]}")
                     ((${#c[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:code ${c[@]}")
                     ((${#t[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:text ${t[@]}")
                     _actions+=($p)
@@ -1406,7 +1399,7 @@ function odsel_xmla() {
                    x="${x//\`/\\\`}"
                    _rvfx[$p]="${_rvfx[$p]}$(printf "\n%s" "${x//\"/\\\"}")"
                 done
-                _pt+=("$p") # events are split into single transactions
+                _pt+=("$p")
            ;;
            \<instance\ *)
                 [[  $li =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
