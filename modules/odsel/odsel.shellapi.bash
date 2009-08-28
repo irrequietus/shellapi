@@ -591,32 +591,6 @@ function odsel_relay() {
 }
 
 #;
-# @desc An odsel expression wrapper handling particular actions based upon
-#       odsel expressions. For the time being acts as a i9kg function cache
-#       loader and initializer before delegating to odsel_exprseq
-# @ptip $1  the odsel expression of which to use or create i9kg init cache
-#           in the meanwhile.
-# @devs FIXME: Still linked exclusively to [prime] pool; import pool - agnostic
-#       implementation (already present in header request; eliminate I9KG_PRIME
-#       wiring)
-#;
-function odsel_act() {
-    local x y=($(_odsel_i9kg_header "$1"))
-    _isfunction "__i9kg_init_${y[$_I9KG_RHID]}" || {
-        x="${I9KG_PRIME[$_FCACHE]}/__i9kg_init_${y[$_I9KG_RHID]}.odsel.bash"
-        odsel_xmla \
-            "${I9KG_PRIME[$_I9KG_SEEDS_XML]}/${y[$_I9KG_RLAY]}.i9kg.xml" \
-            "__i9kg_rcache_${y[$_I9KG_RHID]}"
-        odsel_i9kg_objc \
-            "__i9kg_rcache_${y[$_I9KG_RHID]}" \
-            ${y[$_I9KG_RHID]} > "$x"
-        . "$x"
-    }
-    __i9kg_init_${y[$_I9KG_RHID]}
-    odsel_exprseq "$1"
-}
-
-#;
 # @desc The internal event handler for the -> operator for rpli instructions
 # @ptip $@  The array "passed" through _odsel_rpli_i
 #;
