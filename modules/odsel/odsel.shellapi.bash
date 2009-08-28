@@ -41,6 +41,37 @@ function odsel_si() {
 }
 
 #;
+# @desc odsel_vsi prototype (to deprecate ununified means)
+# @ptip $1  A valid odsel expression
+#;
+function __odsel_vsi_p() {
+    _bsplit "${1}" || {
+        _emsg "${FUNCNAME}: cannot parse expression"
+        return 1
+    }
+    local x y z c=0
+    local g=("${SPLIT_STRING[@]}")
+    for x in ${!g[@]}; do
+        y="${g[$x]/[[:space:]]*/}"
+        z="${g[$x]#"$y"}"
+        z="${z//[[:space:]]/}"
+        if [[ ${z:0:1} != : ]]; then
+            x="${y//[[:space:]]/}"
+            y="odsel_$x"
+            _isfunction $y && {
+                _omsg "$(odsel_whatis $x) : $z"
+                $y "$z" \
+                    || _fatal "operation failed"
+            }
+        else
+            c="$(printf "\033[1;37m[implicit]\033[0m" )"
+            _omsg "$c assuming [${y//[[:space:]]/}] is used as i9kg expression prefix (:)"
+            _omsg "unknown: ${g[$x]//[[:space:]]/}"
+        fi
+    done
+}
+
+#;
 # @desc A practical, odsel group expression expander in bash (component of the future odsel_si)
 #       for multiple, en block odsel expression interpretation during instruction / metadata
 #       navigation in the arrays.
