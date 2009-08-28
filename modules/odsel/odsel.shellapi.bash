@@ -58,11 +58,7 @@ function __odsel_vsi_p() {
         if [[ ${z:0:1} != : ]]; then
             x="${y//[[:space:]]/}"
             y="odsel_$x"
-            _isfunction $y && {
-                _omsg "$(odsel_whatis $x) : $z"
-                $y "$z" \
-                    || _fatal "operation failed"
-            }
+            _omsg "$(odsel_whatis $x) : $z -> $x"
         else
             c="$(printf "\033[1;37m[implicit]\033[0m" )"
             _omsg "$c assuming [${y//[[:space:]]/}] is used as i9kg expression prefix (:)"
