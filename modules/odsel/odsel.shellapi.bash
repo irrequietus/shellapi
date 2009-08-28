@@ -49,7 +49,7 @@ function __odsel_vsi_p() {
         _emsg "${FUNCNAME}: cannot parse expression"
         return 1
     }
-    local x y z c=0
+    local x y z
     local g=("${SPLIT_STRING[@]}")
     for x in ${!g[@]}; do
         y="${g[$x]/[[:space:]]*/}"
@@ -60,8 +60,7 @@ function __odsel_vsi_p() {
             y="odsel_$x"
             _omsg "$(odsel_whatis $x) : $z -> $x"
         else
-            c="$(printf "\033[1;37m[implicit]\033[0m" )"
-            _omsg "$c assuming [${y//[[:space:]]/}] is used as i9kg expression prefix (:)"
+            _omsg "$(_emph implicit) assuming [${y//[[:space:]]/}] is used as i9kg expression prefix (:)"
             _omsg "unknown: ${g[$x]//[[:space:]]/}"
         fi
     done
