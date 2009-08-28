@@ -55,16 +55,26 @@ function __odsel_vsi_p() {
         y="${g[$x]/[[:space:]]*/}"
         z="${g[$x]#"$y"}"
         z="${z//[[:space:]]/}"
-        ! [[ -z $z ]] && {
-            if [[ ${z:0:1} != : ]]; then
-                x="${y//[[:space:]]/}"
-                y="odsel_$x"
-                _omsg "$(odsel_whatis $x) : $z :: $y"
-            else
-                _omsg "$(_emph implicit) assuming [${y//[[:space:]]/}] is used as i9kg expression prefix (:)"
-                _omsg "unknown: ${g[$x]//[[:space:]]/}"
-            fi
-        }
+        case "$y" in
+            new|del|load|dca|nca)
+                case "${z:0:1}" in
+                    :)
+                        _omsg "$(_emph implicit): assuming [${y//[[:space:]]/}] is used as i9kg expression prefix (:)"
+                        _omsg "$(_emph i9kg): ${g[$x]//[[:space:]]/}"
+                    ;;
+                    '')
+                    ;;
+                    *)
+                        x="${y//[[:space:]]/}"
+                        y="odsel_$x"
+                        _omsg "$(_emph pool): $(odsel_whatis $x) : $z :: $y"
+                    ;;
+                esac
+                ;;
+            @*)
+                _omsg "$(_emph rpli): ${g[$x]//[[:space:]]/}"
+            ;;
+        esac
     done
 }
 
