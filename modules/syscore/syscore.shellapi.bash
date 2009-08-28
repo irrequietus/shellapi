@@ -230,7 +230,6 @@ function _emsg() {
 # @ptip $1  filename with compatible XML layout
 # @ptip $2  filename where you want the resulting function to be stored. This
 #           is completely optional (stores in temporary when not set)
-# @ptip $3  
 #;
 function _xml2bda() {
     local   i n f l x u= \
@@ -843,6 +842,7 @@ function _opsolve() {
         \!\?)   n=14;;
         \!\!)   n=15;;
         \<-)    n=16;;
+        \<\>)   n=17;;
         *)      n=0 ;;
     esac
     printf "%d" $n
