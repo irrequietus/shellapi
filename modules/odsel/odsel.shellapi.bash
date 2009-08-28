@@ -546,36 +546,6 @@ function odsel_exprseq() {
 }
 
 #;
-# @desc A splitter for a comma separated list of odsel expressions,
-#       according to specific rules for {*} and [*]
-# @ptip $1  The list to split
-#;
-function odsel_expr() {
-    local x="${1//[[:space:]]/}," y
-    ODSEL_EXPR=()
-    while [[ "$x" =~ ([,}{]) ]]; do
-        case "${BASH_REMATCH[1]}" in
-             ,) y=("${x/,*/}")
-                ;;
-            \{) [[ "${x:0:1}" = [[:alpha:]] ]] && {
-                    y="${x#*]}"
-                    y="${x/]*/}]${y/,*/}"
-                } || {
-                    y="${x#"${x/\}*/}"}"
-                    y="${x/\}*/}${y/,*/}"
-                }
-                ;;
-            \}) _emsg "${FUNCNAME}: illegal expression"
-                ODSEL_EXPR=()
-                return 1
-                ;;
-        esac
-        x="${x#"$y",}"
-        ODSEL_EXPR+=("$y")
-    done
-}
-
-#;
 # @desc Keyword message definition
 # @ptip $1  The odsel keyword for which we want to find the message
 #;
