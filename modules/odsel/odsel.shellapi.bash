@@ -66,14 +66,6 @@ function odsel_ifetch() {
 }
 
 #;
-# @desc Update a clone
-# @devs FIXME import implementation
-#;
-function odsel_clone_update() {
-    _wmsg "${FUNCNAME}: under implementation, reserved"
-}
-
-#;
 # @desc An odsel interpreter in pure GNU bash (3.x, 4.x compatible)
 # @ptip $1 A valid odsel expression
 #;
@@ -671,46 +663,6 @@ function _odsel_pm() {
 }
 
 #;
-# @desc internal event handler for the ~> operator
-# @devs FIXME import implementation
-#;
-function _odsel_rm() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
-# @desc Greater than or equal comparison
-# @devs FIXME import implementation
-#;
-function _odsel_gte() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
-# @desc Less than or equal comparison
-# @devs FIXME import implementation
-#;
-function _odsel_lte() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
-# @desc Greater than comparison
-# @devs FIXME import implementation
-#;
-function _odsel_gt() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
-# @desc Less than comparison
-# @devs FIXME import implementation
-#;
-function _odsel_lt() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
 # @desc internal event handler for the >> operator
 # @devs FIXME
 #;
@@ -1051,15 +1003,6 @@ function odsel_del() {
             ;;
         esac
     done
-}
-
-#;
-# @desc Convert a pull expression to a specific resource within a pool
-# @ptip $1  pull expression to be processed
-# @devs import new implementation
-#;
-function odsel_pull() {
-    _decoy_this "${FUNCNAME}: implementation not imported"
 }
 
 #;
