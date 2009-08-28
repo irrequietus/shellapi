@@ -549,6 +549,24 @@ function odsel_expr() {
 }
 
 #;
+# @desc Keyword message definition
+# @ptip $1  The odsel keyword for which we want to find the message
+#;
+function odsel_whatis() {
+    local x
+    case "$1" in
+        new)  x="creating a new pool"   ;;
+        del)  x="erasing from poolset"  ;;
+        load) x="loading pool"          ;;
+        nca)  x="caching"               ;;
+        dca)  x="deleting cache"        ;;
+        '')                             ;;
+        *)    x="unknown"               ;;
+    esac
+    printf "%s\n" "$x"
+}
+
+#;
 # @desc The init implementation for this module
 # @warn Same fix as in _init for _opsolve (bash 4.x related)
 # @devs FIXME: import XML - driven implementation for this one as well
