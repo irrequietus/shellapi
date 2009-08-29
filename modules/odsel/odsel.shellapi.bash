@@ -835,7 +835,7 @@ function _odsel_pm() {
     esac
     ((${#SHELLAPI_ERROR[@]})) \
         && _fatal "${x[0]}:${x[1]} -> ${x[2]}:${x[3]} is not a valid expression"
-    _omsg "${x[0]}${x[1]} -> ${x[2]}:${x[3]} is a valid expression"
+    _omsg "${x[0]}:${x[1]} -> ${x[2]}:${x[3]} is a valid expression"
     case "$y" in
         \$|pristine|'')
             _ckmsg "requested to put into pristine"
