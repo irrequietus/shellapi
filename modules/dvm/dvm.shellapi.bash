@@ -170,3 +170,43 @@ function dvm_bash_pseq() {
     popd &> /dev/null
 }
 
+#;
+# @desc Create a "self - extracting" bash script.
+# @ptip $1  directory from where to include materials
+# @ptip $2  (optional) script to run after extraction
+# @ptip $3  (optional) working directory root
+#;
+function dvm_sfx_build() {
+    local x="${3:-$(pwd)}/__sfx__"
+    _omsg "creating bash sfx archive"
+    mkdir -p "$x" &> /dev/null || {
+        _emsg "${FUNCNAME}: could not create: $x"
+        return 1
+    }
+    printf "#!/bin/bash\n_bstrap() {
+    local l n=0
+    clear
+    printf \"\\\\033[1;36m[>]\\\\033[0m: extraction in progress\\\\n\"
+    while read -r l; do
+        [[ \$l = __sfx__ ]] \
+            && break;
+        ((n++))
+    done < \"\$0\"
+    [[ \$l = __sfx__ ]] && {
+        tail -n+\$((n+2)) \$0 | tar xj
+    } &> /dev/null || {
+        printf \"\\\\033[1;35m[~]\\\\033[0m: extraction failed\\\\n\"
+        exit 1
+    }
+    unset _bstrap
+    printf \"\\\\033[1;36m[+]\\\\033[0m: extraction complete\\\\n\"
+    exit\n}\n_bstrap\n__sfx__\n" > "$x/testing.sh"
+    {
+        tar cjf "$x/${1##*/}.sfx.tar.bz2" "$1" && \
+        cat "$x/testing.sh" "$x/${1##*/}.sfx.tar.bz2" > "$x/${1##*/}.sh" && \
+        l=
+    } &> /dev/null \
+        && _omsg "bash sfx archive created" \
+        || _fail "bash sfx archive could not be created"
+    [[ -z $l ]]
+}
