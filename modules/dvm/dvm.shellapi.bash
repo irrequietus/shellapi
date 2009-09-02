@@ -173,40 +173,49 @@ function dvm_bash_pseq() {
 #;
 # @desc Create a "self - extracting" bash script.
 # @ptip $1  directory from where to include materials
-# @ptip $2  (optional) script to run after extraction
+# @ptip $2  (optional) script to run after extraction, must exist in $1
 # @ptip $3  (optional) working directory root
+# @echo     Name of the sfx created or error encountered
+# @retv     0/1
 #;
 function dvm_sfx_build() {
-    local x="${3:-$(pwd)}/__sfx__"
-    _omsg "creating bash sfx archive"
-    mkdir -p "$x" &> /dev/null || {
-        _emsg "${FUNCNAME}: could not create: $x"
+    local x="${3:-$(pwd)}/__sfx__" y="$RANDOM" z
+     ! [[ -z $2 ]] && {
+        z="./$2"
+        chmod +x "$1/$2"
+     }
+    mkdir -p "$x/$y" &> /dev/null || {
+        printf "%s\n" "${FUNCNAME}: could not create: $x"
         return 1
     }
     printf "#!/bin/bash\n_bstrap() {
-    local l n=0
-    clear
+    local l m=\"\$(pwd)\" n=0 o=$y p=\"\$(mktemp -d /tmp/_bstrap_sfx.XXXXXXXXXX)\"
     printf \"\\\\033[1;36m[>]\\\\033[0m: extraction in progress\\\\n\"
     while read -r l; do
-        [[ \$l = __sfx__ ]] \
-            && break;
+        [[ \$l = __sfx__ ]] && break;
         ((n++))
     done < \"\$0\"
     [[ \$l = __sfx__ ]] && {
-        tail -n+\$((n+2)) \$0 | tar xj
+        tail -n+\$((n+2)) \$0 | tar xj -C \"\$p\"
     } &> /dev/null || {
         printf \"\\\\033[1;35m[~]\\\\033[0m: extraction failed\\\\n\"
         exit 1
     }
-    unset _bstrap
     printf \"\\\\033[1;36m[+]\\\\033[0m: extraction complete\\\\n\"
-    exit\n}\n_bstrap\n__sfx__\n" > "$x/testing.sh"
+    unset _bstrap
+    cd \"\$p/$y\"
+    %s
+    p=\$?
+    cd \"\$m\"
+    exit \$p\n}\n_bstrap\n__sfx__\n" "$z" > "$x/bstrap.sh"
     {
-        tar cjf "$x/${1##*/}.sfx.tar.bz2" "$1" && \
-        cat "$x/testing.sh" "$x/${1##*/}.sfx.tar.bz2" > "$x/${1##*/}.sh" && \
-        l=
-    } &> /dev/null \
-        && _omsg "bash sfx archive created" \
-        || _fail "bash sfx archive could not be created"
+        pushd "$1" && \
+        cp -ax "." "$x/$y" && \
+        pushd "$x" && \
+        tar cjf "$y.sfx.tar.bz2" "$y" && \
+        cat "$x/bstrap.sh" "$y.sfx.tar.bz2" > "$x/_bstrap.sfx.$y.sh" && \
+        popd && popd && l=
+    }  &> /dev/null \
+        && printf "_bstrap.sfx.$y.sh\n"
     [[ -z $l ]]
 }
