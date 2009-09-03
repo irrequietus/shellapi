@@ -170,3 +170,52 @@ function dvm_bash_pseq() {
     popd &> /dev/null
 }
 
+#;
+# @desc Create a "self - extracting" bash script.
+# @ptip $1  directory from where to include materials
+# @ptip $2  (optional) script to run after extraction, must exist in $1
+# @ptip $3  (optional) working directory root
+# @echo     Name of the sfx created or error encountered
+# @retv     0/1
+#;
+function dvm_sfx_build() {
+    local x="${3:-$(pwd)}/__sfx__" y="$RANDOM" z
+     ! [[ -z $2 ]] && {
+        z="./$2"
+        chmod +x "$1/$2"
+     }
+    mkdir -p "$x/$y" &> /dev/null || {
+        printf "%s\n" "${FUNCNAME}: could not create: $x"
+        return 1
+    }
+    printf "#!/bin/bash\n_bstrap() {
+    local l m=\"\$(pwd)\" n=0 o=$y p=\"\$(mktemp -d /tmp/_bstrap_sfx.XXXXXXXXXX)\"
+    printf \"\\\\033[1;36m[>]\\\\033[0m: extraction in progress\\\\n\"
+    while read -r l; do
+        [[ \$l = __sfx__ ]] && break;
+        ((n++))
+    done < \"\$0\"
+    [[ \$l = __sfx__ ]] && {
+        tail -n+\$((n+2)) \$0 | tar xj -C \"\$p\"
+    } &> /dev/null || {
+        printf \"\\\\033[1;35m[~]\\\\033[0m: extraction failed\\\\n\"
+        exit 1
+    }
+    printf \"\\\\033[1;36m[+]\\\\033[0m: extraction complete\\\\n\"
+    unset _bstrap
+    cd \"\$p/$y\"
+    %s
+    p=\$?
+    cd \"\$m\"
+    exit \$p\n}\n_bstrap\n__sfx__\n" "$z" > "$x/bstrap.sh"
+    {
+        pushd "$1" && \
+        cp -ax "." "$x/$y" && \
+        pushd "$x" && \
+        tar cjf "$y.sfx.tar.bz2" "$y" && \
+        cat "$x/bstrap.sh" "$y.sfx.tar.bz2" > "$x/_bstrap.sfx.$y.sh" && \
+        popd && popd && l=
+    }  &> /dev/null \
+        && printf "_bstrap.sfx.$y.sh\n"
+    [[ -z $l ]]
+}
