@@ -587,39 +587,6 @@ function odsel_whatis() {
 # @devs FIXME: port globals into the XML configuration file (syscore - specs like)
 #;
 function odsel_init() {
-    I9KG_ALIASES=(LOCATION
-        PRISTINE
-        PAYLOAD
-        PATCHES
-        SNAPSHOTS
-        CLONES
-        EZCONFIG
-        METABASE
-        METACACHE
-        I9KG_DEPOT
-        I9KG_SEEDS
-        I9KG_SEEDS_XML
-        I9KG_SEEDS_JSON
-        I9KG_SEEDS_YAML
-        I9KG_REPORTS
-        I9KG_REPORTS_XML
-        I9KG_REPORTS_JSON
-        I9KG_REPORTS_YAML
-        FCACHE
-        RHID
-        RPLI)
-    I9KG_OAL=(
-        RLAY
-        POOL
-        RHID
-        PHID
-        EXPR
-    )
-    _I9KG_RLAY=0
-    _I9KG_POOL=1
-    _I9KG_RHID=2
-    _I9KG_PHID=3
-    _I9KG_EXPR=4
     POOL_CACHE=()
     POOL_REPORT=()
     POOL_TARGUESS=()
@@ -637,12 +604,6 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
     ODSEL_OPRT[$(_opsolve "<-")]="lm"
-    _HPAGE=0
-    _CHECKSUM=1
-    _ENTRY=2
-    _UPDATE=3
-    _PREGET=4
-    _POSTGET=5
 }
 
 #;
