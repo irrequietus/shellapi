@@ -2,3 +2,39 @@
     <var name="POOL_RELAY_STORE">${SHELLAPI_TARGET}/relays</var>
     <var name="POOL_RELAY_CACHE">${SHELLAPI_TARGET}/relays/cache</var>
 </bashdata>
+<bashdata fni="odsel_presets_all">
+    <array name="I9KG_PRESETS" check="ignore">
+        <index>configure_pre</index>
+        <index>configure_build</index>
+        <index>configure_post</index>
+        <index>make_pre</index>
+        <index>make_build</index>
+        <index>make_post</index>
+        <index>make_install_pre</index>
+        <index>make_install_build</index>
+        <index>make_install_post</index>
+        <index>remove_install_pre</index>
+        <index>remove_install_build</index>
+        <index>remove_install_post</index>
+    </array>
+</bashdata>
+<bashdata fni="odsel_presets_install">
+    <array name="I9KG_PRESETS" check="ignore">
+        <index>configure_pre</index>
+        <index>configure_build</index>
+        <index>configure_post</index>
+        <index>make_pre</index>
+        <index>make_build</index>
+        <index>make_post</index>
+        <index>make_install_pre</index>
+        <index>make_install_build</index>
+        <index>make_install_post</index>
+    </array>
+</bashdata>
+<bashdata fni="odsel_presets_remove">
+    <array name="I9KG_PRESETS" check="ignore">
+        <index>remove_install_pre</index>
+        <index>remove_install_build</index>
+        <index>remove_install_post</index>
+    </array>
+</bashdata>

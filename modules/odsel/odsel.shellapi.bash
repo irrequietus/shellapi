@@ -1285,57 +1285,6 @@ function odsel_xmlputs() {
 }
 
 #;
-# @desc Initialize to the full series of events
-# @note DEPRECATED : must move to XML driven version
-#;
-function odsel_presets_all() {
-    I9KG_PRESETS=(
-        "configure_pre"
-        "configure_build"
-        "configure_post"
-        "make_pre"
-        "make_build"
-        "make_post"
-        "make_install_pre"
-        "make_install_build"
-        "make_install_post"
-        "remove_install_pre"
-        "remove_install_build"
-        "remove_install_post"
-    )
-}
-
-#;
-# @desc Initialize to the remove series of events
-# @note DEPRECATED : must move to XML driven version
-#;
-function odsel_presets_remove() {
-    I9KG_PRESETS=(
-        "remove_install_pre"
-        "remove_install_build"
-        "remove_install_post"
-    )
-}
-
-#;
-# @desc Initialize to the install series of events
-# @note DEPRECATED : must move to XML driven version
-#;
-function odsel_presets_install() {
-    I9KG_PRESETS=(
-        "configure_pre"
-        "configure_build"
-        "configure_post"
-        "make_pre"
-        "make_build"
-        "make_post"
-        "make_install_pre"
-        "make_install_build"
-        "make_install_post"
-    )
-}
-
-#;
 # @desc Performs Complete function cache removal for relays
 # @ptip $1  hash id for the relay cache function
 #;
