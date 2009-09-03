@@ -478,13 +478,17 @@ function _odsel_rpli_i() {
             case "$((${#BASH_REMATCH[@]}-1))" in
                 5 | 4)
                     _odsel_${ODSEL_OPRT[$(_opsolve "${BASH_REMATCH[3]}")]} \
-                        ${BASH_REMATCH[@]:1:2} "" ${BASH_REMATCH[@]:4:5} "" \
-                        || return 1
+                        ${BASH_REMATCH[@]:1:2} "" ${BASH_REMATCH[@]:4:5} "" || {
+                        _emsg "${FUNCNAME}: $1 : is not a valid expression"
+                        return 1
+                    }
                     ;;
                 3)
                     _odsel_${ODSEL_OPRT[$(_opsolve "${BASH_REMATCH[2]}")]} \
-                        ${BASH_REMATCH[1]} "" ${BASH_REMATCH[3]} "" \
-                        || return 1
+                        ${BASH_REMATCH[1]} "" ${BASH_REMATCH[3]} "" || {
+                        _emsg "${FUNCNAME}: $1 : is not a valid expression"
+                        return 1
+                    }
                     ;;
                 2 | 1)
                     _decoy_this "${FUNCNAME}: single block instruction?"
@@ -826,16 +830,15 @@ function _odsel_pm() {
             ;;
         \[*\])
             [[ "${x[$z]//[\[\]]/}" =~ ^(\$|\&|@|%|pristine|snapshot|build|clone) ]] \
-                || _emsg "odsel: in A -> B with B=\"${x[$z]}\" is not in context"
+                || _emsg "${FUNCNAME}: in A -> B with B=\"${x[$z]}\" is not in context"
             y="${BASH_REMATCH[1]}"
             ;;
         *)
-            _emsg "odsel: expression has no meaning"
+            _emsg "${FUNCNAME}: expression has no meaning"
         ;;
     esac
     ((${#SHELLAPI_ERROR[@]})) \
-        && _fatal "${x[0]}:${x[1]} -> ${x[2]}:${x[3]} is not a valid expression"
-    _omsg "${x[0]}:${x[1]} -> ${x[2]}:${x[3]} is a valid expression"
+        && return 1
     case "$y" in
         \$|pristine|'')
             _ckmsg "requested to put into pristine"
