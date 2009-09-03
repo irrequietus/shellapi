@@ -374,8 +374,6 @@ function _xml2bda() {
             \</bashdata\>)
                 u=
                 printf "}\n" >> "$a"
-                . "$a"
-                [[ -z $2 ]] && rm -rf "$a"
                 ;;
             \<*)
                 _fatal "${FUNCNAME}: unexpected XML element in stream: $l"
@@ -393,6 +391,7 @@ function _xml2bda() {
                 esac
         esac
     done< <(_xmlpnseq "$1")
+    . "$a"
     [[ -z $2 ]] && rm -rf "$a" || :
 }
 
