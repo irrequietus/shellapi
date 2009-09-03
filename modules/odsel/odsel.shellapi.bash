@@ -583,8 +583,6 @@ function odsel_whatis() {
 #;
 # @desc The init implementation for this module
 # @warn Same fix as in _init for _opsolve (bash 4.x related)
-# @devs FIXME: import XML - driven implementation for this one as well
-# @devs FIXME: port globals into the XML configuration file (syscore - specs like)
 #;
 function odsel_init() {
     POOL_CACHE=()
@@ -600,6 +598,7 @@ function odsel_init() {
                    '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
                    '\[([^@{}>,-]*):([^@{}>,-]*)\]'
                    '\[([^@{}>,:]*)\]' )
+    ODSEL_OPRT=()
     ODSEL_OPRT[$(_opsolve ">>")]="mm"
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
