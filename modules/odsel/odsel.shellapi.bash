@@ -45,7 +45,7 @@ function odsel_si() {
 # @ptip $1  A valid odsel expression
 #;
 function __odsel_vsi_p() {
-    _bsplit "${1}" || {
+    _bsplit "${1}" \; || {
         _emsg "${FUNCNAME}: cannot parse expression"
         return 1
     }
