@@ -61,6 +61,7 @@ function __odsel_vsi_p() {
                     :)
                         _omsg "$(_emph implicit): assuming [${y//[[:space:]]/}] is used as i9kg expression prefix (:)"
                         _omsg "$(_emph i9kg): ${g[$x]//[[:space:]]/}"
+                         odsel_scli "${g[$x]//[[:space:]]/};"
                     ;;
                     '')
                     ;;
@@ -75,6 +76,9 @@ function __odsel_vsi_p() {
                 y="${g[$x]//[[:space:]]/}"
                 _omsg "$(_emph rpli): $y"
                 _odsel_rpli_i "${y:1}"
+            ;;
+            *://*)
+                odsel_scli "${g[$x]//[[:space:]]/};"
             ;;
         esac
     done
@@ -111,7 +115,7 @@ function odsel_scli() {
             ;;
     esac
     case "$_l" in
-        *\[*:\{@*,*)
+        *\[*:\{@*)
             [[ $_l =~ ${ODSEL_REGEXP[0]} ]] \
                 && _l="${BASH_REMATCH[1]}," \
                 || _fatal "${FUNCNAME}: could not intepret: $_l"
@@ -140,23 +144,18 @@ function odsel_scli() {
                 _l=${_l#*"$_p",}
             done
             ;;
-        *\[*:\{@*)
+        *\[*@*:*)
                 [[ $_l =~ ${ODSEL_REGEXP[3]} ]] \
                     &&   _b+=("${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}") \
                     || _fatal "${FUNCNAME}: failed to recognize: $_l"
             ;;
-        *\[*@*:*)
-                [[ $_l =~ ${ODSEL_REGEXP[4]} ]] \
-                    &&   _b+=("${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}") \
-                    || _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
         *\[*:*\]*)
-                [[ $_l =~ ${ODSEL_REGEXP[5]} ]] \
+                [[ $_l =~ ${ODSEL_REGEXP[4]} ]] \
                     &&  _b+=("${lhs}[${BASH_REMATCH[1]}@stable:${BASH_REMATCH[2]}]${rhs}") \
                     || _fatal "${FUNCNAME}: failed to recognize: $_l"
             ;;
         *\[*\]*)
-                [[ $_l =~ ${ODSEL_REGEXP[6]} ]] && {
+                [[ $_l =~ ${ODSEL_REGEXP[5]} ]] && {
                     for _c in ${I9KG_PRESETS[@]}; do
                         _b+=("${lhs}[${BASH_REMATCH[1]}@stable:$_c]${rhs}") 
                     done
@@ -594,7 +593,6 @@ function odsel_init() {
     ODSEL_REGEXP=( ':[{]([^}]*)[}]\]'
                    '([^,]*),'
                    '@([^@]*):([^->]*)->([^->]*)'
-                   '\[([^@{}>,-]*):\{@([^@{}>,-]*)\}\]'
                    '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
                    '\[([^@{}>,-]*):([^@{}>,-]*)\]'
                    '\[([^@{}>,:]*)\]' )
