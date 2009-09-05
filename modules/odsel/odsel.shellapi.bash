@@ -118,6 +118,7 @@ function odsel_scli() {
             _fatal "${FUNCNAME}: could not interpret requested block: ${rhs}"
             ;;
     esac
+    rhs="${rhs%;}"
     case "$_l" in
         *\[*:\{@*)
             [[ $_l =~ ${ODSEL_REGEXP[0]} ]] \
