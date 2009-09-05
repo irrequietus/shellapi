@@ -99,7 +99,7 @@ function odsel_scli() {
     _p="$_l"
     _l="${_l/:*/}"
     _l="${_l/\[*[!:]/}:${_p#*:}"
-    local   lhs="${_l/[*/}" \
+    local   lhs="${_p%[*}" \
             rhs="${_l/*]/}" \
             vhs="${_l#*[}"
     vhs="${vhs%%:*}"
