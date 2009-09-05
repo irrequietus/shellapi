@@ -96,7 +96,7 @@ function __odsel_vsi_p() {
 function odsel_scli() {
     local   _ft="${2:-ODSEL_EXPBLOCK}" \
             _l="${1//[[:space:]]/}" \
-            _c=0 _p= _r= _b=() h
+            _c=0 _p= _r= _b=() h=
     _p="$_l"
     _l="${_l/:*/}"
     i9kgoo_load "$_l" || {
@@ -177,11 +177,7 @@ function odsel_scli() {
                 _fatal "${FUNCNAME}: failed to recognize: $_l"
             ;;
     esac
-    # FIXME: eval expression can substitute after check
-    local _ff="$(mktemp)"
-    printf "${_ft}=(\"%s\" \"\${_b[@]}\")\n" "$h" > $_ff
-    . $_ff
-    rm -rf $_ff
+    eval "${_ft}=(\"$h\" \"\${_b[@]}\")"
 }
 
 #;
