@@ -545,7 +545,7 @@ function odsel_exprseq() {
                 && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
                 || a=("${x/:*/}" "prime")
         a=__i9kg_rcache_$(_hsos "${a[0]}[${a[1]}]")
-    } || a="$2"
+    } || a="__i9kg_rcache_$2"
     local b="$a[0]"
     local h="${!b/ */}" v="${!b/ */}"
     local s=$h
