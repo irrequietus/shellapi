@@ -991,6 +991,18 @@ function odsel_enable() {
 }
 
 #;
+# @desc Check if a pool exists.
+# @ptip $1  pool identifier
+# @retv 0/1
+# @note Commodity function
+#;
+function odsel_ispool() {
+    local x="$(_ifnot_jpath "$1" "${I9KG_POOLSPACE}")"
+    [[ -d $x ]] \
+        && [[ -e $POOL_RELAY_CACHE/xml/$(_hsos "$x").poolconf.xml ]]
+}
+
+#;
 # @desc Create a pool, either within the poolset or at a path of your
 #       option. A function cache is created for the XML description file
 #       as well. If a pool is followed by the [] operator, retrieval of
