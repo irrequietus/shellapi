@@ -96,6 +96,9 @@ function odsel_scli() {
     local   _ft="${2:-ODSEL_EXPBLOCK}" \
             _l="${1//[[:space:]]/}" \
             _c=0 _p= _r= _b=()
+    _p="$_l"
+    _l="${_l/:*/}"
+    _l="${_l/\[*[!:]/}:${_p#*:}"
     local   lhs="${_l/[*/}" \
             rhs="${_l/*]/}" \
             vhs="${_l#*[}"
@@ -539,16 +542,20 @@ function odsel_ispli_repo() {
 #           but as always, the rcache array must be already initialized.
 #;
 function odsel_exprseq() {
-    local x="$1" a r=1 m=0 t=0
+    local x="${1//[[:space:]]/}" a r=1 m=0 t
     [[ -z $2 ]] && {
         [[ "${x/:*/}" =~ ([a-zA-Z0-9_-]*)\[([^[:space:]]*)\] ]] \
                 && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
                 || a=("${x/:*/}" "prime")
         a=__i9kg_rcache_$(_hsos "${a[0]}[${a[1]}]")
     } || a="__i9kg_rcache_$2"
+    t="$x"
+    x="${x/:*/}"
+    x="${x/[*[!:]/}:${t#*:}"
     local b="$a[0]"
     local h="${!b/ */}" v="${!b/ */}"
     local s=$h
+    t=0
     while (($r<$h)); do
         t="$a[$((m=$((r+$(($((h-r))/2))))))]"
         [[ "${!t/ */}" < "$x" ]] && r=$((m+1)) || h=$m
