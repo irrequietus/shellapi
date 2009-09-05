@@ -69,6 +69,7 @@ function __odsel_vsi_p() {
                         x="${y//[[:space:]]/}"
                         y="odsel_$x"
                         _omsg "$(_emph pool): $(odsel_whatis $x) : $z :: $y"
+                        $y "$z"
                     ;;
                 esac
                 ;;
