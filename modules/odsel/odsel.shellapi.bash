@@ -89,15 +89,22 @@ function __odsel_vsi_p() {
 # @desc A practical, odsel group expression expander in bash (component of the future odsel_si)
 #       for multiple, en block odsel expression interpretation during instruction / metadata
 #       navigation in the arrays.
-# @ptip $1  odsel block statement to interpret
-# @ptip $2  array to store the block statement sequence, defaults to ODSEL_EXPBLOCK
+# @ptip $1  odsel block statement to interpret.
+# @ptip $2  array to store the block statement sequence, defaults to ODSEL_EXPBLOCK. First
+#           element is the hash identifier of the target i9kg file.
 #;
 function odsel_scli() {
     local   _ft="${2:-ODSEL_EXPBLOCK}" \
             _l="${1//[[:space:]]/}" \
-            _c=0 _p= _r= _b=()
+            _c=0 _p= _r= _b=() h
     _p="$_l"
     _l="${_l/:*/}"
+    i9kgoo_load "$_l" || {
+        _emsg "${FUNCNAME}: could not load: $_l"
+        return 1
+    }
+    h=($(_odsel_i9kg_header "$_l"))
+    h="${h[2]}"
     _l="${_l/\[*[!:]/}:${_p#*:}"
     local   lhs="${_p%[*}" \
             rhs="${_l/*]/}" \
@@ -172,7 +179,7 @@ function odsel_scli() {
     esac
     # FIXME: eval expression can substitute after check
     local _ff="$(mktemp)"
-    printf "${_ft}=(\"\${_b[@]}\")\n" > $_ff
+    printf "${_ft}=(\"%s\" \"\${_b[@]}\")\n" "$h" > $_ff
     . $_ff
     rm -rf $_ff
 }
@@ -552,7 +559,7 @@ function odsel_exprseq() {
     } || a="__i9kg_rcache_$2"
     t="$x"
     x="${x/:*/}"
-    x="${x/[*[!:]/}:${t#*:}"
+    x="${x/\[*[!:]/}:${t#*:}"
     local b="$a[0]"
     local h="${!b/ */}" v="${!b/ */}"
     local s=$h
