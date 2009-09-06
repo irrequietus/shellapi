@@ -189,10 +189,10 @@ function odsel_scli() {
 # @devs TODO: consider removing _fatal for _emsg semantics with stop on first error.
 #;
 function odsel_xmla() {
-    local   v_sn v_an v_in v_iv t=() c=() k=0 \
+    local   v_sn v_an v_in v_iv t=() c=() k=() \
             v=0 _cn=0 \
             li= p=0 q=0 x \
-            xarray=() _A=() _rvfx=() _pt=() _D=() _NB=() _NR=() _DB=() _DR=() i=0 n=() \
+            xarray=() _A=() _rvfx=() _D=() _NB=() _NR=() _DB=() _DR=() i=0 n=() \
             fnm="${1##*[!/]/}"
             fnm="${fnm/.*/}"
     while read -r li; do
@@ -205,15 +205,15 @@ function odsel_xmla() {
                     || _fatal "${FUNCNAME}: attribute missing in $1: mode"
             ;;
             \</action\>)
-                ((${#_pt[@]})) && {
-                    ((${#c[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:code ${c[@]}")
-                    ((${#t[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:text ${t[@]}")
+                ((${#k[*]})) && {
+                    ((${#c[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:code ${c[*]}")
+                    ((${#t[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:text ${t[*]}")
+                    _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:stream ${k[*]}")
                     _actions+=($p)
-                    _pt=()
                     t=()
                     c=()
+                    k=()
                 }
-                k=0
             ;;
             \<rpli\ */\>)
                 [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
@@ -261,9 +261,8 @@ function odsel_xmla() {
                 q=$((${#xarray[@]}-1))
                 p=${#_rvfx[@]}
                 [[ ${li} == \</code\> ]] \
-                    && c+=($p) \
-                    || t+=($p)
-                _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}(:$((k++)))]:${li:2:4} $p")
+                    && { c+=($p); k+=("c$p"); } \
+                    || { t+=($p); k+=("t$p"); }
                 x="${xarray[$v]//\$/\\\$}"
                 x="${x//\`/\\\`}"
                 _rvfx[$p]="${x//\"/\\\"}"
@@ -273,7 +272,6 @@ function odsel_xmla() {
                    x="${x//\`/\\\`}"
                    _rvfx[$p]="${_rvfx[$p]}$(printf "\n%s" "${x//\"/\\\"}")"
                 done
-                _pt+=("$p")
            ;;
            \<instance\ *)
                 [[  $li =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
