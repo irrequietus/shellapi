@@ -206,9 +206,9 @@ function odsel_xmla() {
             ;;
             \</action\>)
                 ((${#k[*]})) && {
-                    ((${#c[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:code ${c[*]}")
-                    ((${#t[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:text ${t[*]}")
-                    _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:stream ${k[*]}")
+                    #((${#c[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:code ${c[*]}")
+                    #((${#t[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:text ${t[*]}")
+                    _A+=("${v_in}[${v_iv}@${v_sn}:${v_an}] ${k[*]}")
                     _actions+=($p)
                     t=()
                     c=()
@@ -544,31 +544,38 @@ function odsel_ispli_repo() {
 #           but as always, the rcache array must be already initialized.
 #;
 function odsel_exprseq() {
-    local x="${1//[[:space:]]/}" a r=1 m=0 t
+    local x="${1//[[:space:]]/}" a r=1 m=0 t=0 z
     [[ -z $2 ]] && {
         [[ "${x/:*/}" =~ ([a-zA-Z0-9_-]*)\[([^[:space:]]*)\] ]] \
                 && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
                 || a=("${x/:*/}" "prime")
         a=__i9kg_rcache_$(_hsos "${a[0]}[${a[1]}]")
     } || a="__i9kg_rcache_$2"
-    t="$x"
-    x="${x/:*/}"
-    x="${x/\[*[!:]/}:${t#*:}"
+    x="${x#*://}"
+    case "${z:=${x##*\]:}}" in
+        code)   z=t ;;
+        text)   z=c ;;
+        *)  _emsg "${FUNCNAME}: ${1//[[:space:]]/} is not a valid odsel expression"
+            return 1
+            ;;
+    esac
+    x="${x%:*}"
     local b="$a[0]"
     local h="${!b/ */}" v="${!b/ */}"
     local s=$h
-    t=0
     while (($r<$h)); do
         t="$a[$((m=$((r+$(($((h-r))/2))))))]"
         [[ "${!t/ */}" < "$x" ]] && r=$((m+1)) || h=$m
     done
     t="$a[$r]"
-    (($r < $s)) \
-        && [ "${!t/ */}" == "$x" ] \
-        && for x in ${!t#* }; do
-               x="$a[$x+$v]"
-               printf "%s\n" "${!x}"
-           done
+    (($r < $s)) && [ "${!t/ */}" == "$x" ] && {
+        t=(${!t#* })
+        t="${t[@]/$z*/}"
+        for x in $t; do
+            x="$a[${x#?}+$v]"
+            printf "%s\n" "${!x}"
+        done
+    }
 }
 
 #;
