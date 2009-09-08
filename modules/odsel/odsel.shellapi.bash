@@ -184,67 +184,59 @@ function odsel_scli() {
 # @desc Load an i9kg XML file describing the various instances of a "package"
 #       into an array, complete with the dependency query metadata, build
 #       instruction sequences etc. The resulting array is
-# @ptip $1  path to file
-# @ptip $2  a hash identifier or default to ODSEL_XMLA global
-# @devs TODO: consider removing _fatal for _emsg semantics with stop on first error.
+# @ptip $1  The path to the i9kg XML file to process
+# @ptip $2  The array where to store the odsel cache (defaults to ODSEL_XMLA global)
 #;
 function odsel_xmla() {
-    local   v_sn v_an v_in v_iv t=() c=() k=() \
-            v=0 _cn=0 \
-            li= p=0 q=0 x \
-            xarray=() _A=() _rvfx=() _D=() _NB=() _NR=() _DB=() _DR=() i=0 n=() \
-            fnm="${1##*[!/]/}"
-            fnm="${fnm/.*/}"
-    while read -r li; do
-        xarray+=("$li")
-        case "${li}" in
+    local   v_sn= v_an= v_in= v_iv= x= l= \
+            v=0 i=0 p=0 q=0 \
+            t=() c=() k=() y=() r=() n=() \
+            _A=() _D=() _NB=() _NR=() _DB=() _DR=()
+    while read -r l; do
+        y+=("$l")
+        case "$l" in
             \<action\ *)
-                [[  $li =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                [[  $l =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && v_an="${BASH_REMATCH[1]}" \
-                    || _fatal "${FUNCNAME}: attribute missing in $1: mode"
+                    || { _emsg "${FUNCNAME}: attribute missing in $1: mode"; return 1; }
             ;;
             \</action\>)
                 ((${#k[*]})) && {
-                    #((${#c[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:code ${c[*]}")
-                    #((${#t[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:text ${t[*]}")
                     _A+=("${v_in}[${v_iv}@${v_sn}:${v_an}] ${k[*]}")
-                    _actions+=($p)
-                    t=()
-                    c=()
                     k=()
                 }
             ;;
             \<rpli\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && _D[$i]="${_D[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
             ;;
             \<dbld\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && _DB[$i]="${_DB[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
             ;;
             \<drun\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && _DR[$i]="${_DR[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
             ;;
             \<nbld\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && _NB[$i]="${_NB[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
             ;;
             \<nrun\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && _NR[$i]="${_NR[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
             ;;
             \<sequence\ *)
-                [[  $li =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                [[  $l =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && v_sn="${BASH_REMATCH[1]}" \
-                    || _fatal "${FUNCNAME}: attribute missing in $1: variant"
+                    || { _emsg "${FUNCNAME}: attribute missing in $1: variant"; return 1; }
             ;;
             \</instance\>)
                 _D[$i]="${_D[$i]:1}"
@@ -255,46 +247,46 @@ function odsel_xmla() {
                 ((i++))
             ;;
             \<code\> | \<text\>)
-                v=${#xarray[@]}
+                v=${#y[@]}
             ;;
             \</code\> | \</text\>)
-                q=$((${#xarray[@]}-1))
-                p=${#_rvfx[@]}
-                [[ ${li} == \</code\> ]] \
-                    && { c+=($p); k+=("c$p"); } \
-                    || { t+=($p); k+=("t$p"); }
-                x="${xarray[$v]//\$/\\\$}"
+                q=$((${#y[@]}-1))
+                p=${#r[@]}
+                [[ $l == \</code\> ]] \
+                    && k+=("c$p") \
+                    || k+=("t$p")
+                x="${y[$v]//\$/\\\$}"
                 x="${x//\`/\\\`}"
-                _rvfx[$p]="${x//\"/\\\"}"
+                r[$p]="${x//\"/\\\"}"
                 ((v++))
                 for((;v<$q;v++)); do
-                   x="${xarray[$v]//\$/\\\$}"
+                   x="${y[$v]//\$/\\\$}"
                    x="${x//\`/\\\`}"
-                   _rvfx[$p]="${_rvfx[$p]}$(printf "\n%s" "${x//\"/\\\"}")"
+                   r[$p]="${r[$p]}$(printf "\n%s" "${x//\"/\\\"}")"
                 done
            ;;
            \<instance\ *)
-                [[  $li =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                [[  $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && v_iv="${BASH_REMATCH[1]}" \
-                    || _fatal "${FUNCNAME}: attribute missing in $1: version"
-                [[  $li =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    || { _emsg "${FUNCNAME}: attribute missing in $1: version"; return 1; }
+                [[  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && v_in="${BASH_REMATCH[1]}" \
-                    || _fatal "${FUNCNAME}: attribute missing in $1: alias"
+                    || { _emsg "${FUNCNAME}: attribute missing in $1: alias"; return 1; }
                     n="$n$(printf "\n%s" "$v_in[$v_iv]")"
            ;;
         esac
     done< <(_xmlpnseq "$1")
-    _finals=()
+    y=()
     while read -r l; do
-        _finals+=("$l")
+        y+=("$l")
     done< <(for l in ${!_A[@]}; do
                 printf "%s\n" "${_A[$l]}"
             done | sort -k1,1 -t\ )
-    eval "${2:-ODSEL_XMLA}=( \"\$((\${#_finals[@]}+1)) \$((\${#_rvfx[@]}+\${#_finals[@]}+1))\"
-            \"\${_finals[@]}\"
-            \"\${_rvfx[@]}\"
+    eval "${2:-ODSEL_XMLA}=( \"\$((\${#y[@]}+1)) \$((\${#r[@]}+\${#y[@]}+1))\"
+            \"\${y[@]}\"
+            \"\${r[@]}\"
             \"\${n:1}\"
             \"\${_D[@]}\" \"\${_DB[@]}\" \"\${_DR[@]}\" \"\${_NB[@]}\" \"\${_NR[@]}\") "
 }
