@@ -300,7 +300,6 @@ function odsel_xmla() {
 #;
 # @desc Read a file with ppli links and preprocess it
 # @ptip $1  path to file
-# @devs FIXME: _fatal raised is superfluous; move to _emsg
 #;
 function odsel_pppli() {
     local   _pre_l=() \
@@ -311,15 +310,14 @@ function odsel_pppli() {
     _version= \
     _alias= \
     _idf= _cksum= _hpag= \
-    o=0 a=() x= _tagged= k=()
-    QPOOL_RLA=()
+    o=0 a=() x= _tagged= k=() q=()
     while read -r l; do
         case "$l" in
             \<pli\ * | \<pli\ */\>)
             [[  $l =~ [[:space:]]*entry[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                 $l =~ [[:space:]]*entry[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
                     _entry="${BASH_REMATCH[1]}"
-                    [[ -z $_entry ]] && _fatal "${FUNCNAME}: $l"
+                    [[ -z $_entry ]] && { _emsg "${FUNCNAME}: $l has an empty entry?"; return 1; }
                     [[  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                         $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                         && _alias="${BASH_REMATCH[1]}"
@@ -335,10 +333,9 @@ function odsel_pppli() {
                     [[  $l =~ [[:space:]]*idf[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
                         $l =~ [[:space:]]*idf[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                         && _idf="${BASH_REMATCH[1]}" \
-                        || _fatal "${FUNCNAME}: attribute not found: idf"
-            } || _fatal "${FUNCNAME}: entry attribute not found in: $_l"
+                        || { _emsg "${FUNCNAME}: attribute not found: idf"; return 1; }
+            } || { _emsg "${FUNCNAME}: entry attribute not found in: $l"; return 1; }
             [[ $l = */\> ]] && {
-                # we have the tagged attribute now, which means use it
                 _version="${_version:+":$_version"}"
                 b=${#a[@]}
                 a[$((b+$_CHECKSUM))]="$_cksum"
@@ -366,9 +363,9 @@ function odsel_pppli() {
                         _version="snapshot/$_alias$_version"
                         ;;
                 esac
-                QPOOL_RLA+=("$_version $b")
+                q+=("$_version $b")
                 [[ -z $_tagged ]] || {
-                    QPOOL_RLA+=("$_tagged $b")
+                    q+=("$_tagged $b")
                     k+=($b)
                     _tagged=
                 }
@@ -403,7 +400,8 @@ function odsel_pppli() {
                 z=zz
                 ;;
             \<*)
-                _fatal "${FUNCNAME}: unexpected tag in stream: $l"
+                _emsg "${FUNCNAME}: unexpected tag in stream: $l"
+                return 1
                 ;;
             esac
         case "$z" in
@@ -446,7 +444,7 @@ function odsel_pppli() {
                 a[$l]="${a[$l]:1}"
                 _pre_l=()
                 _post_l=()
-                QPOOL_RLA+=("$_version $b")
+                q+=("$_version $b")
             ;;
             zz)
                 break;
@@ -455,17 +453,12 @@ function odsel_pppli() {
     done< <(_xmlpnseq "$1")
     z=0
     while read -r x; do
-        QPOOL_RLA[$((z++))]="$x"
-    done< <(for x in ${!QPOOL_RLA[@]}; do
-                printf "%s\n" "${QPOOL_RLA[$x]}"
+        q[$((z++))]="$x"
+    done< <(for x in ${!q[@]}; do
+                printf "%s\n" "${q[$x]}"
             done | sort -k1,1 -t\|)
     k="${k[@]}"
-    [[ -z $2 ]] \
-        && eval "QPOOL_RLA=(\"\$k\" \"\${QPOOL_RLA[@]}\" \"\${a[@]}\")" \
-        || {
-            eval "$2=(\"\$k\" \"\${QPOOL_RLA[@]}\" \"\${a[@]}\")"
-            QPOOL_RLA=()
-        }
+    eval "${2:-QPOOL_RLA}=(\"\$k\" \"\${q[@]}\" \"\${a[@]}\")"
 }
 
 #;
