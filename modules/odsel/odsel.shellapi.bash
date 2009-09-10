@@ -32,10 +32,10 @@ function odsel_vsi() {
         z="${g[$x]#"$y"}"
         z="${z//[[:space:]]/}"
         case "$y" in
-            new|del|load|dca|nca)
+            new|del|load|delc|newc)
                 case "${z:0:1}" in
                     :)
-                        _omsg "$(_emph implicit): assuming [${y//[[:space:]]/}] is used as i9kg expression prefix (:)"
+                        _omsg "$(_emph implicit): assuming [$y] is used as i9kg expression prefix (:)"
                         _omsg "$(_emph i9kg): ${g[$x]//[[:space:]]/}"
                          odsel_scli "${g[$x]//[[:space:]]/};"
                     ;;
@@ -44,7 +44,7 @@ function odsel_vsi() {
                     *)
                         x="${y//[[:space:]]/}"
                         y="odsel_$x"
-                        _omsg "$(_emph pool): $(odsel_whatis $x) : $z :: $y"
+                        _omsg "$(_emph pool): $(odsel_whatis $x) : $z"
                         $y "$z"
                     ;;
                 esac
@@ -59,6 +59,7 @@ function odsel_vsi() {
             ;;
         esac
     done
+    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
@@ -866,7 +867,7 @@ function odsel_gph() {
 # @desc Enable an odreex pool for use by shellapi
 # @ptip $1  pool relay to activate
 #;
-function odsel_enable() {
+function odsel_load() {
     local x=$(odsel_gph "$1") z
     local y="${2:-__pool_relay_$x}"
     _isfunction "_init_pool_$x" && _init_pool_$x || {
@@ -920,7 +921,7 @@ function odsel_ispool() {
 #       option. A function cache is created for the XML description file
 #       as well. If a pool is followed by the [] operator, retrieval of
 #       the metabase and its processing takes place. The pool gets enabled
-#       on creation (in a way similar to odsel_enable)
+#       on creation (in a way similar to odsel_load)
 # @ptip $1  Comma separated pool list
 #;
 function odsel_new() {
