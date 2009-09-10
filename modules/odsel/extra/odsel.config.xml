@@ -1,7 +1,3 @@
-<bashdata fni="_initglobals_odsel">
-    <var name="POOL_RELAY_STORE">${SHELLAPI_TARGET}/relays</var>
-    <var name="POOL_RELAY_CACHE">${SHELLAPI_TARGET}/relays/cache</var>
-</bashdata>
 <bashdata fni="odsel_presets_all">
     <array name="I9KG_PRESETS" check="ignore">
         <index>configure_pre</index>
