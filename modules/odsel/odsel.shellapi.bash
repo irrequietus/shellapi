@@ -734,55 +734,6 @@ function odsel_uspaceinit() {
 }
 
 #;
-# @desc Initialize a pool relay and create a function cache entry
-# @ptip $1  pool hash identifier
-#;
-function odsel_relay() {
-    local   x y z \
-            _f="${POOL_RELAY_STORE}/$1.poolconf.xml" \
-            _s="${POOL_RELAY_STORE}/$1.poolconf.bash"
-    [[ -z $POOL_RELAYS ]] && POOL_RELAYS=()
-    x=$(_ssbfind POOL_RELAYS "$1") && {
-    # if it is already in the pool relays, just load it up
-        _isfunction "_init_pool_$1" || {
-            . "$_s"  &> /dev/null || {
-                _emsg "${FUNCNAME}: $1 in pool relays, not available in cache"
-                return 1
-            }
-        }
-        _init_pool_$1
-    } || {
-        while read -r z; do
-            POOL_RELAYS[$((y++))]="$z"
-        done< <(POOL_RELAYS+=("$1")
-                for x in ${!POOL_RELAYS[@]}; do
-                    printf "%s\n" "${POOL_RELAYS[$x]}" 
-                done | sort)
-        ! [[ -e $_f ]] && {
-            {
-                printf  "<bashdata fni=\"%s\">\n <array name=\"%s\" check=\"reuse\">\n" \
-                        "_init_pool_$1" "${2:-$1}"
-                for x in ${!I9KG_ALIASES[@]}; do
-                    printf  "  <index name=\"%s\">%s</index>\n" \
-                            "${I9KG_ALIASES[$x]}" \
-                            "\${I9KG_POOLSPACE}${I9KG_PRIME[$x]/${I9KG_POOLSPACE}\/prime//$1}"
-                done
-                printf " </array>\n</bashdata>\n"
-            } > "$_f" 2> /dev/null || {
-                _emsg "${FUNCNAME}: could not create file: $1.poolconf.xml"
-                return 1
-            }
-        } || {
-            _emsg "${FUNCNAME}: file is already here, cannot overwrite: $1.poolconf.xml"
-            return 1
-        }
-        rm -rf "$_s"
-        _xml2bda "$_f" "$_s"
-    }
-    ! ((${#SHELLAPI_ERROR[@]}))
-}
-
-#;
 # @desc The internal event handler for the -> operator for rpli instructions
 # @ptip $@  The array "passed" through _odsel_rpli_i
 #;
