@@ -443,11 +443,20 @@ function odsel_pppli() {
 # @ptip $1  The rpli instruction to process, as passed by odsel_vsi
 #;
 function _odsel_rpli_i() {
-    [[  "$1" =~ ([^=\~\>\<\-]*):\((.*)\)([=\~\>\<\-][\>-])([^=\~\>\<\-]*):\((.*)\) || \
-        "$1" =~ ([^=\~\>\<\-]*):\((.*)\)([=\~\>\<\-][\>-])([^=\~\>\<\-]*) || \
-        "$1" =~ ([^=\~\>\<\-]*)([=\~\>\<\-][\>\<-])([^=\~\>\<\-]*) || \
-        "$1" =~ ([^=\~\>\<\-]*):\((.*)\) || \
-        "$1" =~ ([^=\~\>\<\-]*) ]] && {
+    local x= y="$1"
+    [[ $y = \{*\}* ]] && {
+            x="${y/\}*/}"
+            _split "${x:1}"
+            x="${SPLIT_STRING[*]}"
+            x=${x// /,}
+            x="${x//[()]/}"
+            y="_${y#*\}}"
+    }
+    [[  "$y" =~ ([^=\~\>\<\-]*):\((.*)\)([=\~\>\<\-][\>-])([^=\~\>\<\-]*):\((.*)\) || \
+        "$y" =~ ([^=\~\>\<\-]*):\((.*)\)([=\~\>\<\-][\>-])([^=\~\>\<\-]*) || \
+        "$y" =~ ([^=\~\>\<\-]*)([=\~\>\<\-][\>\<-])([^=\~\>\<\-]*) || \
+        "$y" =~ ([^=\~\>\<\-]*):\((.*)\) || \
+        "$y" =~ ([^=\~\>\<\-]*) ]] && {
             case "$((${#BASH_REMATCH[@]}-1))" in
                 5 | 4)
                     _odsel_${ODSEL_OPRT[$(_opsolve "${BASH_REMATCH[3]}")]} \
@@ -458,7 +467,7 @@ function _odsel_rpli_i() {
                     ;;
                 3)
                     _odsel_${ODSEL_OPRT[$(_opsolve "${BASH_REMATCH[2]}")]} \
-                        ${BASH_REMATCH[1]} "" ${BASH_REMATCH[3]} "" || {
+                        ${x:-${BASH_REMATCH[1]}} "" ${BASH_REMATCH[3]} "" || {
                         _emsg "${FUNCNAME}: $1 : is not a valid expression"
                         return 1
                     }
@@ -733,10 +742,11 @@ function _odsel_pm() {
     esac
     ((${#SHELLAPI_ERROR[@]})) \
         && return 1
+    _split "${x[0]}"
     case "$y" in
         \$|pristine|'')
             _ckmsg "requested to put into pristine"
-             y="pristine/${x[0]}:${x[1]}"
+             y=("${SPLIT_STRING[@]/#/pristine/}")
             ;;
         \&|snapshot)
             _ckmsg "requested to make a snapshot"
@@ -748,9 +758,11 @@ function _odsel_pm() {
             ;;
         %|clone)
             _ckmsg "creating a clone of the repository"
-            y="clone/${x[0]}"
+            y=("${SPLIT_STRING[@]/#/clone/}")
             ;;
     esac
+    y="${y[@]}"
+    y="${y// /,}"
     [[ -z $y ]] \
         && _wmsg "operation valid but not active yet" \
         || odsel_getfn "$y"
