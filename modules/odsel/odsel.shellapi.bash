@@ -464,7 +464,8 @@ function _odsel_rpli_i() {
                     }
                     ;;
                 2 | 1)
-                    _decoy_this "${FUNCNAME}: single block instruction?"
+                    _emsg "single block instruction error"
+                    return 1
                     ;;
                 *) ;;
             esac
@@ -1152,9 +1153,6 @@ function odsel_iassign() {
         && s="${I9KG_PRIME[$_PRISTINE]}/$1" \
         || s="${1}"
     case "$s" in
-        pool\:* | pool\[*)
-            _fatal "${FUNCNAME}: inter - pool operations are currently reserved: $s"
-            ;;
         *.tar.bz2 | *.tbz)  x="bzip2 -dc" ;;
         *.tar.gz | *.tgz)   x="gzip -dc"  ;;
         *.tar.lzma)         x="lzma -dc"  ;;
@@ -1184,8 +1182,8 @@ function odsel_iassign() {
     }
     odsel_targuess "$t" || _fatal
     [[ $x == snap ]] \
-        && POOL_REPORT="@://snapshot/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]#*.}" \
-        || POOL_REPORT="@://payload/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]}"
+        && POOL_REPORT="snapshot/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]#*.}" \
+        || POOL_REPORT="payload/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]}"
     POOL_REPORT=("$POOL_REPORT" "${POOL_TARGUESS[1]}" "${POOL_TARGUESS[4]}")
 }
 
