@@ -605,7 +605,6 @@ function odsel_init() {
                    '\[([^@{}>,-]*):([^@{}>,-]*)\]'
                    '\[([^@{}>,:]*)\]' )
     ODSEL_OPRT=()
-    ODSEL_OPRT[$(_opsolve ">>")]="mm"
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
     ODSEL_OPRT[$(_opsolve "<-")]="lm"
@@ -826,26 +825,6 @@ function _odsel_pm() {
     [[ -z $y ]] \
         && _wmsg "operation valid but not active yet" \
         || odsel_getfn "$y"
-}
-
-#;
-# @desc internal event handler for the >> operator
-# @devs FIXME
-#;
-function _odsel_mm() {
-    local x="$1" y="$2"
-    case "$x" in
-        \[*\])
-            [[ $y =~ \&([^0-9][a-zA-Z0-9-]*) ]] && {
-                x="${x%?}"
-                x="${x:1}"
-                odsel_enable "${x-prime}" "${BASH_REMATCH[1]}"
-                #&& eval "${BASH_REMATCH[1]}[$_RPLI]=_pool_rcache_\${${BASH_REMATCH[1]}[$_RHID]}"
-            }
-        ;;
-        *)
-        ;;
-    esac
 }
 
 #;
