@@ -17,34 +17,10 @@
 # along with shellapi. If not, see <http://www.gnu.org/licenses/>.
 
 #;
-# @desc An odsel interpreter in pure GNU bash (3.x, 4.x compatible)
-# @ptip $1 A valid odsel expression
-#;
-function odsel_si() {
-    local x
-    odsel_expr "$1"
-    for x in ${!ODSEL_EXPR[@]}; do
-        x="${ODSEL_EXPR[$x]}"
-        case "${x:0:1}" in
-            @)
-                _odsel_rpli_i "${x:1}"
-            ;;
-            [[:alpha:]])
-                _odsel_i9kg_i "$x"
-            ;;
-            *)
-                _emsg "${FUNCNAME}: invalid expression"
-                return 1
-            ;;
-        esac
-    done
-}
-
-#;
 # @desc odsel_vsi prototype (to deprecate ununified means)
 # @ptip $1  A valid odsel expression
 #;
-function __odsel_vsi_p() {
+function odsel_vsi() {
     _bsplit "${1}" \; || {
         _emsg "${FUNCNAME}: cannot parse expression"
         return 1
@@ -86,7 +62,7 @@ function __odsel_vsi_p() {
 }
 
 #;
-# @desc A practical, odsel group expression expander in bash (component of the future odsel_si)
+# @desc A practical, odsel group expression expander in bash (component of the future odsel_vsi)
 #       for multiple, en block odsel expression interpretation during instruction / metadata
 #       navigation in the arrays.
 # @ptip $1  odsel block statement to interpret.
@@ -463,7 +439,7 @@ function odsel_pppli() {
 
 #;
 # @desc The odsel rpli instruction decoy
-# @ptip $1  The rpli instruction to process, as passed by odsel_si
+# @ptip $1  The rpli instruction to process, as passed by odsel_vsi
 #;
 function _odsel_rpli_i() {
     [[  "$1" =~ ([^=\~\>\<\-]*):\((.*)\)([=\~\>\<\-][\>-])([^=\~\>\<\-]*):\((.*)\) || \
@@ -496,7 +472,7 @@ function _odsel_rpli_i() {
 
 #;
 # @desc The odsel i9kg instruction decoy
-# @ptip $1  The i9kg instruction to process, as passed by odsel_si
+# @ptip $1  The i9kg instruction to process, as passed by odsel_vsi
 #;
 function _odsel_i9kg_i() {
     _decoy_this "${FUNCNAME}: processing an i9kg instruction"
