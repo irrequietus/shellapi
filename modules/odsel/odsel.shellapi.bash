@@ -556,8 +556,8 @@ function odsel_whatis() {
         new)  x="creating a new pool"   ;;
         del)  x="erasing from poolset"  ;;
         load) x="loading pool"          ;;
-        nca)  x="caching"               ;;
-        dca)  x="deleting cache"        ;;
+        newc) x="caching"               ;;
+        delc) x="deleting cache"        ;;
         '')                             ;;
         *)    x="unknown"               ;;
     esac
@@ -1213,8 +1213,15 @@ function odsel_xmlputs() {
 # @desc Performs Complete function cache removal for relays
 # @ptip $1  hash id for the relay cache function
 #;
-function odsel_rrfcache() {
-    rm -rf "${POOL_RELAY_CACHE}/functions/${1:-*}.poolconf.bash"
+function odsel_delc() {
+    local x="${1:-prime}" y=$(odsel_gph "${1:-prime}")
+    . "$POOL_RELAY_CACHE/functions/$y.poolconf.bash" &> /dev/null && {
+        _isfunction "_init_pool_$y" && {
+            _init_pool_$y
+            y="__pool_relay_$y[$_FCACHE]"
+            ! [[ -z ${!y} ]] && rm -rf "${!y}"/*.bash
+        }
+    }
 }
 
 #;
