@@ -777,21 +777,6 @@ function _odsel_() {
 }
 
 #;
-# @desc Expand an ungrouped odsel expression
-#;
-function odsel_expand() {
-    [[ $1 =~ @\[([a-zA-Z0-9-]*)\]://(snapshot|clone|pristine)/(.*) ]] && {
-        local   x="__pool_relay_$(odsel_gph "${BASH_REMATCH[1]:-prime}")[$_RPLI]" \
-                vpool="${BASH_REMATCH[1]:-prime}" \
-                vsection=${BASH_REMATCH[2]} \
-                vexp="${BASH_REMATCH[3]}"
-        [[ $vexp =~ ([a-zA-Z0-9-]*):\((.*)\) ]] && {
-            _odsel_${VERSION_OPERATORS[$(_opsolve "${BASH_REMATCH[2]:0:2}")]}
-        } || odsel_getfn "$vsection/$vexp" "${!x}"
-    }
-}
-
-#;
 # @desc Decide the target of a retrieved resource
 # @ptip $1  The pli link identifying the resource within a pool
 # @ptip $2  Hash identifier for the pool of the resource, defaults
