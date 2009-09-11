@@ -1185,26 +1185,6 @@ function odsel_iassign() {
 }
 
 #;
-# @desc Create an rpli link out of a tarball
-# @ptip $1  tarball to process
-# @warn FIXME: minor annoyances
-#;
-function odsel_xmlputs() {
-    odsel_targuess "$1" && {
-    printf "<block alias=\"%s\" hpage=\"?\">
-    <rpli
-        entry=\"%s\"
-        version=\"%s\"
-        idf=\"%s\"
-        sha1sum=\"%s\"/>\n</block>\n" \
-        ${POOL_TARGUESS[@]}
-    } || {
-        _emsg "${FUNCNAME}: failed for: $1"
-        return 1
-    }
-}
-
-#;
 # @desc Performs Complete function cache removal for relays
 # @ptip $1  hash id for the relay cache function
 #;
