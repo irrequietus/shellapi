@@ -707,7 +707,7 @@ function _init() {
         && _fatal "${FUNCNAME}: home not set"
     export LC_ALL=C
     SHCORE_START=$(_dtfs)
-    SHCORE_VERSION="0.x-pre2"
+    SHCORE_VERSION="0.x-pre3"
     _VERSTR=(alpha beta rc)
     SHELLAPI_MODULES_DIR="${SHELLAPI_HOME}/modules"
     SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}
