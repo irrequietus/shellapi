@@ -32,7 +32,7 @@ function odsel_vsi() {
         z="${g[$x]#"$y"}"
         z="${z//[[:space:]]/}"
         case "$y" in
-            new|del|load|delc|newc)
+            new|del|load|delc|newc|sim)
                 case "${z:0:1}" in
                     :)
                         _omsg "$(_emph implicit): assuming [$y] is used as i9kg expression prefix (:)"
@@ -53,10 +53,10 @@ function odsel_vsi() {
                 y="${g[$x]//[[:space:]]/}"
                 _omsg "$(_emph rpli): $y"
                 _odsel_rpli_i "${y:1}"
-            ;;
+                ;;
             *://*)
                 _odsel_i9kg_i "${g[$x]//[[:space:]]/};"
-            ;;
+                ;;
         esac
         ((${#SHELLAPI_ERROR[@]})) && return 1 || :
     done
@@ -906,6 +906,30 @@ function odsel_load() {
             _cmsg "@[$1]: caching complete  : $(_dotstr "$x")"
         fi
     }
+}
+
+#;
+# @desc Simulation handler
+# @ptip $1  pool identifier
+#;
+function odsel_sim() {
+    [[ -z $1 ]] && {
+        _emsg "${FUNCNAME}: pool identifier not set"
+        return 1
+    }
+    local x=
+    _split "$1"
+    for x in ${SPLIT_STRING[@]}; do
+        odsel_ispool "$x" && {
+            _emsg "${FUNCNAME}: cannot run a simulation on an already existing pool"
+            break
+        } || {
+            odsel_new "${x}[]" \
+                && i9kgoo_sim_metabase_xml "$x" \
+                || break
+        }
+    done
+    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
