@@ -37,7 +37,7 @@ function odsel_vsi() {
                     :)
                         _omsg "$(_emph implicit): assuming [$y] is used as i9kg expression prefix (:)"
                         _omsg "$(_emph i9kg): ${g[$x]//[[:space:]]/}"
-                         odsel_scli "${g[$x]//[[:space:]]/};"
+                        _odsel_i9kg_i "${g[$x]//[[:space:]]/};"
                     ;;
                     '')
                     ;;
@@ -55,7 +55,7 @@ function odsel_vsi() {
                 _odsel_rpli_i "${y:1}"
             ;;
             *://*)
-                odsel_scli "${g[$x]//[[:space:]]/};"
+                _odsel_i9kg_i "${g[$x]//[[:space:]]/};"
             ;;
         esac
         ((${#SHELLAPI_ERROR[@]})) && return 1 || :
@@ -486,7 +486,13 @@ function _odsel_rpli_i() {
 # @ptip $1  The i9kg instruction to process, as passed by odsel_vsi
 #;
 function _odsel_i9kg_i() {
-    _decoy_this "${FUNCNAME}: processing an i9kg instruction"
+    odsel_scli "${1//[[:space:]]/}" && {
+        local x=${ODSEL_EXPBLOCK[0]} y
+        unset ODSEL_EXPBLOCK[0]
+        for y in ${!ODSEL_EXPBLOCK[@]}; do
+            odsel_exprseq "${ODSEL_EXPBLOCK[$y]}" $x || return 1
+        done
+    }
 }
 
 #;
@@ -518,7 +524,7 @@ function odsel_ispli_repo() {
 #       or text or whatever it refers to, for the pool it refers to and the
 #       i9kg file containing the particular instance it has been mapped for.
 # @ptip $1  odsel expression
-# @ptip $@  i9kg rcache hash identifier it requires; may deduce it on its own
+# @ptip $2  i9kg rcache hash identifier it requires; may deduce it on its own
 #           but as always, the rcache array must be already initialized.
 #;
 function odsel_exprseq() {
