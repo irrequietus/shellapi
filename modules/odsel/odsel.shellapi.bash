@@ -1139,49 +1139,85 @@ fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
 # @desc Transform a directory or any tarball into a tarball with the default payload
 #       option, putting it into [snapshots] or [payload] directory by default, or
 #       storing it at a specified, existing path in the filesystem.
-# @ptip $1  A filesystem path or a pool instruction
-# @ptip $2  A valid fileystem path to output the result of the operations
-# @devs FIXME: remove [prime] exclusive linking
+# @ptip $1  A valid filesystem path (file or directory)
+# @ptip $2  A valid filesystem path where to store the result or a [] enclosed pool
+#           identifier. This identifier is used to deduce payload, snapshot directories;
+#           in all other scenarios, gets treated as a plain path.
 #;
-function odsel_iassign() {
-    local s x t
-    POOL_REPORT=()
-    [[ ${1#*/} == $1 && ${1:0:1} != . ]] \
-        && s="${I9KG_PRIME[$_PRISTINE]}/$1" \
-        || s="${1}"
-    case "$s" in
-        *.tar.bz2 | *.tbz)  x="bzip2 -dc" ;;
-        *.tar.gz | *.tgz)   x="gzip -dc"  ;;
-        *.tar.lzma)         x="lzma -dc"  ;;
-        */*)
-            ! [[ -d $s ]] \
-                && _emsg "${FUNCNAME}: a snapshot was requested, for a non - existing filepath:$s" \
-                && return 1
+function odsel_recoil() {
+    local x="$1" y="${2:-[prime]}" z= r= s= t=
+    POOL_REPORT=() POOL_TARGUESS=()
+    case "$y" in
+        \[*\] | '')
+            y=${y:1:$((${#y}-2))}
+            z=$(odsel_gph "$y")
+            r="__pool_relay_$z[$_PAYLOAD]"
+            s="__pool_relay_$z[$_SNAPSHOTS]"
+            s="${!s}"; r="${!r}"; z=
             ;;
-         *)
-            _emsg "${FUNCNAME}: unrecognizable error in: $s"
-            return 1
-         ;;
+        *)
+            [[ -d $y ]] || {
+                _emsg "${FUNCNAME}: not a valid directory: $y"
+                return 1
+            }
+            s="$y"; r="$y"
+            ;;
     esac
-    [[ -z $x ]] && {
-        t="${2:-${I9KG_PRIME[$_SNAPSHOTS]}}/${s##*/}-snapshot.$(_dtff).tar.${SHELLAPI_PAYLOAD//[ip]/}"
-        {
-            pushd "${s%/*}" > /dev/null
-            tar cf - "${s##*/}" | ${SHELLAPI_PAYLOAD} --best -c - > "$t"
-            popd > /dev/null
-        } 2>/dev/null || _emsg "${FUNCNAME}: could not perform conversion for: $1"
+    case "$x" in
+        *.tar.bz2 | *.tbz)  z="bzip2 -dc" ;;
+        *.tar.gz | *.tgz)   z="gzip -dc"  ;;
+        *.tar.lzma)         z="lzma -dc"  ;;
+        *)
+            [[ -d $x ]] || {
+                _emsg "${FUNCNAME}: directory does not exist: $s"
+                return 1
+            }
+        ;;
+    esac
+    ! [[ -z $z ]] && {
+        [[ -e $x ]] && {
+            t="${1##*/}"
+            t="$r/${t%.t*}.tar.${SHELLAPI_PAYLOAD//[ip]/}"
+            _omsg "payload: $x -> ${t##*/}"
+            {
+                $z "$x" | $SHELLAPI_PAYLOAD --best > "$t"
+            } &> /dev/null || {
+                _emsg "conversion failed: $x"
+                return 1
+            }
+        } || {
+            [[ -d $x ]] \
+                && _emsg "${FUNCNAME}: directory to consider as file?: $x"
+            _emsg "${FUNCNAME}: file does not exist: $x"
+            return 1
+        }
     } || {
-        t="${s##*/}"
-        t="${2:-${I9KG_PRIME[$_PAYLOAD]}}/${t%.t*}.tar.${SHELLAPI_PAYLOAD//[ip]/}"
-        {
-            $x "$s" | $SHELLAPI_PAYLOAD --best > "$t"
-        } 2>/dev/null || _emsg "${FUNCNAME}: could not perform conversion for: $1"
+        [[ -d $x ]] && {
+            t="$s/${x##*/}-snapshot.$(_dtff).tar.${SHELLAPI_PAYLOAD//[ip]/}"
+            _omsg "snapshot: $x -> ${t##*/}"
+            {
+                pushd "${x%/*}"
+                [[ ${x##*/} = $x ]] && x="."
+                tar cf - "${x##*/}" | ${SHELLAPI_PAYLOAD} --best -c - > "$t"
+                popd
+            } &> /dev/null || {
+                _emsg "${FUNCNAME}: could not perform conversion for: $1"
+                return 1
+            }
+        } || {
+            _emsg "${FUNCNAME}: directory does not exist: $x"
+            return 1
+        }
     }
-    odsel_targuess "$t" || _fatal
-    [[ $x == snap ]] \
-        && POOL_REPORT="snapshot/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]#*.}" \
-        || POOL_REPORT="payload/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]}"
-    POOL_REPORT=("$POOL_REPORT" "${POOL_TARGUESS[1]}" "${POOL_TARGUESS[4]}")
+    odsel_targuess "$t" && {
+        [[ -z $x ]] \
+            && POOL_REPORT="snapshot/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]#*.}" \
+            || POOL_REPORT="payload/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]}"
+        POOL_REPORT=("$POOL_REPORT" "${POOL_TARGUESS[1]}" "${POOL_TARGUESS[4]}")
+    } || {
+        _emsg "${FUNCNAME}: tar guessing failed"
+        return 1
+    }
 }
 
 #;
