@@ -17,109 +17,464 @@
 # along with shellapi. If not, see <http://www.gnu.org/licenses/>.
 
 #;
-# @desc Expand a rpli metalink into the actual retrieval expression
-# @ptip $1  rpli metalink
+# @desc odsel_vsi prototype (to deprecate ununified means)
+# @ptip $1  A valid odsel expression
 #;
-function odsel_ifetch() {
-    local e
-    case "$1" in
-        http\://* | \
-        ftp\://* | \
-        https\://*)
-            e="${POOL_DGET} $1"
+function odsel_vsi() {
+    _bsplit "${1}" \; || {
+        _emsg "${FUNCNAME}: cannot parse expression"
+        return 1
+    }
+    local x y z
+    local g=("${SPLIT_STRING[@]}")
+    for x in ${!g[@]}; do
+        y="${g[$x]/[[:space:]]*/}"
+        z="${g[$x]#"$y"}"
+        z="${z//[[:space:]]/}"
+        case "$y" in
+            new|del|load|delc|newc)
+                case "${z:0:1}" in
+                    :)
+                        _omsg "$(_emph implicit): assuming [$y] is used as i9kg expression prefix (:)"
+                        _omsg "$(_emph i9kg): ${g[$x]//[[:space:]]/}"
+                         odsel_scli "${g[$x]//[[:space:]]/};"
+                    ;;
+                    '')
+                    ;;
+                    *)
+                        x="${y//[[:space:]]/}"
+                        y="odsel_$x"
+                        _omsg "$(_emph pool): $(odsel_whatis $x) : $z"
+                        $y "$z"
+                    ;;
+                esac
+                ;;
+            @*)
+                y="${g[$x]//[[:space:]]/}"
+                _omsg "$(_emph rpli): $y"
+                _odsel_rpli_i "${y:1}"
             ;;
-        git\://http\://* | \
-        git\:https\://*)
-            e="git clone ${1#git\://}"
-            ;;
-        git\://*)
-            e="git clone $1"
-            ;;
-        svn\://http\://* | \
-        svn\://https\://*)
-            e="svn co ${1#svn\://}"
-            ;;
-        svn\://*)
-            e="svn co $1"
-            ;;
-        hg\://*)
-            e="hg clone $1"
-            ;;
-        cvs\://*)
-            e="cvs -z9 -d:pserver:${1#cvs\://}"
-            ;;
-        bzr\://http\://* | \
-        bzr\://https\://*)
-            e="bzr branch ${1#bzr\://}"
-            ;;
-        bzr\://*)
-            e="bzr branch $1"
-            ;;
-        *)
-            _isfunction "_odsel_handler_${1/:\/\/*/}" \
-                && e=$(_odsel_handler_${1/:\/\/*/} "$1") \
-                || return 1
-            ;;
-    esac
-    printf "%s\n" "$e"
-    ! ((${#SHELLAPI_ERRORS[@]}))
-}
-
-#;
-# @desc Update a clone
-# @devs FIXME import implementation
-#;
-function odsel_clone_update() {
-    _wmsg "${FUNCNAME}: under implementation, reserved"
-}
-
-#;
-# @desc An odsel interpreter in pure GNU bash (3.x, 4.x compatible)
-# @ptip $1 A valid odsel expression
-#;
-function odsel_si() {
-    local x
-    odsel_expr "$1"
-    for x in ${!ODSEL_EXPR[@]}; do
-        x="${ODSEL_EXPR[$x]}"
-        case "${x:0:1}" in
-            @)
-                _odsel_rpli_i "${x:1}"
-            ;;
-            [[:alpha:]])
-                _odsel_i9kg_i "$x"
-            ;;
-            *)
-                _emsg "${FUNCNAME}: invalid expression"
-                return 1
+            *://*)
+                odsel_scli "${g[$x]//[[:space:]]/};"
             ;;
         esac
     done
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
+# @desc A practical, odsel group expression expander in bash (component of the future odsel_vsi)
+#       for multiple, en block odsel expression interpretation during instruction / metadata
+#       navigation in the arrays.
+# @ptip $1  odsel block statement to interpret.
+# @ptip $2  array to store the block statement sequence, defaults to ODSEL_EXPBLOCK. First
+#           element is the hash identifier of the target i9kg file.
+#;
+function odsel_scli() {
+    local   _ft="${2:-ODSEL_EXPBLOCK}" \
+            _l="${1//[[:space:]]/}" \
+            _c=0 _p= _r= _b=() h=
+    _p="$_l"
+    _l="${_l/:*/}"
+    i9kgoo_load "$_l" || {
+        _emsg "${FUNCNAME}: could not load: $_l"
+        return 1
+    }
+    h=($(_odsel_i9kg_header "$_l"))
+    h="${h[2]}"
+    _l="${_l/\[*[!:]/}:${_p#*:}"
+    local   lhs="${_p%[*}" \
+            rhs="${_l/*]/}" \
+            vhs="${_l#*[}"
+    vhs="${vhs%%:*}"
+    case "${rhs:1}" in
+        install\; | install\(*\)\;)
+            odsel_presets_install
+            ;;
+        remove\; | remove\(*\)\;)
+            odsel_presets_remove
+            ;;
+        code\; | code\(*\)\; | \
+        text\; | text\(*\)\;)
+            odsel_presets_all
+            ;;
+        *)
+            _fatal "${FUNCNAME}: could not interpret requested block: ${rhs}"
+            ;;
+    esac
+    rhs="${rhs%;}"
+    case "$_l" in
+        *\[*:\{@*)
+            [[ $_l =~ ${ODSEL_REGEXP[0]} ]] \
+                && _l="${BASH_REMATCH[1]}," \
+                || _fatal "${FUNCNAME}: could not intepret: $_l"
+            while [[ $_l =~ ${ODSEL_REGEXP[1]}  ]]; do
+                _p="${BASH_REMATCH[1]}"
+                case "$_p" in
+                    *-\>*)
+                        _r="${I9KG_PRESETS[@]}"
+                        [[ $_p =~ ${ODSEL_REGEXP[2]} ]] && {
+                            _r="${_r#*${BASH_REMATCH[2]/(*/}}"
+                            _r="${_r%${BASH_REMATCH[3]/(*/}*}"
+                            _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]${rhs}")
+                            for _c in ${_r}; do
+                                 _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:$_c]${rhs}") 
+                            done
+                             _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]${rhs}")
+                        }
+                    ;;
+                    *\>*)
+                        _fatal "${FUNCNAME}: incorrect syntax"
+                    ;;
+                    *)
+                         _b+=("${lhs}[${vhs}${BASH_REMATCH[1]}]${rhs}")
+                    ;;
+                esac
+                _l=${_l#*"$_p",}
+            done
+            ;;
+        *\[*@*:*)
+                [[ $_l =~ ${ODSEL_REGEXP[3]} ]] \
+                    &&   _b+=("${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}") \
+                    || _fatal "${FUNCNAME}: failed to recognize: $_l"
+            ;;
+        *\[*:*\]*)
+                [[ $_l =~ ${ODSEL_REGEXP[4]} ]] \
+                    &&  _b+=("${lhs}[${BASH_REMATCH[1]}@stable:${BASH_REMATCH[2]}]${rhs}") \
+                    || _fatal "${FUNCNAME}: failed to recognize: $_l"
+            ;;
+        *\[*\]*)
+                [[ $_l =~ ${ODSEL_REGEXP[5]} ]] && {
+                    for _c in ${I9KG_PRESETS[@]}; do
+                        _b+=("${lhs}[${BASH_REMATCH[1]}@stable:$_c]${rhs}") 
+                    done
+                } || _fatal "${FUNCNAME}: failed to recognize: $_l"
+            ;;
+            *)
+                _fatal "${FUNCNAME}: failed to recognize: $_l"
+            ;;
+    esac
+    eval "${_ft}=(\"$h\" \"\${_b[@]}\")"
+}
+
+#;
+# @desc Load an i9kg XML file describing the various instances of a "package"
+#       into an array, complete with the dependency query metadata, build
+#       instruction sequences etc. The resulting array is
+# @ptip $1  The path to the i9kg XML file to process
+# @ptip $2  The array where to store the odsel cache (defaults to ODSEL_XMLA global)
+#;
+function odsel_xmla() {
+    local   v_sn= v_an= v_in= v_iv= x= l= \
+            v=0 i=0 p=0 q=0 \
+            t=() c=() k=() y=() r=() n=() \
+            _A=() _D=() _NB=() _NR=() _DB=() _DR=()
+    while read -r l; do
+        y+=("$l")
+        case "$l" in
+            \<code\> | \<text\>)
+                v=${#y[@]}
+                ;;
+            \</code\> | \</text\>)
+                q=$((${#y[@]}-1))
+                p=${#r[@]}
+                [[ $l == \</code\> ]] \
+                    && k+=("c$p") \
+                    || k+=("t$p")
+                x="${y[$v]//\$/\\\$}"
+                x="${x//\`/\\\`}"
+                r[$p]="${x//\"/\\\"}"
+                ((v++))
+                for((;v<$q;v++)); do
+                    x="${y[$v]//\$/\\\$}"
+                    x="${x//\`/\\\`}"
+                    r[$p]="${r[$p]}$(printf "\n%s" "${x//\"/\\\"}")"
+                done
+                ;;
+            \<action\ *)
+                [[  $l =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && v_an="${BASH_REMATCH[1]}" \
+                    || { _emsg "${FUNCNAME}: attribute missing in $1: mode"; return 1; }
+                ;;
+            \</action\>)
+                ((${#k[*]})) && {
+                    _A+=("${v_in}[${v_iv}@${v_sn}:${v_an}] ${k[*]}")
+                    k=()
+                }
+                ;;
+            \<instance\ *)
+                [[  $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && v_iv="${BASH_REMATCH[1]}" \
+                    || { _emsg "${FUNCNAME}: attribute missing in $1: version"; return 1; }
+                [[  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && v_in="${BASH_REMATCH[1]}" \
+                    || { _emsg "${FUNCNAME}: attribute missing in $1: alias"; return 1; }
+                    n="$n$(printf "\n%s" "$v_in[$v_iv]")"
+                ;;
+            \<rpli\ */\>)
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && _D[$i]="${_D[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                ;;
+            \<dbld\ */\>)
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && _DB[$i]="${_DB[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                ;;
+            \<drun\ */\>)
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && _DR[$i]="${_DR[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                ;;
+            \<nbld\ */\>)
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && _NB[$i]="${_NB[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                ;;
+            \<nrun\ */\>)
+                [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && _NR[$i]="${_NR[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                ;;
+            \<sequence\ *)
+                [[  $l =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
+                ||  $l =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && v_sn="${BASH_REMATCH[1]}" \
+                    || { _emsg "${FUNCNAME}: attribute missing in $1: variant"; return 1; }
+                ;;
+            \</instance\>)
+                _D[$i]="${_D[$i]:1}"
+                _DB[$i]="${_DB[$i]:1}"
+                _DR[$i]="${_DR[$i]:1}"
+                _NB[$i]="${_NB[$i]:1}"
+                _NR[$i]="${_NR[$i]:1}"
+                ((i++))
+                ;;
+            \</sequence\> | \<i9kg\ * | \</i9kg\> | \<materials\> | \</materials\>) ;;
+            \<*)
+                _emsg "${FUNCNAME}: invalid i9kg XML : $l"
+                _emsg "${FUNCNAME}: invalid i9kg file: $1"
+                return 1
+                ;;
+        esac
+    done< <(_xmlpnseq "$1")
+    y=()
+    while read -r l; do
+        y+=("$l")
+    done< <(for l in ${!_A[@]}; do
+                printf "%s\n" "${_A[$l]}"
+            done | sort -k1,1 -t\ )
+    eval "${2:-ODSEL_XMLA}=( \"\$((\${#y[@]}+1)) \$((\${#r[@]}+\${#y[@]}+1))\"
+            \"\${y[@]}\"
+            \"\${r[@]}\"
+            \"\${n:1}\"
+            \"\${_D[@]}\" \"\${_DB[@]}\" \"\${_DR[@]}\" \"\${_NB[@]}\" \"\${_NR[@]}\") "
+}
+
+#;
+# @desc Read a file with ppli links and preprocess it
+# @ptip $1  path to file
+#;
+function odsel_pppli() {
+    local   _pre_l=() \
+    _pos_l=() l \
+    z=0 \
+    _entry= \
+    _updt_target= \
+    _version= \
+    _alias= \
+    _idf= _cksum= _hpag= \
+    o=0 a=() x= _tagged= k=() q=()
+    while read -r l; do
+        case "$l" in
+            \<pli\ * | \<pli\ */\>)
+            [[  $l =~ [[:space:]]*entry[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
+                $l =~ [[:space:]]*entry[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
+                    _entry="${BASH_REMATCH[1]}"
+                    [[ -z $_entry ]] && { _emsg "${FUNCNAME}: $l has an empty entry?"; return 1; }
+                    [[  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
+                        $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                        && _alias="${BASH_REMATCH[1]}"
+                    [[  $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
+                        $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                        && _version="${BASH_REMATCH[1]}"
+                    [[  $l =~ [[:space:]]*sha1sum[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
+                        $l =~ [[:space:]]*sha1sum[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                        && _cksum="${BASH_REMATCH[1]}"
+                    [[  $l =~ [[:space:]]*tagged[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
+                        $l =~ [[:space:]]*tagged[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                        && _tagged="${BASH_REMATCH[1]}"
+                    [[  $l =~ [[:space:]]*idf[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
+                        $l =~ [[:space:]]*idf[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                        && _idf="${BASH_REMATCH[1]}" \
+                        || { _emsg "${FUNCNAME}: attribute not found: idf"; return 1; }
+            } || { _emsg "${FUNCNAME}: entry attribute not found in: $l"; return 1; }
+            [[ $l = */\> ]] && {
+                _version="${_version:+":$_version"}"
+                b=${#a[@]}
+                a[$((b+$_CHECKSUM))]="$_cksum"
+                a[$((b+$_HPAGE))]="$_hpag"
+                a[$((b+$_ENTRY))]="$_entry"
+                a[$((b+$_PREGET))]=""
+                a[$((b+$_POSTGET))]=""
+                a[$((b+$_UPDATE))]=""
+                case "$_idf" in
+                    primary)
+                        odsel_ispli_repo "$_entry" \
+                            && _version="clone/$_alias$_version|0" \
+                            || {
+                                _version="pristine/$_alias$_version|0"
+                                [[ -z $_tagged ]] \
+                                    || _tagged="pristine/$_alias|0"
+                               }
+                    ;;
+                    mirror)
+                        odsel_ispli_repo "$_entry" \
+                            && _version="clone/$_alias$_version|1" \
+                            || _version="pristine/$_alias$_version|1"
+                    ;;
+                    snapshot)
+                        _version="snapshot/$_alias$_version"
+                        ;;
+                esac
+                q+=("$_version $b")
+                [[ -z $_tagged ]] || {
+                    q+=("$_tagged $b")
+                    k+=($b)
+                    _tagged=
+                }
+                _cksum=
+                _version=
+            } && continue
+            ;;
+            \<preget\>)   z=${_PREGET} ;;
+            \<postget\>)  z=${_POSTGET} ;;
+            \<update\ *)
+                z=${_UPDATE}
+                [[  $l =~ [[:space:]]*target[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
+                    $l =~ [[:space:]]*target[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && _updt_target="${BASH_REMATCH[1]}"
+                ;;
+            \</update\>)  z=; _updt_l[0]="cd ${updt_target:=.}" ;;
+            \</preget\> | \</postget\>) z= ;;
+            \</pli\>)   z=z;;
+            \<block\ *\>)
+                [[  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
+                    $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && _alias="${BASH_REMATCH[1]}"
+                [[  $l =~ [[:space:]]*hpage[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
+                    $l =~ [[:space:]]*hpage[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
+                    && _hpag="${BASH_REMATCH[1]}"
+                ;;
+            \</block\>)
+                z=zzz
+                ;;
+            \<rpool\> | \<rpool\ *\>) ;;
+            \</rpool\>)
+                z=zz
+                ;;
+            \<*)
+                _emsg "${FUNCNAME}: unexpected tag in stream: $l"
+                return 1
+                ;;
+            esac
+        case "$z" in
+            $_PREGET)  _pre_l+=("$l")   ;;
+            $_POSTGET) _post_l+=("$l") ;;
+            $_UPDATE)  _updt_l+=("$l") ;;
+            z)
+                unset _pre_l[0]
+                unset _post_l[0]
+                _version="${_version:+":$_version"}"
+                case "$_idf" in
+                    primary)
+                        odsel_ispli_repo "$_entry" \
+                            && _version="clone/$_alias$_version|0" \
+                            || _version="pristine/$_alias$_version|0"
+                    ;;
+                    mirror)
+                        odsel_ispli_repo "$_entry" \
+                            && _version="clone/$_alias$_version|1" \
+                            || _version="pristine/$_alias$_version|1"
+                    ;;
+                    snapshot)
+                        _version="snapshot/$_alias$_version"
+                        ;;
+                esac
+                b=${#a[@]}
+                a[$((b+$_CHECKSUM))]="$_cksum"
+                a[$((b+$_HPAGE))]="$_hpag"
+                a[$((b+$_ENTRY))]="$_entry"
+                l=$((b+$_PREGET))
+                for o in ${!_pre_l[@]}; do
+                    a[$l]="${a[$l]}$(printf "\n%s" "${_pre_l[$o]}")"
+                done
+                a[$l]="${a[$l]:1}"
+                l=$((b+$_POSTGET))
+                for o in ${!_post_l[@]}; do
+                    a[$l]="${a[$l]}$(printf "\n%s" "${_post_l[$o]}")"
+                done
+                a[$((b+$_UPDATE))]=""
+                a[$l]="${a[$l]:1}"
+                _pre_l=()
+                _post_l=()
+                q+=("$_version $b")
+            ;;
+            zz)
+                break;
+            ;;
+        esac
+    done< <(_xmlpnseq "$1")
+    z=0
+    while read -r x; do
+        q[$((z++))]="$x"
+    done< <(for x in ${!q[@]}; do
+                printf "%s\n" "${q[$x]}"
+            done | sort -k1,1 -t\|)
+    k="${k[@]}"
+    eval "${2:-QPOOL_RLA}=(\"\$k\" \"\${q[@]}\" \"\${a[@]}\")"
 }
 
 #;
 # @desc The odsel rpli instruction decoy
-# @ptip $1  The rpli instruction to process, as passed by odsel_si
+# @ptip $1  The rpli instruction to process, as passed by odsel_vsi
 #;
 function _odsel_rpli_i() {
-    [[  "$1" =~ ([^=\~\>\<\-]*):\((.*)\)([=\~\>\<\-][\>-])([^=\~\>\<\-]*):\((.*)\) || \
-        "$1" =~ ([^=\~\>\<\-]*):\((.*)\)([=\~\>\<\-][\>-])([^=\~\>\<\-]*) || \
-        "$1" =~ ([^=\~\>\<\-]*)([=\~\>\<\-][\>\<-])([^=\~\>\<\-]*) || \
-        "$1" =~ ([^=\~\>\<\-]*):\((.*)\) || \
-        "$1" =~ ([^=\~\>\<\-]*) ]] && {
+    local x= y="$1"
+    [[ $y = \{*\}* ]] && {
+            x="${y/\}*/}"
+            _split "${x:1}"
+            x="${SPLIT_STRING[*]}"
+            x=${x// /,}
+            x="${x//[()]/}"
+            y="_${y#*\}}"
+    }
+    [[  "$y" =~ ([^=\~\>\<\-]*):\((.*)\)([=\~\>\<\-][\>-])([^=\~\>\<\-]*):\((.*)\) || \
+        "$y" =~ ([^=\~\>\<\-]*):\((.*)\)([=\~\>\<\-][\>-])([^=\~\>\<\-]*) || \
+        "$y" =~ ([^=\~\>\<\-]*)([=\~\>\<\-][\>\<-])([^=\~\>\<\-]*) || \
+        "$y" =~ ([^=\~\>\<\-]*):\((.*)\) || \
+        "$y" =~ ([^=\~\>\<\-]*) ]] && {
             case "$((${#BASH_REMATCH[@]}-1))" in
                 5 | 4)
                     _odsel_${ODSEL_OPRT[$(_opsolve "${BASH_REMATCH[3]}")]} \
-                        ${BASH_REMATCH[@]:1:2} "" ${BASH_REMATCH[@]:4:5} "" \
-                        || return 1
+                        ${BASH_REMATCH[@]:1:2} "" ${BASH_REMATCH[@]:4:5} "" || {
+                        _emsg "${FUNCNAME}: $1 : is not a valid expression"
+                        return 1
+                    }
                     ;;
                 3)
                     _odsel_${ODSEL_OPRT[$(_opsolve "${BASH_REMATCH[2]}")]} \
-                        ${BASH_REMATCH[1]} "" ${BASH_REMATCH[3]} "" \
-                        || return 1
+                        ${x:-${BASH_REMATCH[1]}} "" ${BASH_REMATCH[3]} "" || {
+                        _emsg "${FUNCNAME}: $1 : is not a valid expression"
+                        return 1
+                    }
                     ;;
                 2 | 1)
-                    _decoy_this "${FUNCNAME}: single block instruction?"
+                    _emsg "single block instruction error"
+                    return 1
                     ;;
                 *) ;;
             esac
@@ -128,7 +483,7 @@ function _odsel_rpli_i() {
 
 #;
 # @desc The odsel i9kg instruction decoy
-# @ptip $1  The i9kg instruction to process, as passed by odsel_si
+# @ptip $1  The i9kg instruction to process, as passed by odsel_vsi
 #;
 function _odsel_i9kg_i() {
     _decoy_this "${FUNCNAME}: processing an i9kg instruction"
@@ -159,45 +514,71 @@ function odsel_ispli_repo() {
 }
 
 #;
+# @desc Transform an ungrouped odsel expression into the sequence of commands
+#       or text or whatever it refers to, for the pool it refers to and the
+#       i9kg file containing the particular instance it has been mapped for.
+# @ptip $1  odsel expression
+# @ptip $@  i9kg rcache hash identifier it requires; may deduce it on its own
+#           but as always, the rcache array must be already initialized.
+#;
+function odsel_exprseq() {
+    local x="${1//[[:space:]]/}" a r=1 m=0 t=0 z
+    [[ -z $2 ]] && {
+        [[ "${x/:*/}" =~ ([a-zA-Z0-9_-]*)\[([^[:space:]]*)\] ]] \
+                && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
+                || a=("${x/:*/}" "prime")
+        a=__i9kg_rcache_$(_hsos "${a[0]}[${a[1]}]")
+    } || a="__i9kg_rcache_$2"
+    x="${x#*://}"
+    case "${z:=${x##*\]:}}" in
+        code)   z=t ;;
+        text)   z=c ;;
+        *)  _emsg "${FUNCNAME}: ${1//[[:space:]]/} is not a valid odsel expression"
+            return 1
+            ;;
+    esac
+    x="${x%:*}"
+    local b="$a[0]"
+    local h="${!b/ */}" v="${!b/ */}"
+    local s=$h
+    while (($r<$h)); do
+        t="$a[$((m=$((r+$(($((h-r))/2))))))]"
+        [[ "${!t/ */}" < "$x" ]] && r=$((m+1)) || h=$m
+    done
+    t="$a[$r]"
+    (($r < $s)) && [ "${!t/ */}" == "$x" ] && {
+        t=(${!t#* })
+        t="${t[@]/$z*/}"
+        for x in $t; do
+            x="$a[${x#?}+$v]"
+            printf "%s\n" "${!x}"
+        done
+    }
+}
+
+#;
+# @desc Keyword message definition
+# @ptip $1  The odsel keyword for which we want to find the message
+#;
+function odsel_whatis() {
+    local x
+    case "$1" in
+        new)  x="creating a new pool"   ;;
+        del)  x="erasing from poolset"  ;;
+        load) x="loading pool"          ;;
+        newc) x="caching"               ;;
+        delc) x="deleting cache"        ;;
+        '')                             ;;
+        *)    x="unknown"               ;;
+    esac
+    printf "%s\n" "$x"
+}
+
+#;
 # @desc The init implementation for this module
 # @warn Same fix as in _init for _opsolve (bash 4.x related)
-# @devs FIXME: import XML - driven implementation for this one as well
-# @devs FIXME: port globals into the XML configuration file (syscore - specs like)
 #;
 function odsel_init() {
-    I9KG_ALIASES=(LOCATION
-        PRISTINE
-        PAYLOAD
-        PATCHES
-        SNAPSHOTS
-        CLONES
-        EZCONFIG
-        METABASE
-        METACACHE
-        I9KG_DEPOT
-        I9KG_SEEDS
-        I9KG_SEEDS_XML
-        I9KG_SEEDS_JSON
-        I9KG_SEEDS_YAML
-        I9KG_REPORTS
-        I9KG_REPORTS_XML
-        I9KG_REPORTS_JSON
-        I9KG_REPORTS_YAML
-        FCACHE
-        RHID
-        RPLI)
-    I9KG_OAL=(
-        RLAY
-        POOL
-        RHID
-        PHID
-        EXPR
-    )
-    _I9KG_RLAY=0
-    _I9KG_POOL=1
-    _I9KG_RHID=2
-    _I9KG_PHID=3
-    _I9KG_EXPR=4
     POOL_CACHE=()
     POOL_REPORT=()
     POOL_TARGUESS=()
@@ -207,20 +588,13 @@ function odsel_init() {
     ODSEL_REGEXP=( ':[{]([^}]*)[}]\]'
                    '([^,]*),'
                    '@([^@]*):([^->]*)->([^->]*)'
-                   '\[([^@{}>,-]*):\{@([^@{}>,-]*)\}\]'
                    '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
                    '\[([^@{}>,-]*):([^@{}>,-]*)\]'
                    '\[([^@{}>,:]*)\]' )
-    ODSEL_OPRT[$(_opsolve ">>")]="mm"
+    ODSEL_OPRT=()
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
     ODSEL_OPRT[$(_opsolve "<-")]="lm"
-    _HPAGE=0
-    _CHECKSUM=1
-    _ENTRY=2
-    _UPDATE=3
-    _PREGET=4
-    _POSTGET=5
 }
 
 #;
@@ -330,177 +704,6 @@ function odsel_ifind() {
 }
 
 #;
-# @desc Read a file with ppli links and preprocess it
-# @ptip $1  path to file
-# @devs FIXME: _fatal raised is superfluous; move to _emsg
-#;
-function odsel_pppli() {
-    local   _pre_l=() \
-    _pos_l=() l \
-    z=0 \
-    _entry= \
-    _updt_target= \
-    _version= \
-    _alias= \
-    _idf= _cksum= _hpag= \
-    o=0 a=() x= _tagged= k=()
-    QPOOL_RLA=()
-    while read -r l; do
-        case "$l" in
-            \<pli\ * | \<pli\ */\>)
-            [[  $l =~ [[:space:]]*entry[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
-                $l =~ [[:space:]]*entry[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
-                    _entry="${BASH_REMATCH[1]}"
-                    [[ -z $_entry ]] && _fatal "${FUNCNAME}: $l"
-                    [[  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
-                        $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                        && _alias="${BASH_REMATCH[1]}"
-                    [[  $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
-                        $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                        && _version="${BASH_REMATCH[1]}"
-                    [[  $l =~ [[:space:]]*sha1sum[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
-                        $l =~ [[:space:]]*sha1sum[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                        && _cksum="${BASH_REMATCH[1]}"
-                    [[  $l =~ [[:space:]]*tagged[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
-                        $l =~ [[:space:]]*tagged[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                        && _tagged="${BASH_REMATCH[1]}"
-                    [[  $l =~ [[:space:]]*idf[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
-                        $l =~ [[:space:]]*idf[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                        && _idf="${BASH_REMATCH[1]}" \
-                        || _fatal "${FUNCNAME}: attribute not found: idf"
-            } || _fatal "${FUNCNAME}: entry attribute not found in: $_l"
-            [[ $l = */\> ]] && {
-                # we have the tagged attribute now, which means use it
-                _version="${_version:+":$_version"}"
-                b=${#a[@]}
-                a[$((b+$_CHECKSUM))]="$_cksum"
-                a[$((b+$_HPAGE))]="$_hpag"
-                a[$((b+$_ENTRY))]="$_entry"
-                a[$((b+$_PREGET))]=""
-                a[$((b+$_POSTGET))]=""
-                a[$((b+$_UPDATE))]=""
-                case "$_idf" in
-                    primary)
-                        odsel_ispli_repo "$_entry" \
-                            && _version="clone/$_alias$_version|0" \
-                            || {
-                                _version="pristine/$_alias$_version|0"
-                                [[ -z $_tagged ]] \
-                                    || _tagged="pristine/$_alias|0"
-                               }
-                    ;;
-                    mirror)
-                        odsel_ispli_repo "$_entry" \
-                            && _version="clone/$_alias$_version|1" \
-                            || _version="pristine/$_alias$_version|1"
-                    ;;
-                    snapshot)
-                        _version="snapshot/$_alias$_version"
-                        ;;
-                esac
-                QPOOL_RLA+=("$_version $b")
-                [[ -z $_tagged ]] || {
-                    QPOOL_RLA+=("$_tagged $b")
-                    k+=($b)
-                    _tagged=
-                }
-                _cksum=
-                _version=
-            } && continue
-            ;;
-            \<preget\>)   z=${_PREGET} ;;
-            \<postget\>)  z=${_POSTGET} ;;
-            \<update\ *)
-                z=${_UPDATE}
-                [[  $l =~ [[:space:]]*target[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
-                    $l =~ [[:space:]]*target[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _updt_target="${BASH_REMATCH[1]}"
-                ;;
-            \</update\>)  z=; _updt_l[0]="cd ${updt_target:=.}" ;;
-            \</preget\> | \</postget\>) z= ;;
-            \</pli\>)   z=z;;
-            \<block\ *\>)
-                [[  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
-                    $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _alias="${BASH_REMATCH[1]}"
-                [[  $l =~ [[:space:]]*hpage[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
-                    $l =~ [[:space:]]*hpage[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _hpag="${BASH_REMATCH[1]}"
-                ;;
-            \</block\>)
-                z=zzz
-                ;;
-            \<rpool\> | \<rpool\ *\>) ;;
-            \</rpool\>)
-                z=zz
-                ;;
-            \<*)
-                _fatal "${FUNCNAME}: unexpected tag in stream: $l"
-                ;;
-            esac
-        case "$z" in
-            $_PREGET)  _pre_l+=("$l")   ;;
-            $_POSTGET) _post_l+=("$l") ;;
-            $_UPDATE)  _updt_l+=("$l") ;;
-            z)
-                unset _pre_l[0]
-                unset _post_l[0]
-                _version="${_version:+":$_version"}"
-                case "$_idf" in
-                    primary)
-                        odsel_ispli_repo "$_entry" \
-                            && _version="clone/$_alias$_version|0" \
-                            || _version="pristine/$_alias$_version|0"
-                    ;;
-                    mirror)
-                        odsel_ispli_repo "$_entry" \
-                            && _version="clone/$_alias$_version|1" \
-                            || _version="pristine/$_alias$_version|1"
-                    ;;
-                    snapshot)
-                        _version="snapshot/$_alias$_version"
-                        ;;
-                esac
-                b=${#a[@]}
-                a[$((b+$_CHECKSUM))]="$_cksum"
-                a[$((b+$_HPAGE))]="$_hpag"
-                a[$((b+$_ENTRY))]="$_entry"
-                l=$((b+$_PREGET))
-                for o in ${!_pre_l[@]}; do
-                    a[$l]="${a[$l]}$(printf "\n%s" "${_pre_l[$o]}")"
-                done
-                a[$l]="${a[$l]:1}"
-                l=$((b+$_POSTGET))
-                for o in ${!_post_l[@]}; do
-                    a[$l]="${a[$l]}$(printf "\n%s" "${_post_l[$o]}")"
-                done
-                a[$((b+$_UPDATE))]=""
-                a[$l]="${a[$l]:1}"
-                _pre_l=()
-                _post_l=()
-                QPOOL_RLA+=("$_version $b")
-            ;;
-            zz)
-                break;
-            ;;
-        esac
-    done< <(_xmlpnseq "$1")
-    z=0
-    while read -r x; do
-        QPOOL_RLA[$((z++))]="$x"
-    done< <(for x in ${!QPOOL_RLA[@]}; do
-                printf "%s\n" "${QPOOL_RLA[$x]}"
-            done | sort -k1,1 -t\|)
-    k="${k[@]}"
-    [[ -z $2 ]] \
-        && eval "QPOOL_RLA=(\"\$k\" \"\${QPOOL_RLA[@]}\" \"\${a[@]}\")" \
-        || {
-            eval "$2=(\"\$k\" \"\${QPOOL_RLA[@]}\" \"\${a[@]}\")"
-            QPOOL_RLA=()
-        }
-}
-
-#;
 # @desc Initialize a series of utility space containers
 # @ptip $@  series of utility space containers to initialize
 # @errv stored in SHELLAPI_ERROR array
@@ -518,113 +721,6 @@ function odsel_uspaceinit() {
 }
 
 #;
-# @desc Transform an ungrouped odsel expression into the sequence of commands
-#       or text or whatever it refers to, for the pool it refers to and the
-#       i9kg file containing the particular instance it has been mapped for.
-# @ptip $1  odsel expression
-# @ptip $@  i9kg rcache hash identifier it requires; may deduce it on its own
-#           but as always, the rcache array must be already initialized.
-#;
-function odsel_exprseq() {
-    local x="$1" a r=1 m=0 t=0
-    [[ -z $2 ]] && {
-        [[ "${x/:*/}" =~ ([a-zA-Z0-9_-]*)\[([^[:space:]]*)\] ]] \
-                && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
-                || a=("${x/:*/}" "prime")
-        a=__i9kg_rcache_$(_hsos "${a[0]}[${a[1]}]")
-    } || a="$2"
-    local b="$a[0]"
-    local h="${!b/ */}" v="${!b/ */}"
-    local s=$h
-    while (($r<$h)); do
-        t="$a[$((m=$((r+$(($((h-r))/2))))))]"
-        [[ "${!t/ */}" < "$x" ]] && r=$((m+1)) || h=$m
-    done
-    t="$a[$r]"
-    (($r < $s)) \
-        && [ "${!t/ */}" == "$x" ] \
-        && for x in ${!t#* }; do
-               x="$a[$x+$v]"
-               printf "%s\n" "${!x}"
-           done
-}
-
-#;
-# @desc Initialize a pool relay and create a function cache entry
-# @ptip $1  pool hash identifier
-#;
-function odsel_relay() {
-    local   x y z \
-            _f="${POOL_RELAY_STORE}/$1.poolconf.xml" \
-            _s="${POOL_RELAY_STORE}/$1.poolconf.bash"
-    [[ -z $POOL_RELAYS ]] && POOL_RELAYS=()
-    x=$(_ssbfind POOL_RELAYS "$1") && {
-    # if it is already in the pool relays, just load it up
-        _isfunction "_init_pool_$1" || {
-            . "$_s"  &> /dev/null || {
-                _emsg "${FUNCNAME}: $1 in pool relays, not available in cache"
-                return 1
-            }
-        }
-        _init_pool_$1
-    } || {
-        while read -r z; do
-            POOL_RELAYS[$((y++))]="$z"
-        done< <(POOL_RELAYS+=("$1")
-                for x in ${!POOL_RELAYS[@]}; do
-                    printf "%s\n" "${POOL_RELAYS[$x]}" 
-                done | sort)
-        ! [[ -e $_f ]] && {
-            {
-                printf  "<bashdata fni=\"%s\">\n <array name=\"%s\" check=\"reuse\">\n" \
-                        "_init_pool_$1" "${2:-$1}"
-                for x in ${!I9KG_ALIASES[@]}; do
-                    printf  "  <index name=\"%s\">%s</index>\n" \
-                            "${I9KG_ALIASES[$x]}" \
-                            "\${I9KG_POOLSPACE}${I9KG_PRIME[$x]/${I9KG_POOLSPACE}\/prime//$1}"
-                done
-                printf " </array>\n</bashdata>\n"
-            } > "$_f" 2> /dev/null || {
-                _emsg "${FUNCNAME}: could not create file: $1.poolconf.xml"
-                return 1
-            }
-        } || {
-            _emsg "${FUNCNAME}: file is already here, cannot overwrite: $1.poolconf.xml"
-            return 1
-        }
-        rm -rf "$_s"
-        _xml2bda "$_f" "$_s"
-    }
-    ! ((${#SHELLAPI_ERROR[@]}))
-}
-
-#;
-# @desc An odsel expression wrapper handling particular actions based upon
-#       odsel expressions. For the time being acts as a i9kg function cache
-#       loader and initializer before delegating to odsel_exprseq
-# @ptip $1  the odsel expression of which to use or create i9kg init cache
-#           in the meanwhile.
-# @devs FIXME: Still linked exclusively to [prime] pool; import pool - agnostic
-#       implementation (already present in header request; eliminate I9KG_PRIME
-#       wiring)
-#;
-function odsel_act() {
-    local x y=($(_odsel_i9kg_header "$1"))
-    _isfunction "__i9kg_init_${y[$_I9KG_RHID]}" || {
-        x="${I9KG_PRIME[$_FCACHE]}/__i9kg_init_${y[$_I9KG_RHID]}.odsel.bash"
-        odsel_xmla \
-            "${I9KG_PRIME[$_I9KG_SEEDS_XML]}/${y[$_I9KG_RLAY]}.i9kg.xml" \
-            "__i9kg_rcache_${y[$_I9KG_RHID]}"
-        odsel_i9kg_objc \
-            "__i9kg_rcache_${y[$_I9KG_RHID]}" \
-            ${y[$_I9KG_RHID]} > "$x"
-        . "$x"
-    }
-    __i9kg_init_${y[$_I9KG_RHID]}
-    odsel_exprseq "$1"
-}
-
-#;
 # @desc The internal event handler for the -> operator for rpli instructions
 # @ptip $@  The array "passed" through _odsel_rpli_i
 #;
@@ -637,20 +733,20 @@ function _odsel_pm() {
             ;;
         \[*\])
             [[ "${x[$z]//[\[\]]/}" =~ ^(\$|\&|@|%|pristine|snapshot|build|clone) ]] \
-                || _emsg "odsel: in A -> B with B=\"${x[$z]}\" is not in context"
+                || _emsg "${FUNCNAME}: in A -> B with B=\"${x[$z]}\" is not in context"
             y="${BASH_REMATCH[1]}"
             ;;
         *)
-            _emsg "odsel: expression has no meaning"
+            _emsg "${FUNCNAME}: expression has no meaning"
         ;;
     esac
     ((${#SHELLAPI_ERROR[@]})) \
-        && _fatal "${x[0]}${x[1]} -> ${x[2]}${x[3]} is not a valid expression"
-    _omsg "${x[0]}${x[1]} -> ${x[2]}${x[3]} is a valid expression"
+        && return 1
+    _split "${x[0]}"
     case "$y" in
         \$|pristine|'')
             _ckmsg "requested to put into pristine"
-             y="pristine/${x[0]}:${x[1]}"
+             y=("${SPLIT_STRING[@]/#/pristine/}")
             ;;
         \&|snapshot)
             _ckmsg "requested to make a snapshot"
@@ -662,72 +758,14 @@ function _odsel_pm() {
             ;;
         %|clone)
             _ckmsg "creating a clone of the repository"
-            y="clone/${x[0]}"
+            y=("${SPLIT_STRING[@]/#/clone/}")
             ;;
     esac
+    y="${y[@]}"
+    y="${y// /,}"
     [[ -z $y ]] \
         && _wmsg "operation valid but not active yet" \
         || odsel_getfn "$y"
-}
-
-#;
-# @desc internal event handler for the ~> operator
-# @devs FIXME import implementation
-#;
-function _odsel_rm() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
-# @desc Greater than or equal comparison
-# @devs FIXME import implementation
-#;
-function _odsel_gte() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
-# @desc Less than or equal comparison
-# @devs FIXME import implementation
-#;
-function _odsel_lte() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
-# @desc Greater than comparison
-# @devs FIXME import implementation
-#;
-function _odsel_gt() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
-# @desc Less than comparison
-# @devs FIXME import implementation
-#;
-function _odsel_lt() {
-    _decoy_this "${FUNCNAME}"
-}
-
-#;
-# @desc internal event handler for the >> operator
-# @devs FIXME
-#;
-function _odsel_mm() {
-    local x="$1" y="$2"
-    case "$x" in
-        \[*\])
-            [[ $y =~ \&([^0-9][a-zA-Z0-9-]*) ]] && {
-                x="${x%?}"
-                x="${x:1}"
-                odsel_enable "${x-prime}" "${BASH_REMATCH[1]}"
-                #&& eval "${BASH_REMATCH[1]}[$_RPLI]=_pool_rcache_\${${BASH_REMATCH[1]}[$_RHID]}"
-            }
-        ;;
-        *)
-        ;;
-    esac
 }
 
 #;
@@ -736,64 +774,6 @@ function _odsel_mm() {
 function _odsel_() {
     _emsg "${FUNCNAME}*: operator not defined"
     return 1
-}
-
-#;
-# @desc Generate and use a function for retrieving a particular
-#       set of resources.
-# @ptip $1  comma separated list of pli resources
-# @ptip $2  pool hash identifier, defaults to using prime
-#;
-function odsel_getfn() {
-    local x f o a
-    FNPREP_ARRAY=()
-    _split "${1//[[:space:]]/}"
-    a=("${SPLIT_STRING[@]}")
-    for x in ${!a[@]}; do
-        x="${a[$x]}"
-        odsel_ifind "$x" "${2:-$(odsel_gph "prime")}" && {
-            o="_odself_$(_hsos "$x")"
-            while read -r j; do
-                [[ -z $j ]] \
-                    || FNPREP_ARRAY+=("$j")
-            done< <(printf "%s\n%s\n%s\n" \
-                    "${POOL_ITEM[$_PREGET]}" \
-                    "$(odsel_ifetch "${POOL_ITEM[$_ENTRY]}")"\
-                    "${POOL_ITEM[$_POSTGET]}")
-            f="$(mktemp)"
-            [[ -z ${POOL_ITEM[$_CHECKSUM]} ]] \
-                || FNPREP_ARRAY+=(\
-"_cfx ${POOL_ITEM[$_ENTRY]##*/} ${POOL_ITEM[$_CHECKSUM]} && \\\
-fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
-\$(_dotstr "${POOL_ITEM[$_CHECKSUM]}") : ok\"")
-            fnapi_genblock "$o" "pool request: $x" \
-                FNPREP_ARRAY "pool request: $x" fatal > "$f"
-            unset FNPREP_ARRAY
-            . "$f"
-            rm -rf "$f"
-            f="$(odsel_rtarg "$x" "${2:-$(odsel_gph "prime")}")" && {
-                pushd "$f" &> /dev/null
-                $o
-                popd &> /dev/null
-            } || _emsg "${FUNCNAME}: could not deduce retrieval target"
-        } || _emsg "${FUNCNAME}: [function()] --> $x ?"
-    done
-    ! ((${#SHELLAPI_ERRORS[@]}))
-}
-
-#;
-# @desc Expand an ungrouped odsel expression
-#;
-function odsel_expand() {
-    [[ $1 =~ @\[([a-zA-Z0-9-]*)\]://(snapshot|clone|pristine)/(.*) ]] && {
-        local   x="__pool_relay_$(odsel_gph "${BASH_REMATCH[1]:-prime}")[$_RPLI]" \
-                vpool="${BASH_REMATCH[1]:-prime}" \
-                vsection=${BASH_REMATCH[2]} \
-                vexp="${BASH_REMATCH[3]}"
-        [[ $vexp =~ ([a-zA-Z0-9-]*):\((.*)\) ]] && {
-            _odsel_${VERSION_OPERATORS[$(_opsolve "${BASH_REMATCH[2]:0:2}")]}
-        } || odsel_getfn "$vsection/$vexp" "${!x}"
-    }
 }
 
 #;
@@ -817,36 +797,6 @@ function odsel_rtarg() {
         }
     }
     ! :
-}
-
-#;
-# @desc A splitter for a comma separated list of odsel expressions,
-#       according to specific rules for {*} and [*]
-# @ptip $1  The list to split
-#;
-function odsel_expr() {
-    local x="${1//[[:space:]]/}," y
-    ODSEL_EXPR=()
-    while [[ "$x" =~ ([,}{]) ]]; do
-        case "${BASH_REMATCH[1]}" in
-             ,) y=("${x/,*/}")
-                ;;
-            \{) [[ "${x:0:1}" = [[:alpha:]] ]] && {
-                    y="${x#*]}"
-                    y="${x/]*/}]${y/,*/}"
-                } || {
-                    y="${x#"${x/\}*/}"}"
-                    y="${x/\}*/}${y/,*/}"
-                }
-                ;;
-            \}) _emsg "${FUNCNAME}: illegal expression"
-                ODSEL_EXPR=()
-                return 1
-                ;;
-        esac
-        x="${x#"$y",}"
-        ODSEL_EXPR+=("$y")
-    done
 }
 
 #;
@@ -915,7 +865,7 @@ function odsel_gph() {
 # @desc Enable an odreex pool for use by shellapi
 # @ptip $1  pool relay to activate
 #;
-function odsel_enable() {
+function odsel_load() {
     local x=$(odsel_gph "$1") z
     local y="${2:-__pool_relay_$x}"
     _isfunction "_init_pool_$x" && _init_pool_$x || {
@@ -953,11 +903,23 @@ function odsel_enable() {
 }
 
 #;
+# @desc Check if a pool exists.
+# @ptip $1  pool identifier
+# @retv 0/1
+# @note Commodity function
+#;
+function odsel_ispool() {
+    local x="$(_ifnot_jpath "$1" "${I9KG_POOLSPACE}")"
+    [[ -d $x ]] \
+        && [[ -e $POOL_RELAY_CACHE/xml/$(_hsos "$x").poolconf.xml ]]
+}
+
+#;
 # @desc Create a pool, either within the poolset or at a path of your
 #       option. A function cache is created for the XML description file
 #       as well. If a pool is followed by the [] operator, retrieval of
 #       the metabase and its processing takes place. The pool gets enabled
-#       on creation (in a way similar to odsel_enable)
+#       on creation (in a way similar to odsel_load)
 # @ptip $1  Comma separated pool list
 #;
 function odsel_new() {
@@ -1054,15 +1016,6 @@ function odsel_del() {
 }
 
 #;
-# @desc Convert a pull expression to a specific resource within a pool
-# @ptip $1  pull expression to be processed
-# @devs import new implementation
-#;
-function odsel_pull() {
-    _decoy_this "${FUNCNAME}: implementation not imported"
-}
-
-#;
 # @desc Extract name / version information out of a tarball
 # @ptip $1  path to the tarball or name of the tarball
 #;
@@ -1091,348 +1044,195 @@ function odsel_targuess() {
 }
 
 #;
+# @desc Expand a rpli metalink into the actual retrieval expression
+# @ptip $1  rpli metalink
+#;
+function odsel_ifetch() {
+    local e
+    case "$1" in
+        http\://* | \
+        ftp\://* | \
+        https\://*)
+            e="${POOL_DGET} $1"
+            ;;
+        git\://http\://* | \
+        git\:https\://*)
+            e="git clone ${1#git\://}"
+            ;;
+        git\://*)
+            e="git clone $1"
+            ;;
+        svn\://http\://* | \
+        svn\://https\://*)
+            e="svn co ${1#svn\://}"
+            ;;
+        svn\://*)
+            e="svn co $1"
+            ;;
+        hg\://*)
+            e="hg clone $1"
+            ;;
+        cvs\://*)
+            e="cvs -z9 -d:pserver:${1#cvs\://}"
+            ;;
+        bzr\://http\://* | \
+        bzr\://https\://*)
+            e="bzr branch ${1#bzr\://}"
+            ;;
+        bzr\://*)
+            e="bzr branch $1"
+            ;;
+        *)
+            _isfunction "_odsel_handler_${1/:\/\/*/}" \
+                && e=$(_odsel_handler_${1/:\/\/*/} "$1") \
+                || return 1
+            ;;
+    esac
+    printf "%s\n" "$e"
+    ! ((${#SHELLAPI_ERRORS[@]}))
+}
+
+#;
+# @desc Generate and use a function for retrieving a particular
+#       set of resources.
+# @ptip $1  comma separated list of pli resources
+# @ptip $2  pool hash identifier, defaults to using prime
+#;
+function odsel_getfn() {
+    local x f o a
+    FNPREP_ARRAY=()
+    _split "${1//[[:space:]]/}"
+    a=("${SPLIT_STRING[@]}")
+    for x in ${!a[@]}; do
+        x="${a[$x]}"
+        odsel_ifind "$x" "${2:-$(odsel_gph "prime")}" && {
+            o="_odself_$(_hsos "$x")"
+            while read -r j; do
+                [[ -z $j ]] \
+                    || FNPREP_ARRAY+=("$j")
+            done< <(printf "%s\n%s\n%s\n" \
+                    "${POOL_ITEM[$_PREGET]}" \
+                    "$(odsel_ifetch "${POOL_ITEM[$_ENTRY]}")"\
+                    "${POOL_ITEM[$_POSTGET]}")
+            f="$(mktemp)"
+            [[ -z ${POOL_ITEM[$_CHECKSUM]} ]] \
+                || FNPREP_ARRAY+=(\
+"_cfx ${POOL_ITEM[$_ENTRY]##*/} ${POOL_ITEM[$_CHECKSUM]} && \\\
+fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
+\$(_dotstr "${POOL_ITEM[$_CHECKSUM]}") : ok\"")
+            fnapi_genblock "$o" "pool request: $x" \
+                FNPREP_ARRAY "pool request: $x" fatal > "$f"
+            unset FNPREP_ARRAY
+            . "$f"
+            rm -rf "$f"
+            f="$(odsel_rtarg "$x" "${2:-$(odsel_gph "prime")}")" && {
+                pushd "$f" &> /dev/null
+                $o
+                popd &> /dev/null
+            } || _emsg "${FUNCNAME}: could not deduce retrieval target"
+        } || _emsg "${FUNCNAME}: [function()] --> $x ?"
+    done
+    ! ((${#SHELLAPI_ERRORS[@]}))
+}
+
+#;
 # @desc Transform a directory or any tarball into a tarball with the default payload
 #       option, putting it into [snapshots] or [payload] directory by default, or
 #       storing it at a specified, existing path in the filesystem.
-# @ptip $1  A filesystem path or a pool instruction
-# @ptip $2  A valid fileystem path to output the result of the operations
-# @devs FIXME: remove [prime] exclusive linking
+# @ptip $1  A valid filesystem path (file or directory)
+# @ptip $2  A valid filesystem path where to store the result or a [] enclosed pool
+#           identifier. This identifier is used to deduce payload, snapshot directories;
+#           in all other scenarios, gets treated as a plain path.
 #;
-function odsel_iassign() {
-    local s x t
-    POOL_REPORT=()
-    [[ ${1#*/} == $1 && ${1:0:1} != . ]] \
-        && s="${I9KG_PRIME[$_PRISTINE]}/$1" \
-        || s="${1}"
-    case "$s" in
-        pool\:* | pool\[*)
-            _fatal "${FUNCNAME}: inter - pool operations are currently reserved: $s"
-            ;;
-        *.tar.bz2 | *.tbz)  x="bzip2 -dc" ;;
-        *.tar.gz | *.tgz)   x="gzip -dc"  ;;
-        *.tar.lzma)         x="lzma -dc"  ;;
-        */*)
-            ! [[ -d $s ]] \
-                && _emsg "${FUNCNAME}: a snapshot was requested, for a non - existing filepath:$s" \
-                && return 1
-            ;;
-         *)
-            _emsg "${FUNCNAME}: unrecognizable error in: $s"
-            return 1
-         ;;
-    esac
-    [[ -z $x ]] && {
-        t="${2:-${I9KG_PRIME[$_SNAPSHOTS]}}/${s##*/}-snapshot.$(_dtff).tar.${SHELLAPI_PAYLOAD//[ip]/}"
-        {
-            pushd "${s%/*}" > /dev/null
-            tar cf - "${s##*/}" | ${SHELLAPI_PAYLOAD} --best -c - > "$t"
-            popd > /dev/null
-        } 2>/dev/null || _emsg "${FUNCNAME}: could not perform conversion for: $1"
-    } || {
-        t="${s##*/}"
-        t="${2:-${I9KG_PRIME[$_PAYLOAD]}}/${t%.t*}.tar.${SHELLAPI_PAYLOAD//[ip]/}"
-        {
-            $x "$s" | $SHELLAPI_PAYLOAD --best > "$t"
-        } 2>/dev/null || _emsg "${FUNCNAME}: could not perform conversion for: $1"
-    }
-    odsel_targuess "$t" || _fatal
-    [[ $x == snap ]] \
-        && POOL_REPORT="@://snapshot/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]#*.}" \
-        || POOL_REPORT="@://payload/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]}"
-    POOL_REPORT=("$POOL_REPORT" "${POOL_TARGUESS[1]}" "${POOL_TARGUESS[4]}")
-}
-
-#;
-# @desc Create an rpli link out of a tarball
-# @ptip $1  tarball to process
-# @warn FIXME: minor annoyances
-#;
-function odsel_xmlputs() {
-    odsel_targuess "$1" && {
-    printf "<block alias=\"%s\" hpage=\"?\">
-    <rpli
-        entry=\"%s\"
-        version=\"%s\"
-        idf=\"%s\"
-        sha1sum=\"%s\"/>\n</block>\n" \
-        ${POOL_TARGUESS[@]}
-    } || {
-        _emsg "${FUNCNAME}: failed for: $1"
-        return 1
-    }
-}
-
-#;
-# @desc Initialize to the full series of events
-# @note DEPRECATED : must move to XML driven version
-#;
-function odsel_presets_all() {
-    I9KG_PRESETS=(
-        "configure_pre"
-        "configure_build"
-        "configure_post"
-        "make_pre"
-        "make_build"
-        "make_post"
-        "make_install_pre"
-        "make_install_build"
-        "make_install_post"
-        "remove_install_pre"
-        "remove_install_build"
-        "remove_install_post"
-    )
-}
-
-#;
-# @desc Initialize to the remove series of events
-# @note DEPRECATED : must move to XML driven version
-#;
-function odsel_presets_remove() {
-    I9KG_PRESETS=(
-        "remove_install_pre"
-        "remove_install_build"
-        "remove_install_post"
-    )
-}
-
-#;
-# @desc Initialize to the install series of events
-# @note DEPRECATED : must move to XML driven version
-#;
-function odsel_presets_install() {
-    I9KG_PRESETS=(
-        "configure_pre"
-        "configure_build"
-        "configure_post"
-        "make_pre"
-        "make_build"
-        "make_post"
-        "make_install_pre"
-        "make_install_build"
-        "make_install_post"
-    )
-}
-
-#;
-# @desc A practical, odsel group expression expander in bash (component of the future odsel_si)
-#       for multiple, en block odsel expression interpretation during instruction / metadata
-#       navigation in the arrays.
-# @ptip $1  odsel block statement to interpret
-# @ptip $2  array to store the block statement sequence, defaults to ODSEL_EXPBLOCK
-#;
-function odsel_scli() {
-    local   _ft="${2:-ODSEL_EXPBLOCK}" \
-            _l="${1//[[:space:]]/}" \
-            _c=0 _p= _r= _b=()
-    local   lhs="${_l/[*/}" \
-            rhs="${_l/*]/}" \
-            vhs="${_l#*[}"
-    vhs="${vhs%%:*}"
-    case "${rhs:1}" in
-        install\; | install\(*\)\;)
-            odsel_presets_install
-            ;;
-        remove\; | remove\(*\)\;)
-            odsel_presets_remove
-            ;;
-        code\; | code\(*\)\; | \
-        text\; | text\(*\)\;)
-            odsel_presets_all
+function odsel_recoil() {
+    local x="$1" y="${2:-[prime]}" z= r= s= t=
+    POOL_REPORT=() POOL_TARGUESS=()
+    case "$y" in
+        \[*\] | '')
+            y=${y:1:$((${#y}-2))}
+            z=$(odsel_gph "$y")
+            r="__pool_relay_$z[$_PAYLOAD]"
+            s="__pool_relay_$z[$_SNAPSHOTS]"
+            s="${!s}"; r="${!r}"; z=
             ;;
         *)
-            _fatal "${FUNCNAME}: could not interpret requested block: ${rhs}"
+            [[ -d $y ]] || {
+                _emsg "${FUNCNAME}: not a valid directory: $y"
+                return 1
+            }
+            s="$y"; r="$y"
             ;;
     esac
-    case "$_l" in
-        *\[*:\{@*,*)
-            [[ $_l =~ ${ODSEL_REGEXP[0]} ]] \
-                && _l="${BASH_REMATCH[1]}," \
-                || _fatal "${FUNCNAME}: could not intepret: $_l"
-            while [[ $_l =~ ${ODSEL_REGEXP[1]}  ]]; do
-                _p="${BASH_REMATCH[1]}"
-                case "$_p" in
-                    *-\>*)
-                        _r="${I9KG_PRESETS[@]}"
-                        [[ $_p =~ ${ODSEL_REGEXP[2]} ]] && {
-                            _r="${_r#*${BASH_REMATCH[2]/(*/}}"
-                            _r="${_r%${BASH_REMATCH[3]/(*/}*}"
-                            _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]${rhs}")
-                            for _c in ${_r}; do
-                                 _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:$_c]${rhs}") 
-                            done
-                             _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]${rhs}")
-                        }
-                    ;;
-                    *\>*)
-                        _fatal "${FUNCNAME}: incorrect syntax"
-                    ;;
-                    *)
-                         _b+=("${lhs}[${vhs}${BASH_REMATCH[1]}]${rhs}")
-                    ;;
-                esac
-                _l=${_l#*"$_p",}
-            done
-            ;;
-        *\[*:\{@*)
-                [[ $_l =~ ${ODSEL_REGEXP[3]} ]] \
-                    &&   _b+=("${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}") \
-                    || _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
-        *\[*@*:*)
-                [[ $_l =~ ${ODSEL_REGEXP[4]} ]] \
-                    &&   _b+=("${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}") \
-                    || _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
-        *\[*:*\]*)
-                [[ $_l =~ ${ODSEL_REGEXP[5]} ]] \
-                    &&  _b+=("${lhs}[${BASH_REMATCH[1]}@stable:${BASH_REMATCH[2]}]${rhs}") \
-                    || _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
-        *\[*\]*)
-                [[ $_l =~ ${ODSEL_REGEXP[6]} ]] && {
-                    for _c in ${I9KG_PRESETS[@]}; do
-                        _b+=("${lhs}[${BASH_REMATCH[1]}@stable:$_c]${rhs}") 
-                    done
-                } || _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
-            *)
-                _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
+    case "$x" in
+        *.tar.bz2 | *.tbz)  z="bzip2 -dc" ;;
+        *.tar.gz | *.tgz)   z="gzip -dc"  ;;
+        *.tar.lzma)         z="lzma -dc"  ;;
+        *)
+            [[ -d $x ]] || {
+                _emsg "${FUNCNAME}: directory does not exist: $s"
+                return 1
+            }
+        ;;
     esac
-    # FIXME: eval expression can substitute after check
-    local _ff="$(mktemp)"
-    printf "${_ft}=(\"\${_b[@]}\")\n" > $_ff
-    . $_ff
-    rm -rf $_ff
-}
-
-#;
-# @desc Load an i9kg XML file describing the various instances of a "package"
-#       into an array, complete with the dependency query metadata, build
-#       instruction sequences etc. The resulting array is
-# @ptip $1  path to file
-# @ptip $2  a hash identifier or default to ODSEL_XMLA global
-# @devs TODO: consider removing _fatal for _emsg semantics with stop on first error.
-#;
-function odsel_xmla() {
-    local   v_sn v_an v_in v_iv t=() c=() k=0 \
-            v=0 _cn=0 \
-            li= p=0 q=0 x \
-            xarray=() _A=() _rvfx=() _pt=() _D=() _NB=() _NR=() _DB=() _DR=() i=0 n=() \
-            fnm="${1##*[!/]/}"
-            fnm="${fnm/.*/}"
-    while read -r li; do
-        xarray+=("$li")
-        case "${li}" in
-            \<action\ *)
-                [[  $li =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && v_an="${BASH_REMATCH[1]}" \
-                    || _fatal "${FUNCNAME}: attribute missing in $1: mode"
-            ;;
-            \</action\>)
-                ((${#_pt[@]})) && {
-                    ((${#c[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:code ${c[@]}")
-                    ((${#t[@]})) && _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}]:text ${t[@]}")
-                    _actions+=($p)
-                    _pt=()
-                    t=()
-                    c=()
-                }
-                k=0
-            ;;
-            \<rpli\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _D[$i]="${_D[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
-            ;;
-            \<dbld\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _DB[$i]="${_DB[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
-            ;;
-            \<drun\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _DR[$i]="${_DR[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
-            ;;
-            \<nbld\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _NB[$i]="${_NB[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
-            ;;
-            \<nrun\ */\>)
-                [[  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _NR[$i]="${_NR[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
-            ;;
-            \<sequence\ *)
-                [[  $li =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && v_sn="${BASH_REMATCH[1]}" \
-                    || _fatal "${FUNCNAME}: attribute missing in $1: variant"
-            ;;
-            \</instance\>)
-                _D[$i]="${_D[$i]:1}"
-                _DB[$i]="${_DB[$i]:1}"
-                _DR[$i]="${_DR[$i]:1}"
-                _NB[$i]="${_NB[$i]:1}"
-                _NR[$i]="${_NR[$i]:1}"
-                ((i++))
-            ;;
-            \<code\> | \<text\>)
-                v=${#xarray[@]}
-            ;;
-            \</code\> | \</text\>)
-                q=$((${#xarray[@]}-1))
-                p=${#_rvfx[@]}
-                [[ ${li} == \</code\> ]] \
-                    && c+=($p) \
-                    || t+=($p)
-                _A+=("${fnm}://${v_in}[${v_iv}@${v_sn}:${v_an}(:$((k++)))]:${li:2:4} $p")
-                x="${xarray[$v]//\$/\\\$}"
-                x="${x//\`/\\\`}"
-                _rvfx[$p]="${x//\"/\\\"}"
-                ((v++))
-                for((;v<$q;v++)); do
-                   x="${xarray[$v]//\$/\\\$}"
-                   x="${x//\`/\\\`}"
-                   _rvfx[$p]="${_rvfx[$p]}$(printf "\n%s" "${x//\"/\\\"}")"
-                done
-                _pt+=("$p")
-           ;;
-           \<instance\ *)
-                [[  $li =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && v_iv="${BASH_REMATCH[1]}" \
-                    || _fatal "${FUNCNAME}: attribute missing in $1: version"
-                [[  $li =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
-                ||  $li =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && v_in="${BASH_REMATCH[1]}" \
-                    || _fatal "${FUNCNAME}: attribute missing in $1: alias"
-                    n="$n$(printf "\n%s" "$v_in[$v_iv]")"
-           ;;
-        esac
-    done< <(_xmlpnseq "$1")
-    _finals=()
-    while read -r l; do
-        _finals+=("$l")
-    done< <(for l in ${!_A[@]}; do
-                printf "%s\n" "${_A[$l]}"
-            done | sort -k1,1 -t\ )
-    eval "${2:-ODSEL_XMLA}=( \"\$((\${#_finals[@]}+1)) \$((\${#_rvfx[@]}+\${#_finals[@]}+1))\"
-            \"\${_finals[@]}\"
-            \"\${_rvfx[@]}\"
-            \"\${n:1}\"
-            \"\${_D[@]}\" \"\${_DB[@]}\" \"\${_DR[@]}\" \"\${_NB[@]}\" \"\${_NR[@]}\") "
+    ! [[ -z $z ]] && {
+        [[ -e $x ]] && {
+            t="${1##*/}"
+            t="$r/${t%.t*}.tar.${SHELLAPI_PAYLOAD//[ip]/}"
+            _omsg "payload: $x -> ${t##*/}"
+            {
+                $z "$x" | $SHELLAPI_PAYLOAD --best > "$t"
+            } &> /dev/null || {
+                _emsg "conversion failed: $x"
+                return 1
+            }
+        } || {
+            [[ -d $x ]] \
+                && _emsg "${FUNCNAME}: directory to consider as file?: $x"
+            _emsg "${FUNCNAME}: file does not exist: $x"
+            return 1
+        }
+    } || {
+        [[ -d $x ]] && {
+            t="$s/${x##*/}-snapshot.$(_dtff).tar.${SHELLAPI_PAYLOAD//[ip]/}"
+            _omsg "snapshot: $x -> ${t##*/}"
+            {
+                pushd "${x%/*}"
+                [[ ${x##*/} = $x ]] && x="."
+                tar cf - "${x##*/}" | ${SHELLAPI_PAYLOAD} --best -c - > "$t"
+                popd
+            } &> /dev/null || {
+                _emsg "${FUNCNAME}: could not perform conversion for: $1"
+                return 1
+            }
+        } || {
+            _emsg "${FUNCNAME}: directory does not exist: $x"
+            return 1
+        }
+    }
+    odsel_targuess "$t" && {
+        [[ -z $x ]] \
+            && POOL_REPORT="snapshot/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]#*.}" \
+            || POOL_REPORT="payload/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]}"
+        POOL_REPORT=("$POOL_REPORT" "${POOL_TARGUESS[1]}" "${POOL_TARGUESS[4]}")
+    } || {
+        _emsg "${FUNCNAME}: tar guessing failed"
+        return 1
+    }
 }
 
 #;
 # @desc Performs Complete function cache removal for relays
 # @ptip $1  hash id for the relay cache function
 #;
-function odsel_rrfcache() {
-    rm -rf "${POOL_RELAY_CACHE}/functions/${1:-*}.poolconf.bash"
+function odsel_delc() {
+    local x="${1:-prime}" y=$(odsel_gph "${1:-prime}")
+    . "$POOL_RELAY_CACHE/functions/$y.poolconf.bash" &> /dev/null && {
+        _isfunction "_init_pool_$y" && {
+            _init_pool_$y
+            y="__pool_relay_$y[$_FCACHE]"
+            ! [[ -z ${!y} ]] && rm -rf "${!y}"/*.bash
+        }
+    }
 }
 
 #;

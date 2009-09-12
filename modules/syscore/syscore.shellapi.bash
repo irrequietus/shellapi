@@ -582,12 +582,14 @@ function _include() {
             SHELLAPI_MODULES+=("$1")
             eval "__LOCK__$1=1"
             [[ -e $l ]] && {
-                _xml2bda "$l" # create the locale shell script
-                _$1_intl_${SHELLAPI_LOCALE} # call the localizer function
+                _xml2bda "$l"
+                _isfunction _$1_intl_$SHELLAPI_LOCALE \
+                        && _$1_intl_$SHELLAPI_LOCALE
             }
             [[ -e $x ]] && {
                 _xml2bda "$x"
-                _initglobals_$1
+                _isfunction _initglobals_$1 \
+                    && _initglobals_$1
             }
             . "$i"
             _isfunction $1_init && $1_init

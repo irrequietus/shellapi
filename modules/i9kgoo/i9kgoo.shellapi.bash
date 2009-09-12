@@ -198,7 +198,8 @@ function i9kgoo_pool_analyze() {
 #;
 # @desc Generate a simulation instance to be part of an i9kg file, using
 #       the XML implementation for i9kg out of a rpli item.
-# @ptips $1 rpli item to use "<name>:<version>"
+# @ptip $1  rpli item to use "<name>:<version>"
+# @ptip $2  pool where this simulation is assigned (defaults to: prime)
 # @note The function prints output to stdout
 #;
 function i9kgoo_sim_prseq_xml() {
@@ -210,9 +211,9 @@ function i9kgoo_sim_prseq_xml() {
         <sequence variant=\"stable\">\n" "${1/*:/}" "$1"
     for x in ${I9KG_PRESETS[@]}; do
         printf "            <action mode=\"%s\">
-                <code>printf \"%s://default[%s@stable:%s] simulating: \$RANDOM events\\\n\"</code>
+                <code>printf \"%s[%s]://default[%s@stable:%s] simulating: \$RANDOM events\\\n\"</code>
                 <text>This is text for the %s event!</text>
-            </action>\n" "$x" "${1/:*/}" "${1/*:/}" "$x" "$x"
+            </action>\n" "$x" "${1/:*/}" "${2:-prime}" "${1/*:/}" "$x" "$x"
     done
     printf "        </sequence>\n    </instance>\n"
 }
@@ -252,7 +253,7 @@ function i9kgoo_sim_metabase_xml() {
     -->
     <i9kg name=\"%s\">\n" "$n" > "$l/$n.i9kg.xml"
                 for y in ${!z[@]}; do
-                    i9kgoo_sim_prseq_xml "${z[y]}"
+                    i9kgoo_sim_prseq_xml "${z[y]}" "${1:-prime}"
                 done >> "$l/$n.i9kg.xml"
                 printf "</i9kg>\n" >> "$l/$n.i9kg.xml"
                 z=("$x")

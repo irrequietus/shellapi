@@ -13,6 +13,19 @@
     <var name="SHELLAPI_HASH">${SHELLAPI_HASH_MODES}</var>
     <var name="SHELLAPI_RSPACE">${SHELLAPI_TARGET}/shellrun</var>
     <var name="I9KG_POOLSPACE">${SHELLAPI_TARGET}/poolset</var>
+    <var name="POOL_RELAY_STORE">${SHELLAPI_TARGET}/relays</var>
+    <var name="POOL_RELAY_CACHE">${SHELLAPI_TARGET}/relays/cache</var>
+    <var name="_I9KG_RLAY">0</var>
+    <var name="_I9KG_POOL">1</var>
+    <var name="_I9KG_RHID">2</var>
+    <var name="_I9KG_PHID">3</var>
+    <var name="_I9KG_EXPR">4</var>
+    <var name="_HPAGE">0</var>
+    <var name="_CHECKSUM">1</var>
+    <var name="_ENTRY">2</var>
+    <var name="_UPDATE">3</var>
+    <var name="_PREGET">4</var>
+    <var name="_POSTGET">5</var>
     <array name="SHELLAPI_MODULES"/>
     <array name="SHELLAPI_LFUNC"/>
     <array name="SHELLAPI_GMSG"/>
@@ -46,6 +59,36 @@
         <index name="FCACHE">${I9KG_POOLSPACE}/prime/fcache</index>
         <index name="RHID"></index>
         <index name="RPLI"></index>
+    </array>
+    <array name="I9KG_ALIASES">
+        <index>LOCATION</index>
+        <index>PRISTINE</index>
+        <index>PAYLOAD</index>
+        <index>PATCHES</index>
+        <index>SNAPSHOTS</index>
+        <index>CLONES</index>
+        <index>EZCONFIG</index>
+        <index>METABASE</index>
+        <index>METACACHE</index>
+        <index>I9KG_DEPOT</index>
+        <index>I9KG_SEEDS</index>
+        <index>I9KG_SEEDS_XML</index>
+        <index>I9KG_SEEDS_JSON</index>
+        <index>I9KG_SEEDS_YAML</index>
+        <index>I9KG_REPORTS</index>
+        <index>I9KG_REPORTS_XML</index>
+        <index>I9KG_REPORTS_JSON</index>
+        <index>I9KG_REPORTS_YAML</index>
+        <index>FCACHE</index>
+        <index>RHID</index>
+        <index>RPLI</index>
+    </array>
+    <array name="I9KG_OAL">
+        <index>RLAY</index>
+        <index>POOL</index>
+        <index>RHID</index>
+        <index>PHID</index>
+        <index>EXPR</index>
     </array>
     <array name="I9KG_UTILSPACE" check="reuse">
         <index name="LOCATION">${SHELLAPI_RSPACE}/utilspace</index>
