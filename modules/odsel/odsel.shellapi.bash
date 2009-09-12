@@ -1129,10 +1129,9 @@ fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
                 pushd "$f" &> /dev/null
                 $o
                 popd &> /dev/null
-            } || _emsg "${FUNCNAME}: could not deduce retrieval target"
-        } || _emsg "${FUNCNAME}: [function()] --> $x ?"
+            } || { _emsg "${FUNCNAME}: could not deduce retrieval target: $x"; return 1; }
+        } || { _emsg "${FUNCNAME}: [function()] --> $x ?"; return 1; }
     done
-    ! ((${#SHELLAPI_ERRORS[@]}))
 }
 
 #;
