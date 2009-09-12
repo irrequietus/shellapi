@@ -58,8 +58,8 @@ function odsel_vsi() {
                 odsel_scli "${g[$x]//[[:space:]]/};"
             ;;
         esac
+        ((${#SHELLAPI_ERROR[@]})) && return 1 || :
     done
-    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
