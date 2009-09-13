@@ -1256,17 +1256,21 @@ function odsel_recoil() {
 
 #;
 # @desc Performs Complete function cache removal for relays
-# @ptip $1  hash id for the relay cache function
+# @ptip $1  pool id for the relay cache function (comma separated list)
 #;
 function odsel_delc() {
-    local x="${1:-prime}" y=$(odsel_gph "${1:-prime}")
-    . "$POOL_RELAY_CACHE/functions/$y.poolconf.bash" &> /dev/null && {
-        _isfunction "_init_pool_$y" && {
-            _init_pool_$y
-            y="__pool_relay_$y[$_FCACHE]"
-            ! [[ -z ${!y} ]] && rm -rf "${!y}"/*.bash
+    local x="${1:-prime}"
+    _split "${x//[[:space:]]/}"
+    for x in ${!SPLIT_STRING[@]}; do
+        x=$(odsel_gph "${SPLIT_STRING[$x]}")
+        . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash" &> /dev/null && {
+            _isfunction "_init_pool_$x" && {
+                _init_pool_$x
+                x="__pool_relay_$x[$_FCACHE]"
+                ! [[ -z ${!x} ]] && rm -rf "${!x}"/*.bash
+            }
         }
-    }
+    done
 }
 
 #;
