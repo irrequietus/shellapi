@@ -872,40 +872,45 @@ function odsel_gph() {
 # @ptip $1  pool relay to activate
 #;
 function odsel_load() {
-    local x=$(odsel_gph "$1") z
-    local y="${2:-__pool_relay_$x}"
-    _isfunction "_init_pool_$x" && _init_pool_$x || {
-        if [[ -e $POOL_RELAY_CACHE/functions/$x.poolconf.bash ]]; then
-            _imsg "@[$1]: loading configuration cache $(_dotstr "$x")"
-            . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash"
-            _init_pool_$x &> /dev/null || {
-                _emsg "${FUNCNAME}: for pool [$1]"
-                _emsg "${FUNCNAME}: invalid cache: $(_dotstr "$x")"
-                return 1
-            }
-            eval "__pool_relay_${x}[\$_RHID]=\"$x\"
-                  __pool_relay_${x}[\$_RPLI]=\"__pool_rcache_$x\""
-        else
-            _nmsg "@[$1]: caching xml relay : $(_dotstr "$x")"
-            [[ -e ${POOL_RELAY_CACHE}/xml/$x.poolconf.xml ]] && {
-                _xml2bda "${POOL_RELAY_CACHE}/xml/$x.poolconf.xml"
-                _init_pool_$x
-                z="__pool_relay_$x[$_METABASE]"
-                eval "$y=(\"\${__pool_relay_$x[@]}\"
-                            [\$_RHID]=\"$x\"
-                            [\$_RPLI]=\"__pool_rcache_$x\")"
-                odsel_pppli "${!z}/metabase.xml" __pool_rcache_$x \
-                    && odsel_pobjc $y > "$POOL_RELAY_CACHE/functions/$x.poolconf.bash"
+    local x= y= z= n=
+    _split "${1//[[:space:]]/}"
+    for n in ${!SPLIT_STRING[@]}; do
+        n=${SPLIT_STRING[$n]}
+        x=$(odsel_gph "$n")
+        y="__pool_relay_$x"
+        _isfunction "_init_pool_$x" && _init_pool_$x || {
+            if [[ -e $POOL_RELAY_CACHE/functions/$x.poolconf.bash ]]; then
+                _imsg "@[$n]: loading configuration cache $(_dotstr "$x")"
                 . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash"
-                _init_pool_$x
-            } || {
-                _emsg "${FUNCNAME}: for pool [$1]"
-                _emsg "${FUNCNAME}: pool configuration relay invalid or missing: $(_dotstr "$x")"
-                return 1
-            }
-            _cmsg "@[$1]: caching complete  : $(_dotstr "$x")"
-        fi
-    }
+                _init_pool_$x &> /dev/null || {
+                    _emsg "${FUNCNAME}: for pool [$1]"
+                    _emsg "${FUNCNAME}: invalid cache: $(_dotstr "$x")"
+                    return 1
+                }
+                eval "__pool_relay_${x}[\$_RHID]=\"$x\"
+                    __pool_relay_${x}[\$_RPLI]=\"__pool_rcache_$x\""
+            else
+                _nmsg "@[$n]: caching xml relay : $(_dotstr "$x")"
+                [[ -e ${POOL_RELAY_CACHE}/xml/$x.poolconf.xml ]] && {
+                    _xml2bda "${POOL_RELAY_CACHE}/xml/$x.poolconf.xml"
+                    _init_pool_$x
+                    z="__pool_relay_$x[$_METABASE]"
+                    eval "$y=(\"\${__pool_relay_$x[@]}\"
+                                [\$_RHID]=\"$x\"
+                                [\$_RPLI]=\"__pool_rcache_$x\")"
+                    odsel_pppli "${!z}/metabase.xml" __pool_rcache_$x \
+                        && odsel_pobjc $y > "$POOL_RELAY_CACHE/functions/$x.poolconf.bash"
+                    . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash"
+                    _init_pool_$x
+                } || {
+                    _emsg "${FUNCNAME}: for pool [$n]"
+                    _emsg "${FUNCNAME}: pool configuration relay invalid or missing: $(_dotstr "$x")"
+                    return 1
+                }
+                _cmsg "@[$n]: caching complete  : $(_dotstr "$x")"
+            fi
+        }
+    done
 }
 
 #;
