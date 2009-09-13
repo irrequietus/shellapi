@@ -502,6 +502,28 @@ function fnapi_pstatall() {
 }
 
 #;
+# @desc Clean up locks that are not of use anymore
+# @ptip $1  The type of lock to clean up. Defaults to "fail"
+#;
+function fnapi_flush() {
+    local x="${1:-fail}"
+    case "$x" in
+        inpr|pass|fail|inqe)
+            pushd "${I9KG_DEFS[$_PROCESS_LOCKS]}" &> /dev/null && {
+                rm -rf *.$x
+                pushd "${I9KG_DEFS[$_PROGRESS_LOCKS]}" &> /dev/null && {
+                    rm -rf *.$x
+                } || _fatal "${FUNCNAME}: progress locks directory does not exist"
+            } || _fatal "${FUNCNAME}: process locks directory does not exist"
+            { popd; popd; } &> /dev/null
+            ;;
+        *)
+            _emsg "${FUNCNAME}: invalid request: $x"
+            return 1
+    esac
+}
+
+#;
 # @desc Push a fnapi message to the FNAPI_MSG array
 # @ptip $1  message to push to the array
 #;
