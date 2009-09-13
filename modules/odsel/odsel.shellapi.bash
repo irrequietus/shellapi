@@ -915,15 +915,15 @@ function odsel_load() {
 
 #;
 # @desc Simulation handler
-# @ptip $1  pool identifier
+# @ptip $1  pool identifier (comma separated list)
 #;
 function odsel_sim() {
+    local x="${1//[[:space:]]/}"
     [[ -z $1 ]] && {
-        _emsg "${FUNCNAME}: pool identifier not set"
+        _emsg "${FUNCNAME}: pool identifier(s) not set"
         return 1
     }
-    local x=
-    _split "$1"
+    _split "$x"
     for x in ${SPLIT_STRING[@]}; do
         odsel_ispool "$x" && {
             _emsg "${FUNCNAME}: cannot run a simulation on an already existing pool"
