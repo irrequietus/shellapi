@@ -1272,18 +1272,3 @@ function odsel_delc() {
         }
     done
 }
-
-#;
-# @desc A wrapper function for odsel_new
-# @ptip $1  pool identifier
-#;
-function odsel_setup_pool() {
-    _nmsg "creating @[${1:-prime}]" \
-        && odsel_new "${1:-prime}" \
-        || {
-            _emsg "${FUNCNAME}: creating @[${1:-prime}] failed"
-            return 1
-           }
-    _cmsg "created  @[${1:-prime}]"
-}
-
