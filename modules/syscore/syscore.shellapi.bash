@@ -796,6 +796,23 @@ function _bashok() {
 }
 
 #;
+# @desc A relatively simple stopwatch, returning a whitespace separated
+#       list of real|user|sys times.
+# @ptip $@  Function / expression to execute.
+#;
+function _time() {
+    local x=($( (time "$@" > /dev/null) 2>&1)) y z
+    unset -v x[0] x[2] x[4]
+    for x in ${!x[@]}; do
+        z=${x[$y]#*m}
+        z="${z/.*/}"
+        z=$((z+${x[$y]/m*/}*60)).${x[$y]#*.}
+        x[$y]=${z%?}
+    done
+    printf "%s\n" "${x[@]}"
+}
+
+#;
 # @desc Setup a shellapi runspace layout
 # @ptip $1  directory where to setup the layout; must not exist
 #;
