@@ -239,6 +239,37 @@ function fnapi_dumpheader() {
 }
 
 #;
+# @desc Explicitely relock a progress / process lock of [inpr] status
+# @ptip $1  The lock format: process/<hash> or progress/<hash>
+# @ptip $2  The "relocked" target (pass|fail|inqe|kill)
+#;
+function fnapi_relock() {
+    (($# == 2)) && {
+        case "${1}" in
+            process/*)
+
+                    rm -rf "${I9KG_DEFS[$_PROCESS_LOCKS]}/${1#*/}.pass"
+                    printf  "${2:-fail}: %s\n" "$(date -R)" >> \
+                            "${I9KG_DEFS[$_PROCESS_LOCKS]}/${1#*/}.inpr/timing.log"
+                    mv  "${I9KG_DEFS[$_PROCESS_LOCKS]}/${1#*/}.inpr" \
+                        "${I9KG_DEFS[$_PROCESS_LOCKS]}/${1#*/}.${2:-fail}"
+                ;;
+            progress/*)
+
+                    rm -rf "${I9KG_DEFS[$_PROGRESS_LOCKS]}/${1#*/}.pass"
+                    printf  "${2:-fail}: %s\n" "$(date -R)" >> \
+                            "${I9KG_DEFS[$_PROGRESS_LOCKS]}/${1#*/}.inpr/timing.log"
+                    mv  "${I9KG_DEFS[$_PROGRESS_LOCKS]}/${1#*/}.inpr" \
+                        "${I9KG_DEFS[$_PROGRESS_LOCKS]}/${1#*/}.${2:-fail}"
+                ;;
+                *)
+                    _emsg "${FUNCNAME}: unknown lock category"
+                ;;
+        esac
+    }
+}
+
+#;
 # @desc Unlock function locks (progress / process)
 # @ptip $1  unlocking in the format of [process|progress]/<hash>.<ext|*>
 #;
