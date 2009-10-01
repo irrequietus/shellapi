@@ -380,7 +380,8 @@ function fnapi_gencascade() {
     fnapi_makeheader \"\${FUNCNAME}\" \"\${@}\"
     local f=\"\${FNAPI_HEADER[\$_FNAPI_FHASH]}\"
     fnapi_allows_flock \"\$f\" && {
-        rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass
+        rm -rf  \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\"\$f.pass
+                \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\"\$f.inpr/*.log
         pushd . &> /dev/null
         _omsg \"\$(_emph \${FUNCNAME}): %s\$(_dotstr \$f): 0/$z\"\n" "$1" "$a"
     for x in $(_xsof $3); do
