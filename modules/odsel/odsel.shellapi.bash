@@ -21,43 +21,70 @@
 # @ptip $1  A valid odsel expression
 #;
 function odsel_vsi() {
-    _bsplit "${1}" \; || {
-        _emsg "${FUNCNAME}: cannot parse expression"
+    _split "${1}" \; || {
+        _emsg "${FUNCNAME}: cannot parse expression!"
         return 1
     }
-    local x y z
-    local g=("${SPLIT_STRING[@]}")
-    for x in ${!g[@]}; do
-        y="${g[$x]/[[:space:]]*/}"
-        z="${g[$x]#"$y"}"
-        z="${z//[[:space:]]/}"
-        case "$y" in
-            new|del|load|delc|newc|sim)
-                case "${z:0:1}" in
-                    :)
-                        _omsg "$(_emph implicit): assuming [$y] is used as i9kg expression prefix (:)"
-                        _omsg "$(_emph i9kg): ${g[$x]//[[:space:]]/}"
-                        _odsel_i9kg_i "${g[$x]//[[:space:]]/};"
+    local x y z a n m b z g f=() i=("${SPLIT_STRING[@]}")
+    for((x=0;x<${#i[@]};x++)); do
+        y="${i[$x]//[[:space:]]/}"
+        [[ -z $y ]] && continue
+        if   [[ ${y:0:1} == @ ]]; then
+            _omsg "$(_emph rpli): ${y:1}"
+            _odsel_rpli_i "${y:1}"
+        elif [[ $y =~ ^(new|del|load|delc|newc|sim|def|:)(.*) ]]; then
+            case "${BASH_REMATCH[1]}" in
+                def|:)
+                    case "${i[$x]#*${BASH_REMATCH[1]}}" in
+                        [[:space:]]*)
+                                n="${BASH_REMATCH[2]}"
+                                if  [[ $n =~ ^([[:alnum:]]*)\(\)\{ ]]; then
+                                    m=" ${!i[@]}"; m="${m#* $x }"; f=("${i[$x]#*{}")
+                                    for x in $m; do
+                                        [[ ${i[$x]} = } ]] && break
+                                        [[ -z ${i[$x]//[[:space:]]/} ]] || f+=("${i[$x]}")
+                                    done
+                                    eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
+                                    _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
+                                elif [[ $n =~ ^([\]\[[:alnum:]]*)(=|\<\<)(.*) ]]; then
+                                    _omsg "$(_emph dval): ${BASH_REMATCH[1]}"
+                                    [[ ${BASH_REMATCH[2]} = \<\< ]] \
+                                        && n="${BASH_REMATCH[1]}://${BASH_REMATCH[3]}" \
+                                        || n="${BASH_REMATCH[3]}"
+                                else
+                                    _emsg "${FUNCNAME}: illegal def:"
+                                    _emsg " *  $n"
+                                fi
+                            ;;
+                            :*)
+                                _omsg "$(_emph rpli): ${BASH_REMATCH[2]}"
+                                ;;
+                    esac
                     ;;
-                    '')
+                *)
+                    _omsg "$(_emph rpli): odsel_${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+                    odsel_${BASH_REMATCH[1]} "${BASH_REMATCH[2]}"
                     ;;
-                    *)
-                        x="${y//[[:space:]]/}"
-                        y="odsel_$x"
-                        _omsg "$(_emph pool): $(odsel_whatis $x) : $z"
-                        $y "$z"
-                    ;;
-                esac
-                ;;
-            @*)
-                y="${g[$x]//[[:space:]]/}"
-                _omsg "$(_emph rpli): $y"
-                _odsel_rpli_i "${y:1}"
-                ;;
-            *://*)
-                _odsel_i9kg_i "${g[$x]//[[:space:]]/};"
-                ;;
-        esac
+            esac
+        elif [[ $y =~ ^([[:alnum:]]*)\(\)(.*) ]]; then
+            [[ -z ${BASH_REMATCH[2]} ]] \
+                && _omsg "$(_emph call): ==${BASH_REMATCH[1]}" \
+                || _emsg "${FUNCNAME}: wrong syntax!"
+            n="_fnop_${BASH_REMATCH[1]}"
+            ! [[ -z ${!n} ]] && {
+                n="$n[*]"
+                odsel_vsi "${!n}" || _emsg "FAILED"
+            } || {
+                _emsg "$(_emph call): ${BASH_REMATCH[1]}(): failed because:"
+                _emsg "* undefined call: ${BASH_REMATCH[1]}()"
+            }
+        elif [[ $y =~ ^([\]\[[:alnum:]]*):// ]]; then
+            _omsg "$(_emph i9kg): ${BASH_REMATCH[1]}"
+            _odsel_i9kg_i "$y:code;" n
+        else
+            _emsg "${FUNCNAME}: unknown request:"
+            _emsg " *  $x"
+        fi
         ((${#SHELLAPI_ERROR[@]})) && return 1 || :
     done
 }
