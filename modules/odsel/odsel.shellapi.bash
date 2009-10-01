@@ -1058,6 +1058,21 @@ function odsel_new() {
 }
 
 #;
+# @desc The prototype for "value" definition in odsel
+# @ptip $1  Left side
+# @ptip $2  Right side
+#;
+function odsel_dval() {
+    local x="$1" y="${2//[[:space:]]/}"
+    _omsg "$(_emph DVAL): name  = $x"
+    _omsg "$(_emph DVAL): value = $y"
+    [ "$x" = "${y/:*/}" ] && {
+        _omsg "* -> properly defined: $x"
+    } || _emsg "${FUNCNAME}: not equal"
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc Remove a series of pools from the runspace
 # @ptip $1  comma separated list of pool names
 #;
