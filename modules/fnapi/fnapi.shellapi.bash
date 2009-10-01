@@ -234,10 +234,8 @@ function fnapi_makeheader() {
 function fnapi_dumpheader() {
     (($#)) && {
             local x="$(printf "%s\n" "${@}" | ${FNAPI_CHECKSUM})"
-            printf "${x/ */}"
-            return
-     } || _emsg "${FUNCNAME}: called without arguments"
-    ! ((${#SHELLAPI_ERROR[@]}))
+            printf "%s\n" "${x/ */}"
+     } || return 1
 }
 
 #;
