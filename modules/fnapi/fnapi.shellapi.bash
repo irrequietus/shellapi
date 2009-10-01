@@ -166,6 +166,8 @@ function fnapi_allows_flock() {
     [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.fail ]] && return 1
     [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inpr ]] && return 2
     mkdir "${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inpr"
+    printf "inpr: %s\n" "$(date -R)" >> \
+        "${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inpr/timing.log"
 }
 
 #;
