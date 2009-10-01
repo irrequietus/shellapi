@@ -253,6 +253,22 @@ function fnapi_fnp_write() {
 }
 
 #;
+# @desc         Rewrite the dependency list of a _fnp_* specification compliant function.
+#               Take note that the function must exist in order to be "rewritten".
+# @ptip $1      The name of an already defined _fnp_* function.
+# @ptip ${@:2}  Sequence of the new dependencies (hash ids).
+#;
+function fnapi_fnp_deprw() {
+    local t="$1"
+    _isfunction $t && {
+        t="$(type $t | tail --lines=+2)"
+        eval "${t/local _d_=(*)/local _d_=(${@:2})}" &> /dev/null \
+            || { _emsg "${FUNCNAME}: could not rewrite dependencies for _fnp_*: $1"; eval "$t"; }
+    } || _emsg "${FUNCNAME}: cannot rewrite an undefined function: $1"
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc Create a FNAPI_HEADER array for a given function and parameters combination;
 #       the function must exist or it raises fatal
 # @ptip $@ function to call, along with the parameters it is to be called with.
