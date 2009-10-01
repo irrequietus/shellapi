@@ -487,11 +487,16 @@ function _odsel_rpli_i() {
 #;
 function _odsel_i9kg_i() {
     odsel_scli "${1//[[:space:]]/}" && {
-        local x=${ODSEL_EXPBLOCK[0]} y
+        local x=${ODSEL_EXPBLOCK[0]} y z=()
         unset ODSEL_EXPBLOCK[0]
+        (($# != 2)) && {
+            _emsg "${FUNCNAME}: target not set for i9kg sequence"
+            return 1
+        }
         for y in ${!ODSEL_EXPBLOCK[@]}; do
-            odsel_exprseq "${ODSEL_EXPBLOCK[$y]}" $x || return 1
+            z+=("$(odsel_exprseq "${ODSEL_EXPBLOCK[$y]}" $x)") || return 1
         done
+        eval "$2=(\"\${z[@]}\")"
     }
 }
 
