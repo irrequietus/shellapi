@@ -171,6 +171,22 @@ function fnapi_allows_flock() {
 }
 
 #;
+# @desc Check whether the hash id you are checking for allows progress
+#       by asserting progress status, this time including [pass] as
+#       significant.
+# @ptip $1  lock hash id
+#;
+function fnapi_allows_go() {
+    [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.pass ]] || { 
+        [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.kill ]] && return 4
+        [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inqe ]] && return 3
+        [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inpr ]] && return 2
+        [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.fail ]] && return 1
+        return 5
+    }
+}
+
+#;
 # @desc Launch a function with its arguments through fnapi in parallel mode
 # @ptip ${1}    The name of the function to lanuch
 # @ptip ${@:2}  Arguments that must be passed to the function
