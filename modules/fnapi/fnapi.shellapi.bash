@@ -269,6 +269,20 @@ function fnapi_fnp_deprw() {
 }
 
 #;
+# @desc Sort a list of _fnp_* compliant functions by csec "weight factor"
+# @ptip $2  Whitespace separated list.
+# @note The csec factor is always a positive integer or zero (csec >= 0).
+#;
+function fnapi_by_csec() {
+    local x y=() n=
+    for x in $@; do
+        n=$($x csec || printf "0" )
+        y[$n]="${y[$n]} $x"
+    done
+    printf "%b\n" ${y[@]}
+}
+
+#;
 # @desc Create a FNAPI_HEADER array for a given function and parameters combination;
 #       the function must exist or it raises fatal
 # @ptip $@ function to call, along with the parameters it is to be called with.
