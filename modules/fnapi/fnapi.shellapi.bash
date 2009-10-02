@@ -529,6 +529,62 @@ function fnapi_gencascade() {
 }
 
 #;
+# @desc A task scheduler prototype implemented in pure GNU bash. This function is
+#       designed to calculate the scheduling for function "wrappers" as presented
+#       within the array which represents the tasks along with their dependencies.
+# @ptip $1  The array variable containing the task set representation.
+# @ptip $2  The array variable where to store the result.
+#;
+function __fnapi_schedule_p() {
+    eval "local g=(\"\${$1[@]}\")"
+    local a x r y i j p=() g1=() g2=() k=0
+    for x in ${!g[@]}; do
+        a=(${g[$x]#*[[:space:]]})
+        r="${g[$x]/[[:space:]]*/}"
+        ((_fl_$r)) \
+            || ((_fl_$r=${#g1[@]}+1))
+        g1[_fl_$r]="$r"
+        g2[_fl_$r]="${a[@]}"
+        for y in ${a[@]}; do
+            ((_fl_$y)) \
+                || ((_fl_$y=${#g1[@]}+1))
+            g1[_fl_$y]="$y"
+        done
+    done
+    r=${#g1[*]}
+    a=0
+    while ((s=${#g1[@]})) && (($((a++))<r)); do
+        for x in ${!g1[@]}; do
+            [[ -z ${g2[$x]} ]] && {
+                p+=("${g1[$x]}")
+                unset -v _fl_${g1[$x]} g1[$x] g2[$x]
+            } || {
+                y=(${g2[$x]})
+                for i in ${!y[@]}; do
+                    for j in ${!p[@]}; do
+                        [[ ${p[$j]} = ${y[$i]} ]] \
+                            && unset y[$i]
+                    done
+                done
+                g2[$x]="${y[@]}"
+            }
+        done
+        ((s!=${#g1[@]})) && {
+            #_imsg "$(_emph "progress|&"): ${#p[@]} : ${#g1[@]}"
+            eval "${2:-results}+=(\"${p[@]:k}\")"
+            k=${#p[*]}
+        }
+    done
+    ((a<r)) || {
+        g1=(${g1[*]})
+        _emsg "${FUNCNAME}: a cyclic event sequence has been detected"
+        _emsg "${FUNCNAME}: cycle seems to start from: ${g1[0]}"
+        _emsg "${FUNCNAME}: would have cycled at  : $((r-${#g1[*]}))/$r in sequence"
+        return 1
+    }
+}
+
+#;
 # @desc Check for a progress lock (inpr, pass, fail, inqe)
 # @ptip $1 name of the function; defaulting to null returns whether
 #       all functions in process (inpr)
