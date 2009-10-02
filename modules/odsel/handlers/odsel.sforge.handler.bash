@@ -68,7 +68,7 @@ function _odsel_handler_sforge_init() {
 #;
 function _odsel_handler_sforge() {
     printf "%s %s?use_mirror=%s\n" \
-        "${POOL_DGET:-"wget -c"}" \
+        "${ODSEL_DGET:-"wget -c"}" \
         "${1/sforge:\/\//http://downloads.sourceforge.net/}" \
         "${SFORGE_MR:=${SFORGE_MSET[$(($RANDOM%${#SFORGE_MSET[@]}))]}}"
 }

@@ -17,6 +17,27 @@
 # along with shellapi. If not, see <http://www.gnu.org/licenses/>.
 
 #;
+# @desc The init implementation for this module
+# @warn Same fix as in _init for _opsolve (bash 4.x related)
+#;
+function odsel_init() {
+    ODSEL_TARCOIL=()
+    ODSEL_TARGUESS=()
+    ODSEL_DGET="wget -c"
+    ODSEL_XMLA=()
+    ODSEL_REGEXP=( ':[{]([^}]*)[}]\]'
+                   '([^,]*),'
+                   '@([^@]*):([^->]*)->([^->]*)'
+                   '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
+                   '\[([^@{}>,-]*):([^@{}>,-]*)\]'
+                   '\[([^@{}>,:]*)\]' )
+    ODSEL_OPRT=()
+    ODSEL_OPRT[$(_opsolve "->")]="pm"
+    ODSEL_OPRT[$(_opsolve "~>")]="rm"
+    ODSEL_OPRT[$(_opsolve "<-")]="lm"
+}
+
+#;
 # @desc odsel_vsi prototype (to deprecate ununified means)
 # @ptip $1  A valid odsel expression
 #;
@@ -613,29 +634,6 @@ function odsel_whatis() {
 }
 
 #;
-# @desc The init implementation for this module
-# @warn Same fix as in _init for _opsolve (bash 4.x related)
-#;
-function odsel_init() {
-    POOL_CACHE=()
-    POOL_REPORT=()
-    POOL_TARGUESS=()
-    POOL_BUILDSPACE=()
-    POOL_DGET="wget -c"
-    ODSEL_XMLA=()
-    ODSEL_REGEXP=( ':[{]([^}]*)[}]\]'
-                   '([^,]*),'
-                   '@([^@]*):([^->]*)->([^->]*)'
-                   '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
-                   '\[([^@{}>,-]*):([^@{}>,-]*)\]'
-                   '\[([^@{}>,:]*)\]' )
-    ODSEL_OPRT=()
-    ODSEL_OPRT[$(_opsolve "->")]="pm"
-    ODSEL_OPRT[$(_opsolve "~>")]="rm"
-    ODSEL_OPRT[$(_opsolve "<-")]="lm"
-}
-
-#;
 # @desc A dependency querying mechanism compatible with an i9kg rcache
 #       array. The purpose here is to get a whitespace separated list
 #       of dependencies of a specific type: {rpli,dbld,drun,nbld,nrun}.
@@ -1102,7 +1100,7 @@ function odsel_del() {
 # @ptip $1  path to the tarball or name of the tarball
 #;
 function odsel_targuess() {
-    POOL_TARGUESS=()
+    ODSEL_TARGUESS=()
     local x s="${1##*/}" v n i
     [[ $s =~ \-([^.-]*)\. ]] \
         && x=${BASH_REMATCH[1]}
@@ -1122,7 +1120,7 @@ function odsel_targuess() {
         && i="snapshot" \
         || i="pristine"
     # name - version - identity - original name - sha1sum
-    POOL_TARGUESS=("$n" "$s" "$v" "$i" "$(_hsof "$1")")
+    ODSEL_TARGUESS=("$n" "$s" "$v" "$i" "$(_hsof "$1")")
 }
 
 #;
@@ -1135,7 +1133,7 @@ function odsel_ifetch() {
         http\://* | \
         ftp\://* | \
         https\://*)
-            e="${POOL_DGET} $1"
+            e="${ODSEL_DGET} $1"
             ;;
         git\://http\://* | \
         git\:https\://*)
@@ -1227,7 +1225,7 @@ fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
 #;
 function odsel_recoil() {
     local x="$1" y="${2:-[prime]}" z= r= s= t=
-    POOL_REPORT=() POOL_TARGUESS=()
+    ODSEL_TARCOIL=() ODSEL_TARGUESS=()
     case "$y" in
         \[*\] | '')
             y=${y:1:$((${#y}-2))}
@@ -1292,9 +1290,9 @@ function odsel_recoil() {
     }
     odsel_targuess "$t" && {
         [[ -z $x ]] \
-            && POOL_REPORT="snapshot/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]#*.}" \
-            || POOL_REPORT="payload/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]}"
-        POOL_REPORT=("$POOL_REPORT" "${POOL_TARGUESS[1]}" "${POOL_TARGUESS[4]}")
+            && ODSEL_TARCOIL="snapshot/${ODSEL_TARGUESS[0]}:${ODSEL_TARGUESS[2]#*.}" \
+            || ODSEL_TARCOIL="payload/${ODSEL_TARGUESS[0]}:${ODSEL_TARGUESS[2]}"
+        ODSEL_TARCOIL=("$ODSEL_TARCOIL" "${ODSEL_TARGUESS[1]}" "${ODSEL_TARGUESS[4]}")
     } || {
         _emsg "${FUNCNAME}: tar guessing failed"
         return 1
