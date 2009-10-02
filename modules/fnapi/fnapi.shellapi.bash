@@ -585,6 +585,35 @@ function __fnapi_schedule_p() {
 }
 
 #;
+# @desc A deploy function for the schedule produced by __fnapi_schedule_p()
+# @ptip $1  The array variable containing the task set representation.
+# @ptip $2  A split factor ( + n to add when parallel / serial, defaults to 0 ).
+# @note Complete the wiring after testing.
+#;
+function __fnapi_deploy_schedule_p() {
+    local x _f n m l z=${2:-0}
+    _isint $z && {
+         (($z)) && x=plaunch || x=slaunch
+         __fnapi_schedule_p $1 _f && {
+            for n in ${!_f[@]}; do
+                # wiring up here once +
+                m=(${_f[$n]})
+                while ((${#m[@]})); do
+                    l=0
+                    for n in ${!m[@]}; do
+                        (($((l++))>z)) && break
+                        printf "%s " ${m[$n]}
+                        unset m[$n]
+                    done
+                    echo
+                done
+            done
+         } || _emsg "${FUNCNAME}: cannot deploy function sequence: $1"
+    } || _emsg "${FUNCNAME}: \"$z\" is not a number, cannot process sequence: $1"
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc Check for a progress lock (inpr, pass, fail, inqe)
 # @ptip $1 name of the function; defaulting to null returns whether
 #       all functions in process (inpr)
