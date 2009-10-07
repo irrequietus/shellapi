@@ -1188,6 +1188,23 @@ function _decoy_this() {
 }
 
 #;
+# @desc The __*_p() function aliaser
+# @ptip $@  A list of __*_p() function prototypes
+#;
+function _wexp_this() {
+    local x
+    for x in $@; do
+        ! _isfunction "__${x}_p" && {
+            eval "$x(){ local x=\"\$(_emph \"\${FUNCNAME}()\")\"
+                _wmsg \"\$x: *** you are using an experimental feature...\"
+                _wmsg \"\$x: *** unexpected behaviour should be expected!\"
+                __\${FUNCNAME}_p \"\$@\" ; }"
+        } || _emsg "${FUNCNAME}: cannot process because __${x}_p() is not defined"
+    done
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc A void function, goes nowhere does nothing
 #;
 function _void() {
