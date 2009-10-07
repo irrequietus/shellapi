@@ -1096,6 +1096,72 @@ function odsel_del() {
 }
 
 #;
+# @desc Completely redefine odsel "step" - related grammar elements using an odsel
+#       expression, making the requirement of XML / * redundant for step - description.
+#       This is a silent function generator.
+# @ptip $1  The odsel grammar - modifier definition expression.
+# @note FIXME: redesign odsel_scli() and related to follow suit.
+#;
+function __odsel_gscoil_p() {
+    local x="${1//[[:space:]]/}"
+    [[ "$x" =~ :\[([[:alnum:]]*)\]=\>@\{([,[:alnum:]]*)\}:\{([,[:alnum:]]*)\}([:\>,\|[:alnum:]-]*)\; ]] && {
+        [[ ${x#*${BASH_REMATCH[4]}} = \; ]] && {
+            local   r="_odsel_gscoil_$(odsel_gph ${BASH_REMATCH[1]})" \
+                    s=(${BASH_REMATCH[2]//,/ }) f=(${BASH_REMATCH[3]//,/ }) l=() \
+                    k= v=
+            k=$(v=$RANDOM$RANDOM
+                for x in ${f[@]}; do
+                    ((_$v_$x)) && { printf "%s\n" $x; return 1; } || ((_$v_$x=1))
+                done)   && v="${BASH_REMATCH[4]:1}|" \
+                        || { _emsg "${FUNCNAME}: $k is defined more than once"; return 1; }
+            while [[ "$v" =~ ^([[:alnum:]]*):([[:alnum:]]*)-\>([[:alnum:]]*)\| 
+                  || "$v" =~ ^([[:alnum:]]*):([[:alnum:]]*)\| ]]; do
+                ((${#BASH_REMATCH[@]} == 4)) && {
+                    local a=-1 b=-1
+                    for x in ${!f[@]}; do
+                        [[ ${f[$x]} == ${BASH_REMATCH[2]} ]] && a=$x
+                        [[ ${f[$x]} == ${BASH_REMATCH[3]} ]] && b=$x
+                    done
+                    (( ((a<0)) || ((b<0)) )) \
+                        && _emsg "${FUNCNAME}: $(_emph ${BASH_REMATCH[1]}) is invalid" || {
+                        ((a<b)) && {
+                            n=; for((x=a;x<=b;x++)); do n+="${f[$x]} "; done
+                            l+=("${BASH_REMATCH[1]} ${n% }")
+                            v="${v#*${BASH_REMATCH[3]}|}"
+                        } || _emsg "${FUNCNAME}: $(_emph ${BASH_REMATCH[1]}) is inversed"
+                    }
+                } || {
+                    l+=("${BASH_REMATCH[1]} ${BASH_REMATCH[2]}")
+                    v="${v#*${BASH_REMATCH[2]}|}"
+                }
+                ((${#SHELLAPI_ERROR[@]})) && return 1 || :
+            done
+            [[ -z $v ]] || {
+                _emsg "${FUNCNAME}: invalid expression:"
+                _emsg "in : ... ${x:0:$((${#x}/3))} ..."
+                _emsg "** : ... ${v:0:$((${#v}/2))} ..."
+                return 1
+            }
+        } || {
+            v="${x#*${BASH_REMATCH[4]}}"
+            _emsg "${FUNCNAME}: invalid expression:"
+            _emsg "in : ... ${x:0:$((${#x}/3))} ..."
+            _emsg "** : ... ${v:0:$((${#v}/2))} ..."
+            return 1
+        }
+    } || {
+        _emsg "${FUNCNAME}: invalid expression:"
+        _emsg "** ${x:0:$((${#x}/3))}..."
+        return 1
+    }
+    eval "$r() { case \"\$1\" in
+        $(for x in ${!l[@]}; do
+            printf  "%s) printf \"%s\\\\n\" ;;\n" \
+                    "${l[$x]/ */}" "${l[$x]#* }"
+          done) '') printf \"${f[@]}\\\\n\" ;; *) return 1 ;; esac; }"
+}
+
+#;
 # @desc Process a comma separated list of odsel "variable" assignments, whether
 #       for a single value or containing nested lists ( variable = { , , , } )
 # @ptip $1  The part of an odsel expression containing said statement.
