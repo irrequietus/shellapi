@@ -1096,6 +1096,39 @@ function odsel_del() {
 }
 
 #;
+# @desc Process a comma separated list of odsel "variable" assignments, whether
+#       for a single value or containing nested lists ( variable = { , , , } )
+# @ptip $1  The part of an odsel expression containing said statement.
+#;
+function __odsel_vdef_p() {
+    local x="$1," y z n m b
+    while [[ ${x#"${x%%[![:space:]]*}"} =~ ^([[:alnum:]]*)[[:space:]]*=[[:space:]]*(.*) ]]; do
+        n="${BASH_REMATCH[1]}"; m="${BASH_REMATCH[2]}"
+        [[ $m =~ \"([^\"]*)\"[[:space:]]*,|\
+\'([^\']*)\'[[:space:]]*,|\
+([[:alnum:]/:\.]*)[[:space:]]*,|\
+(\{[\'\"[:space:][:alnum:]/:,\.\;\{\}]*\})[[:space:]]*, ]] \
+            && y="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}${BASH_REMATCH[4]}" \
+            || return 1
+        if [[ ${y:0:1} = { ]]; then
+            z="${y:1:$((${#y}-2))},"
+            while [[ ${z#"${z%%[![:space:]]*}"} =~ \
+^\"([^\"]*)\"[[:space:]]*,|\
+^\'([^\']*)\'[[:space:]]*,|^([[:alnum:]/:\.]*)[[:space:]]*, ]]; do
+                b="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+                z="${z#*$b*,}"
+                _omsg "$(_emph def) : $n :: $b"
+            done
+        else _omsg "$(_emph def) : $n : $y"; fi    
+        x="${x#*$y*,}"
+    done
+    [[ -z $x ]] || {
+        _emsg "${FUNCNAME}: expression cannot be processed:$x"
+    }
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc Extract name / version information out of a tarball
 # @ptip $1  path to the tarball or name of the tarball
 #;
