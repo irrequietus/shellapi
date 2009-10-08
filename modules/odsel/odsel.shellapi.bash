@@ -17,47 +17,95 @@
 # along with shellapi. If not, see <http://www.gnu.org/licenses/>.
 
 #;
+# @desc The init implementation for this module
+# @warn Same fix as in _init for _opsolve (bash 4.x related)
+#;
+function odsel_init() {
+    ODSEL_TARCOIL=()
+    ODSEL_TARGUESS=()
+    ODSEL_DGET="wget -c"
+    ODSEL_XMLA=()
+    ODSEL_REGEXP=( ':[{]([^}]*)[}]\]'
+                   '([^,]*),'
+                   '@([^@]*):([^->]*)->([^->]*)'
+                   '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
+                   '\[([^@{}>,-]*):([^@{}>,-]*)\]'
+                   '\[([^@{}>,:]*)\]' )
+    ODSEL_OPRT=()
+    ODSEL_OPRT[$(_opsolve "->")]="pm"
+    ODSEL_OPRT[$(_opsolve "~>")]="rm"
+    ODSEL_OPRT[$(_opsolve "<-")]="lm"
+}
+
+#;
 # @desc odsel_vsi prototype (to deprecate ununified means)
 # @ptip $1  A valid odsel expression
 #;
 function odsel_vsi() {
-    _bsplit "${1}" \; || {
-        _emsg "${FUNCNAME}: cannot parse expression"
+    _split "${1}" \; || {
+        _emsg "${FUNCNAME}: cannot parse expression!"
         return 1
     }
-    local x y z
-    local g=("${SPLIT_STRING[@]}")
-    for x in ${!g[@]}; do
-        y="${g[$x]/[[:space:]]*/}"
-        z="${g[$x]#"$y"}"
-        z="${z//[[:space:]]/}"
-        case "$y" in
-            new|del|load|delc|newc|sim)
-                case "${z:0:1}" in
-                    :)
-                        _omsg "$(_emph implicit): assuming [$y] is used as i9kg expression prefix (:)"
-                        _omsg "$(_emph i9kg): ${g[$x]//[[:space:]]/}"
-                        _odsel_i9kg_i "${g[$x]//[[:space:]]/};"
+    local x y z a n m b z g f=() i=("${SPLIT_STRING[@]}")
+    for((x=0;x<${#i[@]};x++)); do
+        y="${i[$x]//[[:space:]]/}"
+        [[ -z $y ]] && continue
+        if   [[ ${y:0:1} == @ ]]; then
+            _omsg "$(_emph rpli): ${y:1}"
+            _odsel_rpli_i "${y:1}"
+        elif [[ $y =~ ^(new|del|load|delc|newc|sim|def|:)(.*) ]]; then
+            case "${BASH_REMATCH[1]}" in
+                def|:)
+                    case "${i[$x]#*${BASH_REMATCH[1]}}" in
+                        [[:space:]]*)
+                                n="${BASH_REMATCH[2]}"
+                                if  [[ $n =~ ^([[:alnum:]]*)\(\)\{ ]]; then
+                                    m=" ${!i[@]}"; m="${m#* $x }"; f=("${i[$x]#*{}")
+                                    for x in $m; do
+                                        [[ ${i[$x]} = } ]] && break
+                                        [[ -z ${i[$x]//[[:space:]]/} ]] || f+=("${i[$x]}")
+                                    done
+                                    eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
+                                    _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
+                                elif [[ $n =~ ^([\]\[[:alnum:]]*)(=|\<\<)(.*) ]]; then
+                                    _omsg "$(_emph dval): ${BASH_REMATCH[1]}"
+                                    [[ ${BASH_REMATCH[2]} = \<\< ]] \
+                                        && n="${BASH_REMATCH[1]}://${BASH_REMATCH[3]}" \
+                                        || n="${BASH_REMATCH[3]}"
+                                else
+                                    _emsg "${FUNCNAME}: illegal def:"
+                                    _emsg " *  $n"
+                                fi
+                            ;;
+                            :*)
+                                _omsg "$(_emph rpli): ${BASH_REMATCH[2]}"
+                                ;;
+                    esac
                     ;;
-                    '')
+                *)
+                    _omsg "$(_emph rpli): odsel_${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
+                    odsel_${BASH_REMATCH[1]} "${BASH_REMATCH[2]}"
                     ;;
-                    *)
-                        x="${y//[[:space:]]/}"
-                        y="odsel_$x"
-                        _omsg "$(_emph pool): $(odsel_whatis $x) : $z"
-                        $y "$z"
-                    ;;
-                esac
-                ;;
-            @*)
-                y="${g[$x]//[[:space:]]/}"
-                _omsg "$(_emph rpli): $y"
-                _odsel_rpli_i "${y:1}"
-                ;;
-            *://*)
-                _odsel_i9kg_i "${g[$x]//[[:space:]]/};"
-                ;;
-        esac
+            esac
+        elif [[ $y =~ ^([[:alnum:]]*)\(\)(.*) ]]; then
+            [[ -z ${BASH_REMATCH[2]} ]] \
+                && _omsg "$(_emph call): ==${BASH_REMATCH[1]}" \
+                || _emsg "${FUNCNAME}: wrong syntax!"
+            n="_fnop_${BASH_REMATCH[1]}"
+            ! [[ -z ${!n} ]] && {
+                n="$n[*]"
+                odsel_vsi "${!n}" || _emsg "FAILED"
+            } || {
+                _emsg "$(_emph call): ${BASH_REMATCH[1]}(): failed because:"
+                _emsg "* undefined call: ${BASH_REMATCH[1]}()"
+            }
+        elif [[ $y =~ ^([\]\[[:alnum:]]*):// ]]; then
+            _omsg "$(_emph i9kg): ${BASH_REMATCH[1]}"
+            _odsel_i9kg_i "$y:code;" n
+        else
+            _emsg "${FUNCNAME}: unknown request:"
+            _emsg " *  $x"
+        fi
         ((${#SHELLAPI_ERROR[@]})) && return 1 || :
     done
 }
@@ -586,29 +634,6 @@ function odsel_whatis() {
 }
 
 #;
-# @desc The init implementation for this module
-# @warn Same fix as in _init for _opsolve (bash 4.x related)
-#;
-function odsel_init() {
-    POOL_CACHE=()
-    POOL_REPORT=()
-    POOL_TARGUESS=()
-    POOL_BUILDSPACE=()
-    POOL_DGET="wget -c"
-    ODSEL_XMLA=()
-    ODSEL_REGEXP=( ':[{]([^}]*)[}]\]'
-                   '([^,]*),'
-                   '@([^@]*):([^->]*)->([^->]*)'
-                   '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
-                   '\[([^@{}>,-]*):([^@{}>,-]*)\]'
-                   '\[([^@{}>,:]*)\]' )
-    ODSEL_OPRT=()
-    ODSEL_OPRT[$(_opsolve "->")]="pm"
-    ODSEL_OPRT[$(_opsolve "~>")]="rm"
-    ODSEL_OPRT[$(_opsolve "<-")]="lm"
-}
-
-#;
 # @desc A dependency querying mechanism compatible with an i9kg rcache
 #       array. The purpose here is to get a whitespace separated list
 #       of dependencies of a specific type: {rpli,dbld,drun,nbld,nrun}.
@@ -1031,6 +1056,21 @@ function odsel_new() {
 }
 
 #;
+# @desc The prototype for "value" definition in odsel
+# @ptip $1  Left side
+# @ptip $2  Right side
+#;
+function odsel_dval() {
+    local x="$1" y="${2//[[:space:]]/}"
+    _omsg "$(_emph DVAL): name  = $x"
+    _omsg "$(_emph DVAL): value = $y"
+    [ "$x" = "${y/:*/}" ] && {
+        _omsg "* -> properly defined: $x"
+    } || _emsg "${FUNCNAME}: not equal"
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc Remove a series of pools from the runspace
 # @ptip $1  comma separated list of pool names
 #;
@@ -1056,11 +1096,110 @@ function odsel_del() {
 }
 
 #;
+# @desc Completely redefine odsel "step" - related grammar elements using an odsel
+#       expression, making the requirement of XML / * redundant for step - description.
+#       This is a silent function generator.
+# @ptip $1  The odsel grammar - modifier definition expression.
+# @note FIXME: redesign odsel_scli() and related to follow suit.
+#;
+function __odsel_gscoil_p() {
+    local x="${1//[[:space:]]/}"
+    [[ "$x" =~ :\[([[:alnum:]]*)\]=\>@\{([,[:alnum:]]*)\}:\{([,[:alnum:]]*)\}([:\>,\|[:alnum:]-]*)\; ]] && {
+        [[ ${x#*${BASH_REMATCH[4]}} = \; ]] && {
+            local   r="_odsel_gscoil_$(odsel_gph ${BASH_REMATCH[1]})" \
+                    s=(${BASH_REMATCH[2]//,/ }) f=(${BASH_REMATCH[3]//,/ }) l=() \
+                    k= v=
+            k=$(v=$RANDOM$RANDOM
+                for x in ${f[@]}; do
+                    ((_$v_$x)) && { printf "%s\n" $x; return 1; } || ((_$v_$x=1))
+                done)   && v="${BASH_REMATCH[4]:1}|" \
+                        || { _emsg "${FUNCNAME}: $k is defined more than once"; return 1; }
+            while [[ "$v" =~ ^([[:alnum:]]*):([[:alnum:]]*)-\>([[:alnum:]]*)\| 
+                  || "$v" =~ ^([[:alnum:]]*):([[:alnum:]]*)\| ]]; do
+                ((${#BASH_REMATCH[@]} == 4)) && {
+                    local a=-1 b=-1
+                    for x in ${!f[@]}; do
+                        [[ ${f[$x]} == ${BASH_REMATCH[2]} ]] && a=$x
+                        [[ ${f[$x]} == ${BASH_REMATCH[3]} ]] && b=$x
+                    done
+                    (( ((a<0)) || ((b<0)) )) \
+                        && _emsg "${FUNCNAME}: $(_emph ${BASH_REMATCH[1]}) is invalid" || {
+                        ((a<b)) && {
+                            n=; for((x=a;x<=b;x++)); do n+="${f[$x]} "; done
+                            l+=("${BASH_REMATCH[1]} ${n% }")
+                            v="${v#*${BASH_REMATCH[3]}|}"
+                        } || _emsg "${FUNCNAME}: $(_emph ${BASH_REMATCH[1]}) is inversed"
+                    }
+                } || {
+                    l+=("${BASH_REMATCH[1]} ${BASH_REMATCH[2]}")
+                    v="${v#*${BASH_REMATCH[2]}|}"
+                }
+                ((${#SHELLAPI_ERROR[@]})) && return 1 || :
+            done
+            [[ -z $v ]] || {
+                _emsg "${FUNCNAME}: invalid expression:"
+                _emsg "in : ... ${x:0:$((${#x}/3))} ..."
+                _emsg "** : ... ${v:0:$((${#v}/2))} ..."
+                return 1
+            }
+        } || {
+            v="${x#*${BASH_REMATCH[4]}}"
+            _emsg "${FUNCNAME}: invalid expression:"
+            _emsg "in : ... ${x:0:$((${#x}/3))} ..."
+            _emsg "** : ... ${v:0:$((${#v}/2))} ..."
+            return 1
+        }
+    } || {
+        _emsg "${FUNCNAME}: invalid expression:"
+        _emsg "** ${x:0:$((${#x}/3))}..."
+        return 1
+    }
+    eval "$r() { case \"\$1\" in
+        $(for x in ${!l[@]}; do
+            printf  "%s) printf \"%s\\\\n\" ;;\n" \
+                    "${l[$x]/ */}" "${l[$x]#* }"
+          done) '') printf \"${f[@]}\\\\n\" ;; *) return 1 ;; esac; }"
+}
+
+#;
+# @desc Process a comma separated list of odsel "variable" assignments, whether
+#       for a single value or containing nested lists ( variable = { , , , } )
+# @ptip $1  The part of an odsel expression containing said statement.
+#;
+function __odsel_vdef_p() {
+    local x="$1," y z n m b
+    while [[ ${x#"${x%%[![:space:]]*}"} =~ ^([[:alnum:]]*)[[:space:]]*=[[:space:]]*(.*) ]]; do
+        n="${BASH_REMATCH[1]}"; m="${BASH_REMATCH[2]}"
+        [[ $m =~ \"([^\"]*)\"[[:space:]]*,|\
+\'([^\']*)\'[[:space:]]*,|\
+([[:alnum:]/:\.]*)[[:space:]]*,|\
+(\{[\'\"[:space:][:alnum:]/:,\.\;\{\}]*\})[[:space:]]*, ]] \
+            && y="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}${BASH_REMATCH[4]}" \
+            || return 1
+        if [[ ${y:0:1} = { ]]; then
+            z="${y:1:$((${#y}-2))},"
+            while [[ ${z#"${z%%[![:space:]]*}"} =~ \
+^\"([^\"]*)\"[[:space:]]*,|\
+^\'([^\']*)\'[[:space:]]*,|^([[:alnum:]/:\.]*)[[:space:]]*, ]]; do
+                b="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+                z="${z#*$b*,}"
+                _omsg "$(_emph def) : $n :: $b"
+            done
+        else _omsg "$(_emph def) : $n : $y"; fi    
+        x="${x#*$y*,}"
+    done
+    [[ -z $x ]] || {
+        _emsg "${FUNCNAME}: expression cannot be processed:$x"
+    }
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc Extract name / version information out of a tarball
 # @ptip $1  path to the tarball or name of the tarball
 #;
 function odsel_targuess() {
-    POOL_TARGUESS=()
+    ODSEL_TARGUESS=()
     local x s="${1##*/}" v n i
     [[ $s =~ \-([^.-]*)\. ]] \
         && x=${BASH_REMATCH[1]}
@@ -1080,7 +1219,7 @@ function odsel_targuess() {
         && i="snapshot" \
         || i="pristine"
     # name - version - identity - original name - sha1sum
-    POOL_TARGUESS=("$n" "$s" "$v" "$i" "$(_hsof "$1")")
+    ODSEL_TARGUESS=("$n" "$s" "$v" "$i" "$(_hsof "$1")")
 }
 
 #;
@@ -1093,7 +1232,7 @@ function odsel_ifetch() {
         http\://* | \
         ftp\://* | \
         https\://*)
-            e="${POOL_DGET} $1"
+            e="${ODSEL_DGET} $1"
             ;;
         git\://http\://* | \
         git\:https\://*)
@@ -1185,7 +1324,7 @@ fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
 #;
 function odsel_recoil() {
     local x="$1" y="${2:-[prime]}" z= r= s= t=
-    POOL_REPORT=() POOL_TARGUESS=()
+    ODSEL_TARCOIL=() ODSEL_TARGUESS=()
     case "$y" in
         \[*\] | '')
             y=${y:1:$((${#y}-2))}
@@ -1250,9 +1389,9 @@ function odsel_recoil() {
     }
     odsel_targuess "$t" && {
         [[ -z $x ]] \
-            && POOL_REPORT="snapshot/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]#*.}" \
-            || POOL_REPORT="payload/${POOL_TARGUESS[0]}:${POOL_TARGUESS[2]}"
-        POOL_REPORT=("$POOL_REPORT" "${POOL_TARGUESS[1]}" "${POOL_TARGUESS[4]}")
+            && ODSEL_TARCOIL="snapshot/${ODSEL_TARGUESS[0]}:${ODSEL_TARGUESS[2]#*.}" \
+            || ODSEL_TARCOIL="payload/${ODSEL_TARGUESS[0]}:${ODSEL_TARGUESS[2]}"
+        ODSEL_TARCOIL=("$ODSEL_TARCOIL" "${ODSEL_TARGUESS[1]}" "${ODSEL_TARGUESS[4]}")
     } || {
         _emsg "${FUNCNAME}: tar guessing failed"
         return 1
