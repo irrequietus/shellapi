@@ -166,6 +166,24 @@ function fnapi_allows_flock() {
     [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.fail ]] && return 1
     [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inpr ]] && return 2
     mkdir "${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inpr"
+    printf "inpr: %s\n" "$(date -R)" >> \
+        "${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inpr/timing.log"
+}
+
+#;
+# @desc Check whether the hash id you are checking for allows progress
+#       by asserting progress status, this time including [pass] as
+#       significant.
+# @ptip $1  lock hash id
+#;
+function fnapi_allows_go() {
+    [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.pass ]] || { 
+        [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.kill ]] && return 4
+        [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inqe ]] && return 3
+        [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.inpr ]] && return 2
+        [[ -d ${I9KG_DEFS[$_PROGRESS_LOCKS]}/$1.fail ]] && return 1
+        return 5
+    }
 }
 
 #;
@@ -209,6 +227,62 @@ function fnapi_slaunch() {
 }
 
 #;
+# @desc     Write a function according to _fnp_* specification requirements
+# @ptip $1  Assignable function name for the _fnp_* generated function.
+# @ptip $2  Array containing sequence of commands comprising the nested function block.
+# @ptip $3  Array containing the _fnp_* dependencies of the generated function call (hash ids).
+# @ptip $4  An integer representing the "weight", a factor related to the time necessary
+#           for the function to complete.
+#;
+function fnapi_fnp_write() {
+    ! _isfunction "$1" && {
+        eval "$1(){ local _d_=($(_for_each $3 printf "%s\n"))
+        local _f_=$(f=$(_for_each $2 printf "%s\n" | ${FNAPI_CHECKSUM}); printf "${f/ */}")
+        [[ \$1 = csec ]] && printf \"%d\" ${4:-0} || {
+        [[ \$1 = preq ]] && printf \"%s\n\" \"\${_d_[@]}\" || {
+            _omsg \"\${FUNCNAME}\"
+            for _d_ in \${_d_[@]}; do _ckmsg \" *** checking -> \$_d_\" || return 1; done
+            fnapi_allows_flock \$_f_ && { {
+            $(_for_each $2 printf "%s && \\\\\n")
+            : || ! :
+        } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$_f_.inpr/output.log && fnapi_relock progress/\$_f_ pass \\
+            || fnapi_relock progress/\$_f_ fail; }; }; }; }" &> /dev/null \
+            || { _emsg "${FUNCNAME}: could not generate _fnp_*: $1"; unset -f $1; }
+    } || _emsg "${FUNCNAME}: function already defined: $1"
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
+# @desc         Rewrite the dependency list of a _fnp_* specification compliant function.
+#               Take note that the function must exist in order to be "rewritten".
+# @ptip $1      The name of an already defined _fnp_* function.
+# @ptip ${@:2}  Sequence of the new dependencies (hash ids).
+#;
+function fnapi_fnp_deprw() {
+    local t="$1"
+    _isfunction $t && {
+        t="$(type $t | tail --lines=+2)"
+        eval "${t/local _d_=(*)/local _d_=(${@:2})}" &> /dev/null \
+            || { _emsg "${FUNCNAME}: could not rewrite dependencies for _fnp_*: $1"; eval "$t"; }
+    } || _emsg "${FUNCNAME}: cannot rewrite an undefined function: $1"
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
+# @desc Sort a list of _fnp_* compliant functions by csec "weight factor"
+# @ptip $2  Whitespace separated list.
+# @note The csec factor is always a positive integer or zero (csec >= 0).
+#;
+function fnapi_by_csec() {
+    local x y=() n=
+    for x in $@; do
+        n=$($x csec || printf "0" )
+        y[$n]="${y[$n]} $x"
+    done
+    printf "%b\n" ${y[@]}
+}
+
+#;
 # @desc Create a FNAPI_HEADER array for a given function and parameters combination;
 #       the function must exist or it raises fatal
 # @ptip $@ function to call, along with the parameters it is to be called with.
@@ -232,10 +306,39 @@ function fnapi_makeheader() {
 function fnapi_dumpheader() {
     (($#)) && {
             local x="$(printf "%s\n" "${@}" | ${FNAPI_CHECKSUM})"
-            printf "${x/ */}"
-            return
-     } || _emsg "${FUNCNAME}: called without arguments"
-    ! ((${#SHELLAPI_ERROR[@]}))
+            printf "%s\n" "${x/ */}"
+     } || return 1
+}
+
+#;
+# @desc Explicitely relock a progress / process lock of [inpr] status
+# @ptip $1  The lock format: process/<hash> or progress/<hash>
+# @ptip $2  The "relocked" target (pass|fail|inqe|kill)
+#;
+function fnapi_relock() {
+    (($# == 2)) && {
+        case "${1}" in
+            process/*)
+
+                    rm -rf "${I9KG_DEFS[$_PROCESS_LOCKS]}/${1#*/}.pass"
+                    printf  "${2:-fail}: %s\n" "$(date -R)" >> \
+                            "${I9KG_DEFS[$_PROCESS_LOCKS]}/${1#*/}.inpr/timing.log"
+                    mv  "${I9KG_DEFS[$_PROCESS_LOCKS]}/${1#*/}.inpr" \
+                        "${I9KG_DEFS[$_PROCESS_LOCKS]}/${1#*/}.${2:-fail}"
+                ;;
+            progress/*)
+
+                    rm -rf "${I9KG_DEFS[$_PROGRESS_LOCKS]}/${1#*/}.pass"
+                    printf  "${2:-fail}: %s\n" "$(date -R)" >> \
+                            "${I9KG_DEFS[$_PROGRESS_LOCKS]}/${1#*/}.inpr/timing.log"
+                    mv  "${I9KG_DEFS[$_PROGRESS_LOCKS]}/${1#*/}.inpr" \
+                        "${I9KG_DEFS[$_PROGRESS_LOCKS]}/${1#*/}.${2:-fail}"
+                ;;
+                *)
+                    _emsg "${FUNCNAME}: unknown lock category"
+                ;;
+        esac
+    }
 }
 
 #;
@@ -380,7 +483,8 @@ function fnapi_gencascade() {
     fnapi_makeheader \"\${FUNCNAME}\" \"\${@}\"
     local f=\"\${FNAPI_HEADER[\$_FNAPI_FHASH]}\"
     fnapi_allows_flock \"\$f\" && {
-        rm -rf \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass
+        rm -rf  \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\"\$f.pass
+                \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\"\$f.inpr/*.log
         pushd . &> /dev/null
         _omsg \"\$(_emph \${FUNCNAME}): %s\$(_dotstr \$f): 0/$z\"\n" "$1" "$a"
     for x in $(_xsof $3); do
@@ -422,6 +526,91 @@ function fnapi_gencascade() {
         \"\${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$f.pass\"
     _omsg \"\$(_emph \${FUNCNAME}): \$(_dotstr \$f): $z/$z\"\n}\n" \
     "$1"
+}
+
+#;
+# @desc A task scheduler prototype implemented in pure GNU bash. This function is
+#       designed to calculate the scheduling for function "wrappers" as presented
+#       within the array which represents the tasks along with their dependencies.
+# @ptip $1  The array variable containing the task set representation.
+# @ptip $2  The array variable where to store the result.
+#;
+function __fnapi_schedule_p() {
+    eval "local g=(\"\${$1[@]}\")"
+    local a x r y i j p=() g1=() g2=() k=0
+    for x in ${!g[@]}; do
+        a=(${g[$x]#*[[:space:]]})
+        r="${g[$x]/[[:space:]]*/}"
+        ((_fl_$r)) \
+            || ((_fl_$r=${#g1[@]}+1))
+        g1[_fl_$r]="$r"
+        g2[_fl_$r]="${a[@]}"
+        for y in ${a[@]}; do
+            ((_fl_$y)) \
+                || ((_fl_$y=${#g1[@]}+1))
+            g1[_fl_$y]="$y"
+        done
+    done
+    r=${#g1[*]}
+    a=0
+    while ((s=${#g1[@]})) && (($((a++))<r)); do
+        for x in ${!g1[@]}; do
+            [[ -z ${g2[$x]} ]] && {
+                p+=("${g1[$x]}")
+                unset -v _fl_${g1[$x]} g1[$x] g2[$x]
+            } || {
+                y=(${g2[$x]})
+                for i in ${!y[@]}; do
+                    for j in ${!p[@]}; do
+                        [[ ${p[$j]} = ${y[$i]} ]] \
+                            && unset y[$i]
+                    done
+                done
+                g2[$x]="${y[@]}"
+            }
+        done
+        ((s!=${#g1[@]})) && {
+            #_imsg "$(_emph "progress|&"): ${#p[@]} : ${#g1[@]}"
+            eval "${2:-results}+=(\"${p[@]:k}\")"
+            k=${#p[*]}
+        }
+    done
+    ((a<r)) || {
+        g1=(${g1[*]})
+        _emsg "${FUNCNAME}: a cyclic event sequence has been detected"
+        _emsg "${FUNCNAME}: cycle seems to start from: ${g1[0]}"
+        _emsg "${FUNCNAME}: would have cycled at  : $((r-${#g1[*]}))/$r in sequence"
+        return 1
+    }
+}
+
+#;
+# @desc A deploy function for the schedule produced by __fnapi_schedule_p()
+# @ptip $1  The array variable containing the task set representation.
+# @ptip $2  A split factor ( + n to add when parallel / serial, defaults to 0 ).
+# @note Complete the wiring after testing.
+#;
+function __fnapi_deploy_schedule_p() {
+    local x _f n m l z=${2:-0}
+    _isint $z && {
+         (($z)) && x=plaunch || x=slaunch
+         __fnapi_schedule_p $1 _f && {
+            for n in ${!_f[@]}; do
+                # wiring up here once +
+                m=(${_f[$n]})
+                while ((${#m[@]})); do
+                    l=0
+                    for n in ${!m[@]}; do
+                        (($((l++))>z)) && break
+                        printf "%s " ${m[$n]}
+                        unset m[$n]
+                    done
+                    echo
+                done
+            done
+         } || _emsg "${FUNCNAME}: cannot deploy function sequence: $1"
+    } || _emsg "${FUNCNAME}: \"$z\" is not a number, cannot process sequence: $1"
+    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
