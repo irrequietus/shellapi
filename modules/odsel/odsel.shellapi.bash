@@ -35,6 +35,7 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
     ODSEL_OPRT[$(_opsolve "<-")]="lm"
+    _wexp_this odsel_gscoil odsel_vdef
 }
 
 #;
