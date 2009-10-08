@@ -1176,7 +1176,7 @@ function _decoy_this() {
 function _wexp_this() {
     local x
     for x in $@; do
-        ! _isfunction "__${x}_p" && {
+        _isfunction "__${x}_p" && {
             eval "$x(){ local x=\"\$(_emph \"\${FUNCNAME}()\")\"
                 _wmsg \"\$x: *** you are using an experimental feature...\"
                 _wmsg \"\$x: *** unexpected behaviour should be expected!\"
