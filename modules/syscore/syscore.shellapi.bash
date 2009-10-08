@@ -643,15 +643,32 @@ function _dotstr() {
 # @desc Split string into an array, using a particular character as delimiter
 # @ptip $1  string to split
 # @ptip $2  optional, character to use as delimiter (defaults to comma)
-# @note Stores results to the SPLIT_STRING global array
+# @note Stores results to the SPLIT_STRING global array, it is quote/double quote
+#       sensitive
 #;
 function _split() {
-    local x="${1}" y="${2:-,}"
-    x="$x$y"
     SPLIT_STRING=()
-    while read -r -d "$y" x; do
-        SPLIT_STRING+=("$x")
-    done< <(printf "%s\n" "$x")
+    local x="$1" y z="${2:-,}" c= t=
+    while [[ $x =~ ([$z\"\']) ]]; do
+        case "${BASH_REMATCH[1]}" in
+            \"|\')
+                y="${x/"${BASH_REMATCH[1]}"*/}"
+                t="${x#*"${BASH_REMATCH[1]}"}"
+                c+="$y${BASH_REMATCH[1]}${t/${BASH_REMATCH[1]}*/}${BASH_REMATCH[1]}"
+                x="${x#*"${BASH_REMATCH[1]}"}"
+                ;;
+            "$z")
+                SPLIT_STRING+=("$c${x/"$z"*/}")
+                c=
+                ;;
+        esac
+        x="${x#*${BASH_REMATCH[1]}}"
+    done
+    [[ -z $x ]] || {
+        _emsg "${FUNCNAME}: could not split: $1"
+        SPLIT_STRING=()
+        return 1
+    }
 }
 
 #;
@@ -1184,6 +1201,23 @@ function _decoy_this() {
     ! [[ -z $1 ]] \
         && _wmsg "$1: this function is under implementation and the function is reserved" \
         || _emsg "${FUNCNAME}: function name undefined"
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
+# @desc The __*_p() function aliaser
+# @ptip $@  A list of __*_p() function prototypes
+#;
+function _wexp_this() {
+    local x
+    for x in $@; do
+        ! _isfunction "__${x}_p" && {
+            eval "$x(){ local x=\"\$(_emph \"\${FUNCNAME}()\")\"
+                _wmsg \"\$x: *** you are using an experimental feature...\"
+                _wmsg \"\$x: *** unexpected behaviour should be expected!\"
+                __\${FUNCNAME}_p \"\$@\" ; }"
+        } || _emsg "${FUNCNAME}: cannot process because __${x}_p() is not defined"
+    done
     ! ((${#SHELLAPI_ERROR[@]}))
 }
 
