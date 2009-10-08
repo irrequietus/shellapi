@@ -648,7 +648,7 @@ function _dotstr() {
 #;
 function _split() {
     SPLIT_STRING=()
-    local x="$1" y z="${2:-,}" c= t=
+    local x="$1${2:-,}" y z="${2:-,}" c t
     while [[ $x =~ ([$z\"\']) ]]; do
         case "${BASH_REMATCH[1]}" in
             \"|\')
