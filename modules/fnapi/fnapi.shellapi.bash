@@ -42,6 +42,7 @@ function fnapi_init() {
             _fatal "${FUNCNAME}: not supported ${FNAPI_CHECKSUM}"
         ;;
     esac
+    _wexp_this fnapi_schedule fnapi_deploy_schedule
 }
 
 #;
