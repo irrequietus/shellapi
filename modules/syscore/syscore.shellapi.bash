@@ -672,41 +672,6 @@ function _split() {
 }
 
 #;
-# @desc Split string into an array, using a particular character as delimiter
-#       but taking under consideration the presence of {,} pairs as significant.
-# @ptip $1  string to split
-# @ptip $2  optional, character to use as delimiter (defaults to comma)
-# @note Stores results to the SPLIT_STRING global array
-#;
-function _bsplit() {
-    local x="$1" y z="${2:-,}" k
-    x="$x$z"
-    SPLIT_STRING=()
-    while [[ "$x" =~ ([$z}{]) ]]; do
-        case "${BASH_REMATCH[1]}" in
-             $z)
-                y="${x/"$z"*/}"
-                x="${x#*"$z"}"
-             ;;
-            \{)
-                y="${x/\}*/}"
-                y="${x/{*/}{${y#*\{}}"
-                k="${x#*"$y"}"
-                k="${k/"$z"*/}"
-                y="${x/{*/}{${y#*\{}${k/"$z"*/}"
-                x="${x#*\}"$k"}"
-                ;;
-            \})
-                _emsg "${FUNCNAME}: } not expected, aborting"
-                SPLIT_STRING=()
-                return 1
-            ;;
-        esac
-       SPLIT_STRING+=("${y#"${y%%[![:space:]]*}"}")
-    done
-}
-
-#;
 # @desc The shellapi core initializer
 # @note This function initializes the shellapi core and the various modules 
 #       that are marked as active to use within a shellapi script flow. For
