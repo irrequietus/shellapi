@@ -69,8 +69,10 @@ function odsel_vsi() {
                                     done
                                     eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
                                     _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
-                                elif [[ $n =~ ^([[:alnum:]]*)[[:space:]]*=[[:space:]]*(.*) ]]; then
+                                elif [[ $n =~ ^([[:alnum:]]*)[[:space:]]*=[[:space:]]* ]]; then
                                     odsel_vdef "${i[$x]#*$_r}"
+                                elif [[ $n =~ ^\[([[:alnum:]]*)\][[:space:]]*=[[:space:]]*\>[[:space:]]*@ ]]; then
+                                    odsel_gscoil "${i[$x]};"
                                 elif [[ $n =~ ^([\]\[[:alnum:]]*)(=|\<\<)(.*) ]]; then
                                     _omsg "$(_emph dval): ${BASH_REMATCH[1]}"
                                     [[ ${BASH_REMATCH[2]} = \<\< ]] \
