@@ -60,6 +60,7 @@ function odsel_vsi() {
                     case "${i[$x]#*${BASH_REMATCH[1]}}" in
                         [[:space:]]*)
                                 n="${BASH_REMATCH[2]}"
+                                local _r="${BASH_REMATCH[1]}"
                                 if  [[ $n =~ ^([[:alnum:]]*)\(\)\{ ]]; then
                                     m=" ${!i[@]}"; m="${m#* $x }"; f=("${i[$x]#*{}")
                                     for x in $m; do
@@ -68,6 +69,8 @@ function odsel_vsi() {
                                     done
                                     eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
                                     _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
+                                elif [[ $n =~ ^([[:alnum:]]*)[[:space:]]*=[[:space:]]*(.*) ]]; then
+                                    odsel_vdef "${i[$x]#*$_r}"
                                 elif [[ $n =~ ^([\]\[[:alnum:]]*)(=|\<\<)(.*) ]]; then
                                     _omsg "$(_emph dval): ${BASH_REMATCH[1]}"
                                     [[ ${BASH_REMATCH[2]} = \<\< ]] \
