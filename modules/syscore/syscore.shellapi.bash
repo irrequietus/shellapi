@@ -17,6 +17,73 @@
 # along with shellapi. If not, see <http://www.gnu.org/licenses/>.
 
 #;
+# @desc The shellapi core initializer
+# @note This function initializes the shellapi core and the various modules 
+#       that are marked as active to use within a shellapi script flow. For
+#       the time being, there is no reuse of the function cache as generated.
+# @ptip $1  The name of the profile to load, defaults to [shellapi] or uses
+#           the shellapi.defaults if none is offered.
+# @warn Do not use in any other occasion but before any other shellapi call
+#       is made.
+# @warn In bash 4.x, the VERSION_OPERATORS=( [$(_opsolve ">")]="" ... ) syntax
+#       does not work. One of the alternatives is to pass it down value by value
+#       in the usual way instead of =().
+#;
+function _init() {
+    [[ -z $SHELLAPI_HOME ]] \
+        && _fatal "${FUNCNAME}: home not set"
+    export LC_ALL=C
+    readonly    SHCORE_START=$(_dtfs) \
+                SHCORE_VERSION="0.x-pre4" \
+                _VERSTR=(alpha beta rc)
+    SHELLAPI_MODULES_DIR="${SHELLAPI_HOME}/modules"
+    SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}
+    SHELLAPI_TARGET="${SHELLAPI_TARGET:-"$(pwd)/$(_uuidg)"}"
+    SHELLAPI_LDOT=${SHELLAPI_LDOT:-10}
+    VERSION_OPERATORS=()
+    VERSION_OPERATORS[$(_opsolve "<")]="lt"
+    VERSION_OPERATORS[$(_opsolve ">")]="gt"
+    VERSION_OPERATORS[$(_opsolve ">=")]="gte"
+    VERSION_OPERATORS[$(_opsolve "<=")]="lte"
+    VERSION_OPERATORS[$(_opsolve "!=")]="neq"
+    VERSION_OPERATORS[$(_opsolve "==")]="eqt"
+    local l="$SHELLAPI_MODULES_DIR/syscore/locales/syscore.locale.$SHELLAPI_LOCALE.xml"
+    local f="$SHELLAPI_MODULES_DIR/syscore/extra/syscore.config.xml"
+    [[ -e $l ]] \
+        || _emsg "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_NOLOCINIT]:-invalid locale}"
+    [[ -e $f ]] \
+        || _emsg "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_NOGLOBCONF]:-no globals set}"
+    ((${#SHELLAPI_ERRORS[@]})) && _fatal
+    _xml2bda "$l"
+    _xml2bda "$f"
+    _initglobals_syscore
+    _bashok
+    _syscore_intl_$SHELLAPI_LOCALE
+    l="${1:-shellapi}"
+    [[ -e ${SHELLAPI_MODULES_DIR}/$l.profile ]] && {
+        f="${SHELLAPI_MODULES_DIR}/$l.profile"
+        l="loading profile: $l"
+    } || {
+        [[ $l != shellapi ]] && _fatal "${FUNCNAME}: profile does not exist: $1"
+        [[ -e ${SHELLAPI_MODULES_DIR}/shellapi.defaults ]] \
+            && f="${SHELLAPI_MODULES_DIR}/shellapi.defaults" \
+            || _fatal "${FUNCNAME}: shellapi configuration defaults missing"
+        l="loading configuration defaults"
+    }
+    _imsg "$(_emph "shellapi"): $l"
+    while read -r l; do
+        case "$l" in
+            '' | \#*)   ;;
+            *)  _include "$l" ;;
+        esac
+    done < "$f"
+    [[ -d ${SHELLAPI_TARGET} ]] || {
+        _wmsg "shellapi runspace >> [${SHELLAPI_TARGET##*/}]"
+        _setup_layout "${SHELLAPI_TARGET}"
+    }
+}
+
+#;
 # @desc Get seconds since epoch
 # @echo seconds since 1970
 # @warn GNU date specific.
@@ -499,73 +566,6 @@ function _psplit() {
     while read -r -d "$y" x; do
         SPLIT_STRING+=("$x")
     done< <(printf "%s\n" "$x")
-}
-
-#;
-# @desc The shellapi core initializer
-# @note This function initializes the shellapi core and the various modules 
-#       that are marked as active to use within a shellapi script flow. For
-#       the time being, there is no reuse of the function cache as generated.
-# @ptip $1  The name of the profile to load, defaults to [shellapi] or uses
-#           the shellapi.defaults if none is offered.
-# @warn Do not use in any other occasion but before any other shellapi call
-#       is made.
-# @warn In bash 4.x, the VERSION_OPERATORS=( [$(_opsolve ">")]="" ... ) syntax
-#       does not work. One of the alternatives is to pass it down value by value
-#       in the usual way instead of =().
-#;
-function _init() {
-    [[ -z $SHELLAPI_HOME ]] \
-        && _fatal "${FUNCNAME}: home not set"
-    export LC_ALL=C
-    SHCORE_START=$(_dtfs)
-    SHCORE_VERSION="0.x-pre4"
-    _VERSTR=(alpha beta rc)
-    SHELLAPI_MODULES_DIR="${SHELLAPI_HOME}/modules"
-    SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}
-    SHELLAPI_LDOT=${SHELLAPI_LDOT:-10}
-    SHELLAPI_TARGET="${SHELLAPI_TARGET:-"$(pwd)/$(_uuidg)"}"
-    VERSION_OPERATORS=()
-    VERSION_OPERATORS[$(_opsolve "<")]="lt"
-    VERSION_OPERATORS[$(_opsolve ">")]="gt"
-    VERSION_OPERATORS[$(_opsolve ">=")]="gte"
-    VERSION_OPERATORS[$(_opsolve "<=")]="lte"
-    VERSION_OPERATORS[$(_opsolve "!=")]="neq"
-    VERSION_OPERATORS[$(_opsolve "==")]="eqt"
-    local l="$SHELLAPI_MODULES_DIR/syscore/locales/syscore.locale.$SHELLAPI_LOCALE.xml"
-    local f="$SHELLAPI_MODULES_DIR/syscore/extra/syscore.config.xml"
-    [[ -e $l ]] \
-        || _emsg "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_NOLOCINIT]:-invalid locale}"
-    [[ -e $f ]] \
-        || _emsg "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_NOGLOBCONF]:-no globals set}"
-    ((${#SHELLAPI_ERRORS[@]})) && _fatal
-    _xml2bda "$l"
-    _xml2bda "$f"
-    _initglobals_syscore
-    _bashok
-    _syscore_intl_$SHELLAPI_LOCALE
-    l="${1:-shellapi}"
-    [[ -e ${SHELLAPI_MODULES_DIR}/$l.profile ]] && {
-        f="${SHELLAPI_MODULES_DIR}/$l.profile"
-        l="loading profile: $l"
-    } || {
-        [[ $l != shellapi ]] && _fatal "${FUNCNAME}: profile does not exist: $1"
-        [[ -e ${SHELLAPI_MODULES_DIR}/shellapi.defaults ]] \
-            && f="${SHELLAPI_MODULES_DIR}/shellapi.defaults" \
-            || _fatal "${FUNCNAME}: shellapi configuration defaults missing"
-        l="loading configuration defaults"
-    }
-    _imsg "$(_emph "shellapi"): $l"
-    while read -r l; do
-        case "$l" in
-            '' | \#*)   ;;
-            *)  _include "$l" ;;
-        esac
-    done < "$f"
-    [[ -d ${SHELLAPI_TARGET} ]] || {
-        _wmsg "shellapi runspace >> [${SHELLAPI_TARGET##*/}]"
-        _setup_layout "${SHELLAPI_TARGET}"
-    }
 }
 
 #;
