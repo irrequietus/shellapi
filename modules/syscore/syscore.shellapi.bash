@@ -644,7 +644,7 @@ function _dotstr() {
 # @ptip $1  string to split
 # @ptip $2  optional, character to use as delimiter (defaults to comma)
 # @note Stores results to the SPLIT_STRING global array, it is quote/double quote
-#       sensitive
+#       sensitive.
 #;
 function _split() {
     SPLIT_STRING=()
@@ -664,11 +664,22 @@ function _split() {
         esac
         x="${x#*${BASH_REMATCH[1]}}"
     done
-    [[ -z $x ]] || {
-        _emsg "${FUNCNAME}: could not split: $1"
-        SPLIT_STRING=()
-        return 1
-    }
+    [[ -z $x ]] || SPLIT_STRING+=("$x")
+}
+
+#;
+# @desc Split string into an array, using a particular character as delimiter
+# @ptip $1  string to split
+# @ptip $2  optional, character to use as delimiter (defaults to comma)
+# @note This is the plain version (does not care about quotes).
+#;
+function _psplit() {
+    local x="${1}" y="${2:-,}"
+    x="$x$y"
+    SPLIT_STRING=()
+    while read -r -d "$y" x; do
+        SPLIT_STRING+=("$x")
+    done< <(printf "%s\n" "$x")
 }
 
 #;

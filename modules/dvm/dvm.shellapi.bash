@@ -74,7 +74,7 @@ function dvm_bash_sbuilder() {
 #       other packages as well. Possible abstraction target.
 #;
 function dvm_bash_pseq() {
-    local bv="$1" p l h="$IFS" t v x z=1
+    local bv="$1" p l h="$IFS" t v x z=1 o
     [[ $1 =~ ^[3-4]?\.[0-9]? ]] \
         || _fatal "${FUNCNAME}: $bv is an invalid series identifier"
     [[ -z $2 ]] && {
@@ -106,27 +106,28 @@ function dvm_bash_pseq() {
                         IFS="$(printf "\n")"
                         while read -r l; do
                             [[ $l =~ ^\*\*\*[[:space:]]*([\./][^[:space:]]*) ]] && {
-                                [[ ${BASH_REMATCH[1]} != ../bash-${bv}/* ]] && {
-                                    _split "${BASH_REMATCH[1]}" "/"
+                                o="${BASH_REMATCH[1]}"
+                                [[ $o != ../bash-${bv}/* ]] && {
+                                    _psplit "$o" "/"
                                     case "${#SPLIT_STRING[@]}" in
                                         3)
                                             t="../bash-$bv/${SPLIT_STRING[2]}"
                                             ;;
                                         *)
-                                            v="${BASH_REMATCH[1]##*/}"
+                                            v="${o##*/}"
                                             [[ $v = *bash* ]] && {
-                                                    t="${BASH_REMATCH[1]%${v}}"
+                                                    t="${o%${v}}"
                                                     t="${t##*bash}"
                                                     t="../bash-$bv/${t#*/}$v"
                                             } || {
-                                                    t="${BASH_REMATCH[1]##*bash}"
+                                                    t="${o##*bash}"
                                                     t="../bash-$bv/${t#*/}"
                                             }
                                     esac
-                                    printf "%s\n" "${l/${BASH_REMATCH[1]}/$t}" >> $x.patch
+                                    printf "%s\n" "${l/$o/$t}" >> $x.patch
                                 }
                             } || printf "%s\n" "$l" >> $x.patch
-                        done < $x
+                        done < "$x"
                         IFS="$h"
                         popd &> /dev/null
                         tar zxf bash-${bv}.tar.gz
