@@ -70,8 +70,11 @@ function odsel_vsi() {
                                     odsel_vdef "${i[$x]#*$_r}" \
                                         || _emsg "${FUNCNAME}: cannot parse definition: ${i[$x]}"
                                 elif [[ $n =~ ^\[([[:alnum:]_]*)\][[:space:]]*=[[:space:]]*\>[[:space:]]*@ ]]; then
+                                    n=${BASH_REMATCH[1]}
                                     odsel_gscoil "${i[$x]};" \
-                                        || _emsg "${FUNCNAME}: cannot redefine expression base: ${i[$x]}"
+                                        && _omsg "$(_emph coil): defined for: $(_emph $n)" \
+                                        || { _emsg "${FUNCNAME}: cannot define expression base: " \
+                                                   " * : ${y:0:$((${#y}/5))}..."; }
                                 elif [[ $n =~ ^([\]\[[:alnum:]_]*)(=|\<\<)(.*) ]]; then
                                     _omsg "$(_emph dval): ${BASH_REMATCH[1]}"
                                     [[ ${BASH_REMATCH[2]} = \<\< ]] \
@@ -1105,9 +1108,14 @@ function __odsel_gscoil_p() {
     local x="${1//[[:space:]]/}"
     [[ "$x" =~ :\[([[:alnum:]_]*)\]=\>@\{([,[:alnum:]_]*)\}:\{([,[:alnum:]_]*)\}([:\>,\|[:alnum:]_-]*)\; ]] && {
         [[ ${x#*${BASH_REMATCH[4]}} = \; ]] && {
-            local   r="_odsel_gscoil_$(odsel_gph ${BASH_REMATCH[1]})" \
+            local   r="_odsel_gscoil_$(odsel_gph ${BASH_REMATCH[1]})" n= \
                     s=(${BASH_REMATCH[2]//,/ }) f=(${BASH_REMATCH[3]//,/ }) l=() \
                     k= v=
+            _isfunction "$r" && {
+                _emsg   "${FUNCNAME}: event paths for [${BASH_REMATCH[1]}]:" \
+                        " * : are already defined in coil: $(_dotstr ${r##*_})"
+                return 1
+            }
             k=$(v=$RANDOM$RANDOM
                 for x in ${f[@]}; do
                     ((_$v_$x)) && { printf "%s\n" $x; return 1; } || ((_$v_$x=1))
