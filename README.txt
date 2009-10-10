@@ -72,9 +72,14 @@ In this case, we use odsel to define a function that does the following:
 These "callbacks" and other functions are defined using the odsel DSL, implemented in
 GNU bash (as an initial demonstration) and all the operations take place within shellapi.
 A wider variety of odsel expressions as well as a progressively completing implementation
-for odsel itself are to follow. Check commit 955562675d27a7db4d5f115a4f7fc3844c9e61ca for
-some of the details related to "callback" / function generation at the official repository
-for shellapi: http://gitorious.org/odreex/shellapi
+for odsel itself are to follow. Callbacks (as well as functions) can be defined in nested
+or non - nested definitions in odsel expressions; odsel_vsi() is the shellapi function that
+is the current GNU Bash - implementation for odsel.
+
+Check commit 955562675d27a7db4d5f115a4f7fc3844c9e61ca for some of the details related to
+callback / function generation at the official git repository for the shellapi:
+
+http://gitorious.org/odreex/shellapi.
 
 This is still something *experimental*.
 
