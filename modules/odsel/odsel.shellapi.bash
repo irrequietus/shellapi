@@ -35,7 +35,7 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
     ODSEL_OPRT[$(_opsolve "<-")]="lm"
-    _wexp_this odsel_gscoil odsel_vdef
+    _wexp_this odsel_gscoil odsel_vdef odsel_dcbk
 }
 
 #;
@@ -64,8 +64,12 @@ function odsel_vsi() {
                                         [[ ${i[$x]} = } ]] && break
                                         [[ -z ${i[$x]//[[:space:]]/} ]] || f+=("${i[$x]}")
                                     done
-                                    eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
                                     _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
+                                    eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
+                                elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>(.*) ]]; then
+                                    _omsg "$(_emph dcbk): callback: ${BASH_REMATCH[1]}()"
+                                    odsel_dcbk "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" \
+                                        || _emsg "${FUNCNAME}: could not define callback"
                                 elif [[ $n =~ ^([[:alnum:]_]*)[[:space:]]*=[[:space:]]* ]]; then
                                     odsel_vdef "${i[$x]#*$_r}" \
                                         || _emsg "${FUNCNAME}: cannot parse definition: ${i[$x]}"
@@ -99,12 +103,13 @@ function odsel_vsi() {
                 && _omsg "$(_emph call): -> ${BASH_REMATCH[1]}" \
                 || _emsg "${FUNCNAME}: wrong syntax!"
             n="_fnop_${BASH_REMATCH[1]}"
-            ! [[ -z ${!n} ]] && {
-                n="$n[*]"
-                odsel_vsi "${!n}" || _emsg "FAILED"
-            } || {
-                _emsg   "$(_emph call): ${BASH_REMATCH[1]}(): failed because:" \
-                        "* undefined call: ${BASH_REMATCH[1]}()"
+            _isfunction $n && $n || {
+                ! [[ -z ${!n} ]] && {
+                    n="$n[*]"
+                    odsel_vsi "${!n}" \
+                        || _emsg "${FUNCNAME}: cascade failure"
+                } || _emsg  "$(_emph call): ${BASH_REMATCH[1]}(): failed because:" \
+                            "* undefined call: ${BASH_REMATCH[1]}()"
             }
         elif [[ $y =~ ^([\]\[[:alnum:]_]*):// ]]; then
             _omsg "$(_emph i9kg): ${BASH_REMATCH[1]}"
@@ -1196,6 +1201,25 @@ function __odsel_vdef_p() {
     done
     [[ -z $x ]] || {
         _emsg "${FUNCNAME}: expression cannot be processed:$x"
+    }
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
+# @desc Generate a callback out of an odsel i9kg extraction expression. The output
+#       of the callback is logged at a progress lock, check for its hash id within
+#       the shellrun folder in order to find it.
+# @ptip $1  Callback name within odsel instruction flow.
+# @ptip $2  The odsel i9kg extraction expression.
+# @note This is a prototype, towards the final step and it is hardwired to :code
+#       from the default odsel coil (the presets as defined within odsel.config.xml).
+#;
+function __odsel_dcbk_p() {
+    local x="_cbki_$1"
+    _isfunction _fnop_$1 && _emsg "${FUNCNAME}: already defined: $1()" || {
+        _odsel_i9kg_i "$2:code;" $x \
+            && fnapi_fnp_write _fnop_$1 $x
+        unset -v $x
     }
     ! ((${#SHELLAPI_ERROR[@]}))
 }
