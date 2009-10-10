@@ -57,7 +57,7 @@ odsel_vsi "
         : ctest() => gcc[example]://default[4.4.0:{ @stable:configure_pre->make_post } ];
     };
     ftest();
-    ctest();"
+    ctest();" || _fatal
 
 In this case, we use odsel to define a function that does the following:
 
@@ -68,6 +68,9 @@ In this case, we use odsel to define a function that does the following:
        details) within the "example" pool.
     d) We run the function we have defined (ftest).
     e) Since the ftest() call has generated the ctest callback, we simply call that!
+    f) In case of error, the _fatal() shellapi call will inform you of what happened.
+       Notice that _fatal() is placed outside odsel_vsi(), it is a different shellapi
+       function call.
 
 These "callbacks" and other functions are defined using the odsel DSL, implemented in
 GNU bash (as an initial demonstration) and all the operations take place within shellapi.
