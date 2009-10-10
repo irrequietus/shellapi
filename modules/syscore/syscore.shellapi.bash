@@ -532,25 +532,23 @@ function _dotstr() {
 # @note Stores results to the SPLIT_STRING global array, it is quote/double quote
 #       sensitive.
 #;
-function _split() {
+function _qsplit() {
     SPLIT_STRING=()
-    local x="$1${2:-,}" y z="${2:-,}" c t
-    while [[ $x =~ ([$z\"\']) ]]; do
-        case "${BASH_REMATCH[1]}" in
+    local x="$1${2:-,}" y="${2:-,}" z t
+    while [[ $x =~ (^[[:space:]]*)([^$y\"\']*)([$y\"\']) ]]; do
+        t="${BASH_REMATCH[3]}"
+        case "$t" in
             \"|\')
-                y="${x/"${BASH_REMATCH[1]}"*/}"
-                t="${x#*"${BASH_REMATCH[1]}"}"
-                c+="$y${BASH_REMATCH[1]}${t/${BASH_REMATCH[1]}*/}${BASH_REMATCH[1]}"
-                x="${x#*"${BASH_REMATCH[1]}"}"
+                x="${x#*"$t"}"
+                z+="${BASH_REMATCH[2]}$t${x/$t*/}$t"
                 ;;
-            "$z")
-                SPLIT_STRING+=("$c${x/"$z"*/}")
-                c=
+            "$y")
+                SPLIT_STRING+=("$z${BASH_REMATCH[2]}")
+                z=
                 ;;
         esac
-        x="${x#*${BASH_REMATCH[1]}}"
+        x="${x#*"$t"}"
     done
-    [[ -z $x ]] || SPLIT_STRING+=("$x")
 }
 
 #;

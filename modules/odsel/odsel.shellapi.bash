@@ -43,7 +43,7 @@ function odsel_init() {
 # @ptip $1  A valid odsel expression
 #;
 function odsel_vsi() {
-    _split "${1}" \;
+    _qsplit "${1}" \;
     local x y z a n m b z g f=() i=("${SPLIT_STRING[@]}")
     for((x=0;x<${#i[@]};x++)); do
         y="${i[$x]//[[:space:]]/}"
@@ -499,7 +499,7 @@ function _odsel_rpli_i() {
     local x= y="$1"
     [[ $y = \{*\}* ]] && {
             x="${y/\}*/}"
-            _split "${x:1}"
+            _psplit "${x:1}"
             x="${SPLIT_STRING[*]}"
             x=${x// /,}
             x="${x//[()]/}"
@@ -783,7 +783,7 @@ function _odsel_pm() {
     esac
     ((${#SHELLAPI_ERROR[@]})) \
         && return 1
-    _split "${x[0]}"
+    _psplit "${x[0]}"
     case "$y" in
         \$|pristine|'')
             _ckmsg "requested to put into pristine"
@@ -908,7 +908,7 @@ function odsel_gph() {
 #;
 function odsel_load() {
     local x= y= z= n=
-    _split "${1//[[:space:]]/}"
+    _psplit "${1//[[:space:]]/}"
     for n in ${!SPLIT_STRING[@]}; do
         n=${SPLIT_STRING[$n]}
         x=$(odsel_gph "$n")
@@ -958,7 +958,7 @@ function odsel_sim() {
         _emsg "${FUNCNAME}: pool identifier(s) not set"
         return 1
     }
-    _split "$x"
+    _psplit "$x"
     for x in ${SPLIT_STRING[@]}; do
         odsel_ispool "$x" && {
             _emsg "${FUNCNAME}: cannot run a simulation on an already existing pool"
@@ -994,7 +994,7 @@ function odsel_ispool() {
 #;
 function odsel_new() {
     local x y z f l t k h a
-    _split "${1//[[:space:]]/}"
+    _psplit "${1//[[:space:]]/}"
     a=("${SPLIT_STRING[@]}")
     for y in ${a[@]}; do
         [[ "$y" = *\[\] ]] \
@@ -1081,7 +1081,7 @@ function odsel_dval() {
 #;
 function odsel_del() {
     local x y a
-    _split "${1//[[:space:]]/}"
+    _psplit "${1//[[:space:]]/}"
     a=("${SPLIT_STRING[@]}")
     for x in ${!a[@]}; do
         x="${a[$x]}"
@@ -1285,7 +1285,7 @@ function odsel_ifetch() {
 function odsel_getfn() {
     local x f o a
     FNPREP_ARRAY=()
-    _split "${1//[[:space:]]/}"
+    _psplit "${1//[[:space:]]/}"
     a=("${SPLIT_STRING[@]}")
     for x in ${!a[@]}; do
         x="${a[$x]}"
@@ -1409,7 +1409,7 @@ function odsel_recoil() {
 #;
 function odsel_delc() {
     local x="${1:-prime}"
-    _split "${x//[[:space:]]/}"
+    _psplit "${x//[[:space:]]/}"
     for x in ${!SPLIT_STRING[@]}; do
         x=$(odsel_gph "${SPLIT_STRING[$x]}")
         . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash" &> /dev/null && {
