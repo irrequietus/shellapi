@@ -93,7 +93,7 @@ function odsel_vsi() {
             esac
         elif [[ $y =~ ^([[:alnum:]_]*)\(\)(.*) ]]; then
             [[ -z ${BASH_REMATCH[2]} ]] \
-                && _omsg "$(_emph call): ==${BASH_REMATCH[1]}" \
+                && _omsg "$(_emph call): -> ${BASH_REMATCH[1]}" \
                 || _emsg "${FUNCNAME}: wrong syntax!"
             n="_fnop_${BASH_REMATCH[1]}"
             ! [[ -z ${!n} ]] && {
@@ -783,7 +783,6 @@ function _odsel_pm() {
     _psplit "${x[0]}"
     case "$y" in
         \$|pristine|'')
-            _ckmsg "requested to put into pristine"
              y=("${SPLIT_STRING[@]/#/pristine/}")
             ;;
         \&|snapshot)
@@ -795,7 +794,6 @@ function _odsel_pm() {
             y=
             ;;
         %|clone)
-            _ckmsg "creating a clone of the repository"
             y=("${SPLIT_STRING[@]/#/clone/}")
             ;;
     esac
@@ -1299,8 +1297,8 @@ function odsel_getfn() {
 "_cfx ${POOL_ITEM[$_ENTRY]##*/} ${POOL_ITEM[$_CHECKSUM]} && \\\
 fnapi_msg \"checking hash of ${POOL_ITEM[$_ENTRY]##*/} : \
 \$(_dotstr "${POOL_ITEM[$_CHECKSUM]}") : ok\"")
-            fnapi_genblock "$o" "pool request: $x" \
-                FNPREP_ARRAY "pool request: $x" fatal > "$f"
+            fnapi_genblock "$o" "requesting: $x" \
+                FNPREP_ARRAY "requesting: $x" fatal > "$f"
             unset FNPREP_ARRAY
             . "$f"
             rm -rf "$f"
