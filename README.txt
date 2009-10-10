@@ -37,11 +37,49 @@ implemented in GNU bash for the purpose of using a pure GNU bash based solution 
 the end user desires to. The easiest way to see what a pool is is to run the following
 command after an _init call is made:
 
-odsel_new "prime[]"
+odsel_vsi "new prime[];"
 
 The command above retrieves the metabase XML descriptor from the official repository and
 initializes the function and configuration caches of the prime pool; these caches are
-located within the relays subdirectories of the runspace selected.
+located within the relays subdirectories of the runspace selected. Notice that if you
+run the following:
+
+odsel_vsi "del prime; sim prime;"
+
+An i9kg "simulation" will run, creating a series of i9kg XML files and other material as
+used by the system during test runs and for development purposes. Another, more complicated
+example is the following:
+
+odsel_vsi "
+    : ftest() {
+        del example;
+        sim example;
+        : ctest() => gcc[example]://default[4.4.0:{ @stable:configure_pre->make_post } ];
+    };
+    ftest();
+    ctest();"
+
+In this case, we use odsel to define a function that does the following:
+
+    a) Deletes the "example" pool.
+    b) Runs an i9kg XML simulation for the "example" pool.
+    c) Defines a callback function (ctest) that is the command sequence as extracted
+       from the i9kg XML file of the simulation for gcc (look at that XML for more
+       details) within the "example" pool.
+    d) We run the function we have defined (ftest).
+    e) Since the ftest() call has generated the ctest callback, we simply call that!
+
+These "callbacks" and other functions are defined using the odsel DSL, implemented in
+GNU bash (as an initial demonstration) and all the operations take place within shellapi.
+A wider variety of odsel expressions as well as a progressively completing implementation
+for odsel itself are to follow. Check commit 955562675d27a7db4d5f115a4f7fc3844c9e61ca for
+some of the details related to "callback" / function generation at the official repository
+for shellapi: http://gitorious.org/odreex/shellapi
+
+This is still something *experimental*.
+
+4. Final remarks
+================
 
 If you have not set a SHELLAPI_TARGET global, the prime pool will be located inside
 the runspace created during the first run. If you wish to use that runspace, remember
