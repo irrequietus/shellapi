@@ -78,8 +78,7 @@ function odsel_vsi() {
                                         && n="${BASH_REMATCH[1]}://${BASH_REMATCH[3]}" \
                                         || n="${BASH_REMATCH[3]}"
                                 else
-                                    _emsg "${FUNCNAME}: illegal def:"
-                                    _emsg " *  $n"
+                                    _emsg "${FUNCNAME}: illegal def:" " *  $n"
                                 fi
                             ;;
                             :*)
@@ -101,15 +100,14 @@ function odsel_vsi() {
                 n="$n[*]"
                 odsel_vsi "${!n}" || _emsg "FAILED"
             } || {
-                _emsg "$(_emph call): ${BASH_REMATCH[1]}(): failed because:"
-                _emsg "* undefined call: ${BASH_REMATCH[1]}()"
+                _emsg   "$(_emph call): ${BASH_REMATCH[1]}(): failed because:" \
+                        "* undefined call: ${BASH_REMATCH[1]}()"
             }
         elif [[ $y =~ ^([\]\[[:alnum:]]*):// ]]; then
             _omsg "$(_emph i9kg): ${BASH_REMATCH[1]}"
             _odsel_i9kg_i "$y:code;" n
         else
-            _emsg "${FUNCNAME}: unknown request:"
-            _emsg " *  $x"
+            _emsg "${FUNCNAME}: unknown request:" " *  $x"
         fi
         ((${#SHELLAPI_ERROR[@]})) && return 1 || :
     done
@@ -308,8 +306,7 @@ function odsel_xmla() {
                 ;;
             \</sequence\> | \<i9kg\ * | \</i9kg\> | \<materials\> | \</materials\>) ;;
             \<*)
-                _emsg "${FUNCNAME}: invalid i9kg XML : $l"
-                _emsg "${FUNCNAME}: invalid i9kg file: $1"
+                _emsg "${FUNCNAME}: invalid i9kg XML : $l" "${FUNCNAME}: invalid i9kg file: $1"
                 return 1
                 ;;
         esac
@@ -918,8 +915,7 @@ function odsel_load() {
                 _imsg "@[$n]: loading configuration cache $(_dotstr "$x")"
                 . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash"
                 _init_pool_$x &> /dev/null || {
-                    _emsg "${FUNCNAME}: for pool [$1]"
-                    _emsg "${FUNCNAME}: invalid cache: $(_dotstr "$x")"
+                    _emsg "${FUNCNAME}: for pool [$1]" " * : invalid cache: $(_dotstr "$x")"
                     return 1
                 }
                 eval "__pool_relay_${x}[\$_RHID]=\"$x\"
@@ -938,8 +934,8 @@ function odsel_load() {
                     . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash"
                     _init_pool_$x
                 } || {
-                    _emsg "${FUNCNAME}: for pool [$n]"
-                    _emsg "${FUNCNAME}: pool configuration relay invalid or missing: $(_dotstr "$x")"
+                    _emsg   "${FUNCNAME}: in pool [$n]" \
+                            " * : pool configuration relay invalid or missing: $(_dotstr "$x")"
                     return 1
                 }
                 _cmsg "@[$n]: caching complete  : $(_dotstr "$x")"
@@ -1142,21 +1138,20 @@ function __odsel_gscoil_p() {
                 ((${#SHELLAPI_ERROR[@]})) && return 1 || :
             done
             [[ -z $v ]] || {
-                _emsg "${FUNCNAME}: invalid expression:"
-                _emsg "in : ... ${x:0:$((${#x}/3))} ..."
-                _emsg "** : ... ${v:0:$((${#v}/2))} ..."
+                _emsg   "${FUNCNAME}: invalid expression:" \
+                        "in : ... ${x:0:$((${#x}/3))} ..." \
+                        "** : ... ${v:0:$((${#v}/2))} ..."
                 return 1
             }
         } || {
             v="${x#*${BASH_REMATCH[4]}}"
-            _emsg "${FUNCNAME}: invalid expression:"
-            _emsg "in : ... ${x:0:$((${#x}/3))} ..."
-            _emsg "** : ... ${v:0:$((${#v}/2))} ..."
+            _emsg   "${FUNCNAME}: invalid expression:" \
+                    "in : ... ${x:0:$((${#x}/3))} ..."
+                    "** : ... ${v:0:$((${#v}/2))} ..."
             return 1
         }
     } || {
-        _emsg "${FUNCNAME}: invalid expression:"
-        _emsg "** ${x:0:$((${#x}/3))}..."
+        _emsg "${FUNCNAME}: invalid expression:" "** ${x:0:$((${#x}/3))}..."
         return 1
     }
     eval "$r() { case \"\$1\" in

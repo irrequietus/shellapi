@@ -106,7 +106,7 @@ function _dtff() {
 # @ptip $1  error message to store
 #;
 function _emsg() {
-    SHELLAPI_ERROR+=("$1")
+    SHELLAPI_ERROR+=("$@")
 }
 
 #;
