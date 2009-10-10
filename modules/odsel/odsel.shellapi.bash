@@ -58,7 +58,7 @@ function odsel_vsi() {
                         [[:space:]]*)
                                 n="${BASH_REMATCH[2]}"
                                 local _r="${BASH_REMATCH[1]}"
-                                if  [[ $n =~ ^([[:alnum:]]*)\(\)\{ ]]; then
+                                if  [[ $n =~ ^([[:alnum:]_]*)\(\)\{ ]]; then
                                     m=" ${!i[@]}"; m="${m#* $x }"; f=("${i[$x]#*{}")
                                     for x in $m; do
                                         [[ ${i[$x]} = } ]] && break
@@ -66,13 +66,13 @@ function odsel_vsi() {
                                     done
                                     eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
                                     _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
-                                elif [[ $n =~ ^([[:alnum:]]*)[[:space:]]*=[[:space:]]* ]]; then
+                                elif [[ $n =~ ^([[:alnum:]_]*)[[:space:]]*=[[:space:]]* ]]; then
                                     odsel_vdef "${i[$x]#*$_r}" \
                                         || _emsg "${FUNCNAME}: cannot parse definition: ${i[$x]}"
-                                elif [[ $n =~ ^\[([[:alnum:]]*)\][[:space:]]*=[[:space:]]*\>[[:space:]]*@ ]]; then
+                                elif [[ $n =~ ^\[([[:alnum:]_]*)\][[:space:]]*=[[:space:]]*\>[[:space:]]*@ ]]; then
                                     odsel_gscoil "${i[$x]};" \
                                         || _emsg "${FUNCNAME}: cannot redefine expression base: ${i[$x]}"
-                                elif [[ $n =~ ^([\]\[[:alnum:]]*)(=|\<\<)(.*) ]]; then
+                                elif [[ $n =~ ^([\]\[[:alnum:]_]*)(=|\<\<)(.*) ]]; then
                                     _omsg "$(_emph dval): ${BASH_REMATCH[1]}"
                                     [[ ${BASH_REMATCH[2]} = \<\< ]] \
                                         && n="${BASH_REMATCH[1]}://${BASH_REMATCH[3]}" \
@@ -91,7 +91,7 @@ function odsel_vsi() {
                     odsel_${BASH_REMATCH[1]} "${BASH_REMATCH[2]}"
                     ;;
             esac
-        elif [[ $y =~ ^([[:alnum:]]*)\(\)(.*) ]]; then
+        elif [[ $y =~ ^([[:alnum:]_]*)\(\)(.*) ]]; then
             [[ -z ${BASH_REMATCH[2]} ]] \
                 && _omsg "$(_emph call): ==${BASH_REMATCH[1]}" \
                 || _emsg "${FUNCNAME}: wrong syntax!"
@@ -103,7 +103,7 @@ function odsel_vsi() {
                 _emsg   "$(_emph call): ${BASH_REMATCH[1]}(): failed because:" \
                         "* undefined call: ${BASH_REMATCH[1]}()"
             }
-        elif [[ $y =~ ^([\]\[[:alnum:]]*):// ]]; then
+        elif [[ $y =~ ^([\]\[[:alnum:]_]*):// ]]; then
             _omsg "$(_emph i9kg): ${BASH_REMATCH[1]}"
             _odsel_i9kg_i "$y:code;" n
         else
@@ -1105,7 +1105,7 @@ function odsel_del() {
 #;
 function __odsel_gscoil_p() {
     local x="${1//[[:space:]]/}"
-    [[ "$x" =~ :\[([[:alnum:]]*)\]=\>@\{([,[:alnum:]]*)\}:\{([,[:alnum:]]*)\}([:\>,\|[:alnum:]-]*)\; ]] && {
+    [[ "$x" =~ :\[([[:alnum:]_]*)\]=\>@\{([,[:alnum:]_]*)\}:\{([,[:alnum:]_]*)\}([:\>,\|[:alnum:]_-]*)\; ]] && {
         [[ ${x#*${BASH_REMATCH[4]}} = \; ]] && {
             local   r="_odsel_gscoil_$(odsel_gph ${BASH_REMATCH[1]})" \
                     s=(${BASH_REMATCH[2]//,/ }) f=(${BASH_REMATCH[3]//,/ }) l=() \
@@ -1115,8 +1115,8 @@ function __odsel_gscoil_p() {
                     ((_$v_$x)) && { printf "%s\n" $x; return 1; } || ((_$v_$x=1))
                 done)   && v="${BASH_REMATCH[4]:1}|" \
                         || { _emsg "${FUNCNAME}: $k is defined more than once"; return 1; }
-            while [[ "$v" =~ ^([[:alnum:]]*):([[:alnum:]]*)-\>([[:alnum:]]*)\| 
-                  || "$v" =~ ^([[:alnum:]]*):([[:alnum:]]*)\| ]]; do
+            while [[ "$v" =~ ^([[:alnum:]_]*):([[:alnum:]_]*)-\>([[:alnum:]_]*)\| 
+                  || "$v" =~ ^([[:alnum:]_]*):([[:alnum:]_]*)\| ]]; do
                 ((${#BASH_REMATCH[@]} == 4)) && {
                     local a=-1 b=-1
                     for x in ${!f[@]}; do
@@ -1168,19 +1168,19 @@ function __odsel_gscoil_p() {
 #;
 function __odsel_vdef_p() {
     local x="$1," y z n m b
-    while [[ ${x#"${x%%[![:space:]]*}"} =~ ^([[:alnum:]]*)[[:space:]]*=[[:space:]]*(.*) ]]; do
+    while [[ ${x#"${x%%[![:space:]]*}"} =~ ^([[:alnum:]_]*)[[:space:]]*=[[:space:]]*(.*) ]]; do
         n="${BASH_REMATCH[1]}"; m="${BASH_REMATCH[2]}"
         [[ $m =~ \"([^\"]*)\"[[:space:]]*,|\
 \'([^\']*)\'[[:space:]]*,|\
-([[:alnum:]/:\.]*)[[:space:]]*,|\
-(\{[\'\"[:space:][:alnum:]/:,\.\;\{\}]*\})[[:space:]]*, ]] \
+([[:alnum:]_/:\.]*)[[:space:]]*,|\
+(\{[\'\"[:space:][:alnum:]_/:,\.\;\{\}]*\})[[:space:]]*, ]] \
             && y="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}${BASH_REMATCH[4]}" \
             || return 1
         if [[ ${y:0:1} = { ]]; then
             z="${y:1:$((${#y}-2))},"
             while [[ ${z#"${z%%[![:space:]]*}"} =~ \
 ^\"([^\"]*)\"[[:space:]]*,|\
-^\'([^\']*)\'[[:space:]]*,|^([[:alnum:]/:\.]*)[[:space:]]*, ]]; do
+^\'([^\']*)\'[[:space:]]*,|^([[:alnum:]_/:\.]*)[[:space:]]*, ]]; do
                 b="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
                 z="${z#*$b*,}"
                 _omsg "$(_emph def) : $n :: $b"
