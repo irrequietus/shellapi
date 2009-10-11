@@ -968,6 +968,7 @@ function odsel_sim() {
         } || {
             odsel_new "${x}[]" \
                 && i9kgoo_sim_metabase_xml "$x" \
+                && i9kgoo_pcache "$x" \
                 || break
         }
     done

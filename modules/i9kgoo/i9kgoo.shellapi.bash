@@ -67,8 +67,7 @@ function i9kgoo_load() {
             n="${!n}/__i9kg_init_${y[$_I9KG_RHID]}.odsel.bash"
             . "$n" &> /dev/null && {
                 _isfunction "__i9kg_init_${y[$_I9KG_RHID]}" \
-                    && "__i9kg_init_${y[$_I9KG_RHID]}" \
-                    || {
+                    && "__i9kg_init_${y[$_I9KG_RHID]}" || {
                         _emsg "${FUNCNAME}: corrupt i9kg cache: $r"
                         return 1
                     }
@@ -77,18 +76,10 @@ function i9kgoo_load() {
                 l="${!l}/${y[$_I9KG_RLAY]}.i9kg.xml"
                 [[ -e $l ]] && {
                     _nmsg "extracting $m -> $r"
-                    odsel_xmla \
-                        "$l" \
-                        "__i9kg_rcache_${y[$_I9KG_RHID]}" \
-                        && \
-                    odsel_i9kg_objc \
-                        "__i9kg_rcache_${y[$_I9KG_RHID]}" \
-                        ${y[$_I9KG_RHID]} > "$n" \
-                        && _eqmsg "$m: ok" \
-                        || {
-                            _emsg "${FUNCNAME}: $m: fail"
-                            return 1
-                        }
+                    odsel_xmla "$l" "__i9kg_rcache_${y[$_I9KG_RHID]}" \
+                        && odsel_i9kg_objc "__i9kg_rcache_${y[$_I9KG_RHID]}" ${y[$_I9KG_RHID]} > "$n" \
+                        && _eqmsg "$m: ok" || { _emsg "${FUNCNAME}: $m: fail"; return 1; }
+                    . "$n"; __i9kg_init_${y[$_I9KG_RHID]}
                 } || {
                     _emsg "${FUNCNAME}: does not exist: $m"
                     return 1
@@ -262,5 +253,4 @@ function i9kgoo_sim_metabase_xml() {
         }
     done
     I9KG_PRESETS=("${c[@]}")
-    i9kgoo_pcache "${1:-prime}"
 }
