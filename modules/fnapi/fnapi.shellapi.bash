@@ -532,11 +532,13 @@ function fnapi_gencascade() {
 #       designed to calculate the scheduling for function "wrappers" as presented
 #       within the array which represents the tasks along with their dependencies.
 # @ptip $1  The array variable containing the task set representation.
-# @ptip $2  The array variable where to store the result.
+# @ptip $2  The array variable where to store the result (optional, defaults to
+#           ODSEL_FNSCHEDULE).
 #;
 function __fnapi_schedule_p() {
     eval "local g=(\"\${$1[@]}\")"
     local a x r y i j p=() g1=() g2=() k=0
+    ODSEL_FNSCHEDULE=()
     for x in ${!g[@]}; do
         a=(${g[$x]#*[[:space:]]})
         r="${g[$x]/[[:space:]]*/}"
@@ -569,18 +571,21 @@ function __fnapi_schedule_p() {
             }
         done
         ((s!=${#g1[@]})) && {
-            #_imsg "$(_emph "progress|&"): ${#p[@]} : ${#g1[@]}"
-            eval "${2:-results}+=(\"${p[@]:k}\")"
+            ODSEL_FNSCHEDULE+=("${p[@]:k}")
             k=${#p[*]}
         }
     done
-    ((a<r)) || {
-        g1=(${g1[*]})
-        _emsg "${FUNCNAME}: a cyclic event sequence has been detected"
-        _emsg "${FUNCNAME}: cycle seems to start from: ${g1[0]}"
-        _emsg "${FUNCNAME}: would have cycled at  : $((r-${#g1[*]}))/$r in sequence"
-        return 1
-    }
+    ((${#g1[@]} == 1)) \
+        && ODSEL_FNSCHEDULE+=(${g1[*]}) \
+        || ((a<r)) || {
+            g1=(${g1[*]})
+            _emsg "${FUNCNAME}: a cyclic event sequence has been detected"
+            _emsg "${FUNCNAME}: cycle seems to start from: ${g1[0]}"
+            _emsg "${FUNCNAME}: would have cycled at  : $((r-${#g1[*]}))/$r in sequence"
+            return 1
+        }
+    [[ -z $2 ]] \
+        || eval "$2=(\"\${ODSEL_FNSCHEDULE[@]}\"); ODSEL_FNSCHEDULE=()"
 }
 
 #;
@@ -590,13 +595,13 @@ function __fnapi_schedule_p() {
 # @note Complete the wiring after testing.
 #;
 function __fnapi_deploy_schedule_p() {
-    local x _f n m l z=${2:-0}
+    local x n m l z=${2:-0}
     _isint $z && {
          (($z)) && x=plaunch || x=slaunch
-         __fnapi_schedule_p $1 _f && {
-            for n in ${!_f[@]}; do
+         __fnapi_schedule_p $1 && {
+            for n in ${!ODSEL_FNSCHEDULE[@]}; do
                 # wiring up here once +
-                m=(${_f[$n]})
+                m=(${ODSEL_FNSCHEDULE[$n]})
                 while ((${#m[@]})); do
                     l=0
                     for n in ${!m[@]}; do
