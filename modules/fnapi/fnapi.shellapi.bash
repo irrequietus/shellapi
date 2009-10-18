@@ -241,8 +241,6 @@ function fnapi_fnp_write() {
         local _f_=$(f=$(_for_each $2 printf "%s\n" | ${FNAPI_CHECKSUM}); printf "${f/ */}")
         [[ \$1 = csec ]] && printf \"%d\" ${4:-0} || {
         [[ \$1 = preq ]] && printf \"%s\n\" \"\${_d_[@]}\" || {
-            _omsg \"\${FUNCNAME}: -> \$(_emph \$_f_)\"
-            for _d_ in \${_d_[@]}; do _ckmsg \" *** checking -> \$_d_\" || return 1; done
             fnapi_allows_flock \$_f_ && { {
             $(_for_each $2 printf "%s && \\\\\n")
             : || ! :
