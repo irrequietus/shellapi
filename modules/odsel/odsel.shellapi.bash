@@ -633,39 +633,31 @@ function odsel_whatis() {
 # @desc A dependency querying mechanism compatible with an i9kg rcache
 #       array. The purpose here is to get a whitespace separated list
 #       of dependencies of a specific type: {rpli,dbld,drun,nbld,nrun}.
-# @ptip $1  instance expression to query
-# @ptip $2  [] enclosed string out of {rpli,dbld,drun,nbld,nrun}
-# @ptip $3  hash id of the i9kg rcache (optional)
+# @ptip $1  An instance - specific block of a valid odsel expression (://*)
+# @ptip $2  Any string out of {rpli,dbld,drun,nbld,nrun}
+# @ptip $3  The hash id of the i9kg rcache.
 # @note The i9kg rcache used must be initialized.
 #;
 function odsel_depquery() {
-    local x y q=0 k=0 f=0
-    [[ -z $3 ]] && {
-        y=($(_odsel_i9kg_header "$1"))
-        y=__i9kg_rcache_${y[$_I9KG_RHID]}
-    } || y=__i9kg_rcache_$3
-    x="$y[0]"
-    x="$y[$((q=${!x/* /}))]"
-    case "${2:-[rpli]}" in
-        \[\] | \[rpli\]);;
-        \[dbld\])   f=1 ;;
-        \[drun\])   f=2 ;;
-        \[nbld\])   f=3 ;;
-        \[nrun\])   f=4 ;;
-        *)  printf "%s\n" "?= undefined end: $1"
+    local x q=0 k=0 f=0 y="__i9kg_rcache_$3"
+    x="$y[0]"; x="$y[$((q=${!x/* /}))]"
+    case "${2:-rpli}" in
+        "" | rpli);;
+        dbld)   f=1 ;;
+        drun)   f=2 ;;
+        nbld)   f=3 ;;
+        nrun)   f=4 ;;
+        *)  printf "%s\n" "-2"
             return 1
         ;;
     esac
-    ((q+=$(($(($(_asof $y)-$((++q))))*f/5))))
     for x in ${!x}; do
-        [ "$x" == "${1#*//}" ] && {
-            x="$y[$((q+k))]"
-            printf "%s\n" "${!x}"
-            return
-        }
+        [ "$x" == "$1" ] \
+            && printf "%s\n" "$((q+$(($(($(_asof $y)-$((++q))))*f/5))+k))" \
+            && return
         ((k++))
     done
-    printf "%s\n" "${FUNCNAME}: undefined error"
+    printf "%s\n" "-1"
     return 1
 }
 
