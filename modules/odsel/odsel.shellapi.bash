@@ -889,12 +889,14 @@ function odsel_i9kg_objc() {
 # @ptip $1  an odsel expression
 #;
 function _odsel_i9kg_header() {
-    local a="$1" v=
-    [[ "${a/:*/}" =~ ([a-zA-Z0-9_-]*)\[([^[:space:]]*)\] ]] \
+    local a="${1//[[:space:]]/}" v=
+    [[ $a =~ ://([[:alnum:]_-]*)\[([.[:alnum:]_-]*)[\]@] ]] \
+        && v="${BASH_REMATCH[1]}[${BASH_REMATCH[2]}]"
+    [[ "${a/:*/}" =~ ([[:alnum:]_-]*)\[([^[:space:]]*)\] ]] \
             && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
             || a=("${a/:*/}" "prime")
-    v="$(_hsos "${a[0]}[${a[1]}]")"
-    printf "%s\n%s\n%s\n" "${a[0]}" "${a[1]}" "$v" "$(odsel_gph "${a[1]}")" "${1#*://}"
+    a[2]="$(_hsos "${a[0]}[${a[1]}]")"
+    printf "%s\n" "${a[@]} $(odsel_gph "${a[1]}") $v"
 }
 
 #;
