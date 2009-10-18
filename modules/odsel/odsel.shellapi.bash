@@ -586,27 +586,14 @@ function odsel_ispli_repo() {
 # @desc Transform an ungrouped odsel expression into the sequence of commands
 #       or text or whatever it refers to, for the pool it refers to and the
 #       i9kg file containing the particular instance it has been mapped for.
-# @ptip $1  odsel expression
-# @ptip $2  i9kg rcache hash identifier it requires; may deduce it on its own
+# @ptip $1  A specific instantiation block identifier for a given odsel expression.
+# @ptip $2  The i9kg rcache hash identifier it requires; may deduce it on its own
 #           but as always, the rcache array must be already initialized.
+# @ptip $3  A t/c switch.
+# @note As with many others in its group, this is now intended as internal.
 #;
 function odsel_exprseq() {
-    local x="${1//[[:space:]]/}" a r=1 m=0 t=0 z
-    [[ -z $2 ]] && {
-        [[ "${x/:*/}" =~ ([a-zA-Z0-9_-]*)\[([^[:space:]]*)\] ]] \
-                && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
-                || a=("${x/:*/}" "prime")
-        a=__i9kg_rcache_$(_hsos "${a[0]}[${a[1]}]")
-    } || a="__i9kg_rcache_$2"
-    x="${x#*://}"
-    case "${z:=${x##*\]:}}" in
-        code)   z=t ;;
-        text)   z=c ;;
-        *)  _emsg "${FUNCNAME}: ${1//[[:space:]]/} is not a valid odsel expression"
-            return 1
-            ;;
-    esac
-    x="${x%:*}"
+    local x="$1" r=1 m=0 t=0 a="__i9kg_rcache_$2" z="$3"
     local b="$a[0]"
     local h="${!b/ */}" v="${!b/ */}"
     local s=$h
@@ -619,8 +606,7 @@ function odsel_exprseq() {
         t=(${!t#* })
         t="${t[@]/$z*/}"
         for x in $t; do
-            x="$a[${x#?}+$v]"
-            printf "%s\n" "${!x}"
+            printf "%d\n" $((${x#?}+$v))
         done
     }
 }
