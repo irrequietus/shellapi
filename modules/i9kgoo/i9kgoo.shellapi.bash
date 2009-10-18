@@ -231,8 +231,8 @@ function i9kgoo_sim_metabase_xml() {
     n="${POOL_PRISTINE[0]/:*/}"
     l="__pool_relay_$a[$_I9KG_SEEDS_XML]"
     l="${!l}"
+    z+=("${POOL_PRISTINE[0]}")
     unset POOL_PRISTINE[0]
-    z+=("$n")
     o=$((${#POOL_PRISTINE[@]}+1))
     for x in ${!POOL_PRISTINE[@]} $o; do
         x="${POOL_PRISTINE[$x]:-_${POOL_PRISTINE[${#POOL_PRISTINE[@]}]}}"
