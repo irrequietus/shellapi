@@ -856,6 +856,32 @@ function odsel_extpli() {
 }
 
 #;
+# @desc Extracting a resource and collocating it with its patches in the same
+#       allocated uuid - named folder within utilspace.
+# @ptip $1 Resource identifier (<name>:<version>) of the compressed resource.
+# @ptip $2 The hash identifier of the pool containing the resource we want.
+#;
+function odsel_sppx() {
+    local a=$(_uuidg) x="$1" y z="${2:-$(odsel_gph prime)}"
+    local b="__pool_relay_$z[$_PATCHES]"
+    ODSEL_SSPXU=
+    _omsg "$(_emph sppx): $1 -> $a"
+    odsel_uspaceinit "$a" \
+        && odsel_extpli "pristine/$1" "${I9KG_UTILSPACE[$LOCATION]}/$a/source" "$z" \
+        || _emsg "${FUNCNAME}: could not prepare resource: ff $1"
+    ((${#SHELLAPI_ERROR[@]})) && {
+        rm -rf "${I9KG_UTILSPACE[$_LOCATION]}/$a"
+        return 1
+    } || {
+        [[ -d ${!b}/${1/:/-}/ ]] && {
+            cp -ax "${!b}/${1/:/-}/" "${I9KG_UTILSPACE[$_LOCATION]}/$a/source" \
+                || { _emsg "${FUNCNAME}: could not prepare resource: $1"; return 1; }
+        }
+    } 
+    ODSEL_SSPXU=$a
+}
+
+#;
 # @desc The internal event handler for the -> operator for rpli instructions
 # @ptip $@  The array "passed" through _odsel_rpli_i
 #;
