@@ -817,6 +817,45 @@ function odsel_uspaceinit() {
 }
 
 #;
+# @desc Prepare a resource for use (extraction to path from its identifier)
+# @ptip $1 Resource identifier (<name>:<version>) of the compressed resource.
+# @ptip $2 Physical path where the compressed resource gets extracted.
+# @ptip $3 The hash identifier of the pool containing the resource we want.
+# @devs FIXME: odsel_ifind() gets called twice, rewire odsel_getfn or
+#       deprecate it.
+#;
+function odsel_extpli() {
+    local x="$1" y h="${3:-$(odsel_gph prime)}" c= i= e=0
+    local z="__pool_relay_$h[$_PRISTINE]"
+    odsel_ifind "$x" "$h" \
+        && x="${!z}/${POOL_ITEM[$_ENTRY]##*/}" \
+        || { _emsg "${FUNCNAME}: could not find resource: ${1##*/}"; return 1; }
+    [[ -e $x ]] && _cfx "$x" ${POOL_ITEM[$_CHECKSUM]} || {
+        SHELLAPI_ERROR=()
+        odsel_getfn "$1" $h || {
+            _emsg "${FUNCNAME}: could not export resource: ${1##*/}"
+            return 1
+        }
+    }
+    case "$x" in
+        *.tar.bz2|*.tbz) c=j ;;
+        *.tar.gz|*.tgz)  c=z ;;
+        *.tar.lzma)      c=l ;;
+        *.bz2)           c=b; i="bzip2 -d" ;;
+        *.gz)            c=g; i="gzip  -d" ;;
+        *.lzma)          c=a; i="lzma  -d" ;;
+    esac
+    case "$c" in
+        [jz])  tar -C "${2:-.}" -x${c}f "$x" &> /dev/null || e=1 ;;
+        [bga]) cp "$x" "${2:-.}" && $i "${2:-.}/${x##*/}" &> /dev/null || e=1 ;;
+        l)     { lzma -dc "$x" | tar -C "${2:-.}" -x ; } 2> /dev/null
+               [[ ${PIPESTATUS[*]} = "0 0" ]] || e=1 ;;
+    esac
+    ((e)) && { _emsg "${FUNCNAME}: could not extract ${x##*/}"; return 1; }
+    return 0
+}
+
+#;
 # @desc The internal event handler for the -> operator for rpli instructions
 # @ptip $@  The array "passed" through _odsel_rpli_i
 #;
