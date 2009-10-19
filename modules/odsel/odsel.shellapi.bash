@@ -1343,6 +1343,37 @@ function __odsel_dcbk_p() {
 }
 
 #;
+# @desc Another callback generator
+# @ptip $1  An odsel expression.
+#;
+function __odsel_getcbk_p() {
+    local x=($(_odsel_i9kg_header "$1")) y z d g f=() a= n= h=()
+    ODSEL_CBKDEP=()
+    i9kgoo_load "$1" \
+        && y="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "rpli" "${x[2]}")]" \
+        && a="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "dbld" "${x[2]}")]" \
+        && z="$(__odsel_i9kgi_p "$1" "${x[2]}")" && {
+            n="${x[0]}_${x[1]}____${x[4]//[\].\[]/_}"
+            for d in ${!a}; do ODSEL_CBKDEP+=("${d/:*/}[${x[1]}]://${x[4]/[*/}[${d#*:}]"); done
+            for d in ${!y}; do
+                g=${x[1]}_${d//[:.]/_}
+                _isfunction _get_$g || eval "_get_$g() { odsel_sppx $d ${x[3]}; }"
+                h+=(_get_$g)
+            done
+            for d in $z; do d=__i9kg_rcache_${x[2]}[$d]; f+=("${!d}"); done
+            _isfunction $n || {
+                fnapi_fnp_write $n f h
+                eval "$n=\"${x[0]}[${x[1]}]://${x[4]}\""
+            }
+        } || {
+            x="${1//[[:space:]]/}"
+            _emsg  "${FUNCNAME}: odsel expression callback failed:" \
+                    "* ${x:0:$((${#x}/2))}..."
+        }
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc Extract name / version information out of a tarball
 # @ptip $1  path to the tarball or name of the tarball
 #;
