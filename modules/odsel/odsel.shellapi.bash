@@ -31,6 +31,14 @@ function odsel_init() {
                    '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
                    '\[([^@{}>,-]*):([^@{}>,-]*)\]'
                    '\[([^@{}>,:]*)\]' )
+    ODSEL_RXP=(
+        [0]="^[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\
+((\[[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\])|([[:space:]]*))"
+        [1]="^[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\
+\[[[:space:]]*([[:alnum:]_\.-]*)[[:space:]]*(.)"
+        [2]="[[:space:]]*@[[:space:]]*([[:alnum:]_]*)\
+[[:space:]]*:[[:space:]]*([[:alnum:]_]*)\
+[[:space:]]*->[[:space:]]*([[:alnum:]_]*)")
     ODSEL_OPRT=()
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
@@ -214,6 +222,70 @@ function odsel_scli() {
             ;;
     esac
     eval "${_ft}=(\"$h\" \"\${_b[@]}\")"
+}
+
+#;
+# @desc Evolution of odsel_scli(), in unstable form. This one does work with
+#       the new odsel_exprseq implementation and will deprecate odsel_scli()
+#;
+function __odsel_i9kgi_p() {
+    local p= n= v= i= a= b= x= y= r=() _r _c k s= j
+    [[ $1 =~ ${ODSEL_RXP[0]} ]] && {
+        p="${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
+        y=${BASH_REMATCH[1]}; p=${p:-prime}
+        odsel_presets_all
+        [[ ${x:=${1#*//}} =~ ${ODSEL_RXP[1]} ]] && {
+            n="${BASH_REMATCH[1]}";v="${BASH_REMATCH[2]}";x="${x#*$v}"
+            case "${j:=${BASH_REMATCH[3]}}" in
+                @)  [[ $x =~ ${ODSEL_RXP[2]} ]] && {
+                        _r="${I9KG_PRESETS[@]}"
+                        _r="${_r#*${BASH_REMATCH[2]}}"
+                        _r="${_r%${BASH_REMATCH[3]}*}"
+                        r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
+                        for _c in ${_r}; do
+                            r+=("$n[${v}@${BASH_REMATCH[1]}:${_c}]") 
+                        done
+                        r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]")
+                        [[ ${x#*${BASH_REMATCH[3]}*]} =~ \
+                            ^[[:space:]]*:[[:space:]]*(code|text)[[:space:]]*\; ]] && {
+                                case "${BASH_REMATCH[1]}" in
+                                    code) k=t ;;
+                                    text) k=c ;;
+                                esac
+                        }
+                    }
+                    ;;
+                \]) # fix this once out of _p() phase, hardwiring must go
+                    r+=("$n[${v}@stable:configure_pre->make_install_post]")
+                    ;;
+                :)  [[ $x =~ [[:space:]]*\{([[:space:][:alnum:]:@\>,_-]*)\}[[:space:]]* ]] && {
+                        s="${BASH_REMATCH[1]},"
+                        while [[ $s =~ ${ODSEL_RXP[2]} ]]; do
+                            _r="${I9KG_PRESETS[@]}"
+                            _r="${_r#*${BASH_REMATCH[2]}}"
+                            _r="${_r%${BASH_REMATCH[3]}*}"
+                            r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
+                            for _c in ${_r}; do
+                                r+=("$n[${v}@${BASH_REMATCH[1]}:${_c}]") 
+                            done
+                            r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]")
+                            s="${s#*,}"
+                        done
+                        [[ -z $s ]]
+                    } || ! :
+                    ;;
+                 *) ! : ;;
+            esac
+        } || ! :
+    } || _emsg "${FUNCNAME}: invalid expression: ${1//[[:space:]]/}"
+    [[ -z $2 ]] && {
+        x=($(_odsel_i9kg_header "$1"))
+        x="${x[2]}"
+    } || x="$2"
+    for z in ${!r[@]}; do
+        odsel_exprseq "${r[$z]}" $x $k
+    done
+    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
