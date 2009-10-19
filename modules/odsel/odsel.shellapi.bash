@@ -856,6 +856,56 @@ function odsel_extpli() {
 }
 
 #;
+# @desc Part of the "callback" cascade, also able to detect cycles and prepare
+#       the ODSEL_DDEPS global doing hoop jumping in hoops between the three parts.
+# @devs FIXME: _cp_* locks need cleanup, hardwiring for the default event
+#       grammar must also be removed.
+#;
+function __odsel_ddepexp_p() {
+    local x z=()
+    __odsel_getcbk_p "$1" && {
+        ((${#ODSEL_CBKDEP[@]})) && {
+            x="${1%@*}]"
+            ((_cp_${x//[:\/.\]\[]/_})) && {
+                _emsg "${FUNCNAME}: a cycle has been detected during i9kg instantiation"
+                return 1
+            }
+            ((_cp_${x//[:\/.\]\[]/_}=1))
+            ODSEL_DDEPS+=("${x//[:\/.\]\[]/_} ${ODSEL_CBKDEP[*]//[:\/.\]\[]/_}")
+            for x in ${!ODSEL_CBKDEP[@]}; do
+                z+=("${ODSEL_CBKDEP[$x]}")
+            done
+            for x in ${!z[@]}; do
+                __odsel_ddepexp_p "${z[$x]%?}@stable:configure_pre->make_install_post]:code;" \
+                || break
+            done
+        }
+    }
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
+# @desc The "initiating part" of the cascade trio (prepare, expand, formulate) needed
+#       for completing the initial part of the instantiation sequence. The other
+#       two are __odsel_ddepexp_p() and __odsel_getcbk_p()
+# @ptip $1  A semicolon separated list of odsel block extraction expressions
+# @devs FIXME: change (;), give alternative to ODSEL_DDEPS global, etc.
+#;
+function __odsel_ddepprep_p() {
+    local x="$IFS" y z=()
+    IFS=";"; y=($1); IFS="$x"
+    ODSEL_DDEPS=()
+    for x in ${!y[@]}; do
+        __odsel_ddepexp_p "${y[$x]};"
+        ((${#ODSEL_CBKDEP[@]})) || {
+            x="${y[$x]%@*}]"
+            z+=("${x//[:\/.\]\[]/_}")
+        }
+    done
+    ODSEL_DDEPS+=("${z[*]}")
+}
+
+#;
 # @desc Extracting a resource and collocating it with its patches in the same
 #       allocated uuid - named folder within utilspace.
 # @ptip $1 Resource identifier (<name>:<version>) of the compressed resource.
