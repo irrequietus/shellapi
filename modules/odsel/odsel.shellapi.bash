@@ -111,7 +111,9 @@ function odsel_vsi() {
                 && _omsg "$(_emph call): -> ${BASH_REMATCH[1]}" \
                 || _emsg "${FUNCNAME}: wrong syntax!"
             n="_fnop_${BASH_REMATCH[1]}"
-            _isfunction $n && $n || {
+            _isfunction $n && {
+                $n || { _emsg "${FUNCNAME}: callback failure"; return 1; }
+            } || {
                 ! [[ -z ${!n} ]] && {
                     n="$n[*]"
                     odsel_vsi "${!n}" \
