@@ -1055,7 +1055,7 @@ function odsel_i9kg_objc() {
 #;
 function _odsel_i9kg_header() {
     local a="${1//[[:space:]]/}" v=
-    [[ $a =~ ://([[:alnum:]_-]*)\[([.[:alnum:]_-]*)[\]@] ]] \
+    [[ $a =~ ://([[:alnum:]_-]*)\[([.[:alnum:]_-]*)[\]@:] ]] \
         && v="${BASH_REMATCH[1]}[${BASH_REMATCH[2]}]"
     [[ "${a/:*/}" =~ ([[:alnum:]_-]*)\[([^[:space:]]*)\] ]] \
             && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
@@ -1383,11 +1383,8 @@ function __odsel_vdef_p() {
 #       from the default odsel coil (the presets as defined within odsel.config.xml).
 #;
 function __odsel_dcbk_p() {
-    local x="_cbki_$1"
     _isfunction _fnop_$1 && _emsg "${FUNCNAME}: already defined: $1()" || {
-        _odsel_i9kg_i "$2:code;" $x \
-            && fnapi_fnp_write _fnop_$1 $x
-        unset -v $x
+        __odsel_getcbk_p "$2:code;" _fnop_$1
     }
     ! ((${#SHELLAPI_ERROR[@]}))
 }
@@ -1395,6 +1392,7 @@ function __odsel_dcbk_p() {
 #;
 # @desc Another callback generator
 # @ptip $1  An odsel expression.
+# @ptip $2  Callback name (optional).
 #;
 function __odsel_getcbk_p() {
     local x=($(_odsel_i9kg_header "$1")) y z d g f=() a= n= h=()
@@ -1403,7 +1401,7 @@ function __odsel_getcbk_p() {
         && y="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "rpli" "${x[2]}")]" \
         && a="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "dbld" "${x[2]}")]" \
         && z="$(__odsel_i9kgi_p "$1" "${x[2]}")" && {
-            n="${x[0]}_${x[1]}____${x[4]//[\].\[]/_}"
+            n="${2:-${x[0]}_${x[1]}____${x[4]//[\].\[]/_}}"
             for d in ${!a}; do ODSEL_CBKDEP+=("${d/:*/}[${x[1]}]://${x[4]/[*/}[${d#*:}]"); done
             for d in ${!y}; do
                 g=${x[1]}_${d//[:.]/_}
