@@ -239,7 +239,14 @@ function __odsel_i9kgi_p() {
         [[ ${x:=${1#*//}} =~ ${ODSEL_RXP[1]} ]] && {
             n="${BASH_REMATCH[1]}";v="${BASH_REMATCH[2]}";x="${x#*$v}"
             case "${j:=${BASH_REMATCH[3]}}" in
-                @)  [[ $x =~ ${ODSEL_RXP[2]} ]] && {
+                @)  [[ $x =~ ${ODSEL_RXP[2]}\]([^\;]*)\; ]] && {
+                        case "${BASH_REMATCH[4]//[[:space:]]/}" in
+                            :code|'') k=t ;;
+                            :text)    k=c ;;
+                            *)  _emsg "${FUNCNAME}: unknown final: ${BASH_REMATCH[4]}"
+                                return 1
+                                ;;
+                        esac
                         _r="${I9KG_PRESETS[@]}"
                         _r="${_r#*${BASH_REMATCH[2]}}"
                         _r="${_r%${BASH_REMATCH[3]}*}"
@@ -260,7 +267,14 @@ function __odsel_i9kgi_p() {
                 \]) # fix this once out of _p() phase, hardwiring must go
                     r+=("$n[${v}@stable:configure_pre->make_install_post]")
                     ;;
-                :)  [[ $x =~ [[:space:]]*\{([[:space:][:alnum:]:@\>,_-]*)\}[[:space:]]* ]] && {
+                :)  [[ $x =~ [[:space:]]*\{([[:space:][:alnum:]:@\>,_-]*)\}[[:space:]]*\]([^\;]*)\; ]] && {
+                        case "${BASH_REMATCH[2]//[[:space:]]/}" in
+                            :code|'') k=t ;;
+                            :text)    k=c ;;
+                            *)  _emsg "${FUNCNAME}: unknown final: ${BASH_REMATCH[2]}"
+                                return 1
+                                ;;
+                        esac
                         s="${BASH_REMATCH[1]},"
                         while [[ $s =~ ${ODSEL_RXP[2]} ]]; do
                             _r="${I9KG_PRESETS[@]}"
@@ -879,6 +893,7 @@ function __odsel_ddepexp_p() {
                 z+=("${ODSEL_CBKDEP[$x]}")
             done
             for x in ${!z[@]}; do
+                # hardwiring must be eliminated.
                 __odsel_ddepexp_p "${z[$x]%?}@stable:configure_pre->make_install_post]:code;" \
                 || break
             done
@@ -1404,7 +1419,7 @@ function __odsel_getcbk_p() {
     i9kgoo_load "$1" \
         && y="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "rpli" "${x[2]}")]" \
         && a="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "dbld" "${x[2]}")]" \
-        && z="$(__odsel_i9kgi_p "$1" "${x[2]}")" && {
+        && z="$(__odsel_i9kgi_p "$1;" "${x[2]}")" && {
             n="${2:-${x[0]}_${x[1]}____${x[4]//[\].\[]/_}}"
             for d in ${!a}; do ODSEL_CBKDEP+=("${d/:*/}[${x[1]}]://${x[4]/[*/}[${d#*:}]"); done
             for d in ${!y}; do
