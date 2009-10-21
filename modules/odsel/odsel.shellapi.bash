@@ -868,6 +868,7 @@ function __odsel_ddepexp_p() {
     __odsel_getcbk_p "$1" && {
         ((${#ODSEL_CBKDEP[@]})) && {
             x="${1%@*}]"
+            x="${x//[\{\}]/}"
             ((_cp_${x//[:\/.\]\[]/_})) && {
                 _emsg "${FUNCNAME}: a cycle has been detected during i9kg instantiation"
                 return 1
@@ -901,6 +902,7 @@ function __odsel_ddepprep_p() {
         __odsel_ddepexp_p "${y[$x]};"
         ((${#ODSEL_CBKDEP[@]})) || {
             x="${y[$x]%@*}]"
+            x="${x//[\}\{]/}"
             z+=("${x//[:\/.\]\[]/_}")
         }
     done
@@ -1386,7 +1388,7 @@ function __odsel_vdef_p() {
 #;
 function __odsel_dcbk_p() {
     _isfunction _fnop_$1 && _emsg "${FUNCNAME}: already defined: $1()" || {
-        __odsel_getcbk_p "$2:code;" _fnop_$1
+        __odsel_getcbk_p "$2" _fnop_$1
     }
     ! ((${#SHELLAPI_ERROR[@]}))
 }
