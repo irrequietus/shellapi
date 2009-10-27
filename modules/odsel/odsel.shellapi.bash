@@ -897,6 +897,13 @@ function __odsel_ddepexp_p() {
                 __odsel_ddepexp_p "${z[$x]%?}@stable:configure_pre->make_install_post]:code;" \
                 || break
             done
+        } || {
+            x="${1%@*}]"
+            x="${x//[\{\}]/}"
+            ((_cp_${x//[:\/.\]\[]/_})) || {
+                ODSEL_DDEPS+=("${x//[:\/.\]\[]/_} _void")
+                ((_cp_${x//[:\/.\]\[]/_}=1)) 
+            }
         }
     }
     ! ((${#SHELLAPI_ERROR[@]}))
@@ -915,13 +922,7 @@ function __odsel_ddepprep_p() {
     ODSEL_DDEPS=()
     for x in ${!y[@]}; do
         __odsel_ddepexp_p "${y[$x]};"
-        ((${#ODSEL_CBKDEP[@]})) || {
-            x="${y[$x]%@*}]"
-            x="${x//[\}\{]/}"
-            z+=("${x//[:\/.\]\[]/_}")
-        }
     done
-    ODSEL_DDEPS+=("${z[*]}")
 }
 
 #;
