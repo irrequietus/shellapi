@@ -850,7 +850,7 @@ function __odsel_cbkdeploy() {
         for x in ${v[@]:1}; do
             _omsg "$(_emph preq): ${!x}"
             for y in $($x preq); do
-                $y || {
+                ($y) || {
                     _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
                           "* ..."
                     unset -v ODSEL_DDEPS ODSEL_CBKDEP ODSEL_SSPXU
@@ -858,7 +858,7 @@ function __odsel_cbkdeploy() {
                 }
             done
             _omsg "$(_emph runf): () => ${!x}"
-            $x || {
+            ($x) || {
                 _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
                       "* ${!x}"
                 break
