@@ -122,8 +122,7 @@ function odsel_vsi() {
                             "* undefined call: ${BASH_REMATCH[1]}()"
             }
         elif [[ $y =~ ^([\]\[[:alnum:]_]*):// ]]; then
-            _omsg "$(_emph i9kg): ${BASH_REMATCH[1]}"
-            _odsel_i9kg_i "$y:code;" n
+            _omsg "$(_emph i9kg): ? ${BASH_REMATCH[1]}"
         else
             _emsg "${FUNCNAME}: unknown request:" " *  $x"
         fi
@@ -132,103 +131,9 @@ function odsel_vsi() {
 }
 
 #;
-# @desc A practical, odsel group expression expander in bash (component of the future odsel_vsi)
-#       for multiple, en block odsel expression interpretation during instruction / metadata
-#       navigation in the arrays.
-# @ptip $1  odsel block statement to interpret.
-# @ptip $2  array to store the block statement sequence, defaults to ODSEL_EXPBLOCK. First
-#           element is the hash identifier of the target i9kg file.
-#;
-function odsel_scli() {
-    local   _ft="${2:-ODSEL_EXPBLOCK}" \
-            _l="${1//[[:space:]]/}" \
-            _c=0 _p= _r= _b=() h=
-    _p="$_l"
-    _l="${_l/:*/}"
-    i9kgoo_load "$_l" || {
-        _emsg "${FUNCNAME}: could not load: $_l"
-        return 1
-    }
-    h=($(_odsel_i9kg_header "$_l"))
-    h="${h[2]}"
-    _l="${_l/\[*[!:]/}:${_p#*:}"
-    local   lhs="${_p%[*}" \
-            rhs="${_l/*]/}" \
-            vhs="${_l#*[}"
-    vhs="${vhs%%:*}"
-    case "${rhs:1}" in
-        install\; | install\(*\)\;)
-            odsel_presets_install
-            ;;
-        remove\; | remove\(*\)\;)
-            odsel_presets_remove
-            ;;
-        code\; | code\(*\)\; | \
-        text\; | text\(*\)\;)
-            odsel_presets_all
-            ;;
-        *)
-            _fatal "${FUNCNAME}: could not interpret requested block: ${rhs}"
-            ;;
-    esac
-    rhs="${rhs%;}"
-    case "$_l" in
-        *\[*:\{@*)
-            [[ $_l =~ ${ODSEL_REGEXP[0]} ]] \
-                && _l="${BASH_REMATCH[1]}," \
-                || _fatal "${FUNCNAME}: could not intepret: $_l"
-            while [[ $_l =~ ${ODSEL_REGEXP[1]}  ]]; do
-                _p="${BASH_REMATCH[1]}"
-                case "$_p" in
-                    *-\>*)
-                        _r="${I9KG_PRESETS[@]}"
-                        [[ $_p =~ ${ODSEL_REGEXP[2]} ]] && {
-                            _r="${_r#*${BASH_REMATCH[2]/(*/}}"
-                            _r="${_r%${BASH_REMATCH[3]/(*/}*}"
-                            _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]${rhs}")
-                            for _c in ${_r}; do
-                                 _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:$_c]${rhs}") 
-                            done
-                             _b+=("${lhs}[${vhs}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]${rhs}")
-                        }
-                    ;;
-                    *\>*)
-                        _fatal "${FUNCNAME}: incorrect syntax"
-                    ;;
-                    *)
-                         _b+=("${lhs}[${vhs}${BASH_REMATCH[1]}]${rhs}")
-                    ;;
-                esac
-                _l=${_l#*"$_p",}
-            done
-            ;;
-        *\[*@*:*)
-                [[ $_l =~ ${ODSEL_REGEXP[3]} ]] \
-                    &&   _b+=("${lhs}[${BASH_REMATCH[1]}@${BASH_REMATCH[2]}]${rhs}") \
-                    || _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
-        *\[*:*\]*)
-                [[ $_l =~ ${ODSEL_REGEXP[4]} ]] \
-                    &&  _b+=("${lhs}[${BASH_REMATCH[1]}@stable:${BASH_REMATCH[2]}]${rhs}") \
-                    || _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
-        *\[*\]*)
-                [[ $_l =~ ${ODSEL_REGEXP[5]} ]] && {
-                    for _c in ${I9KG_PRESETS[@]}; do
-                        _b+=("${lhs}[${BASH_REMATCH[1]}@stable:$_c]${rhs}") 
-                    done
-                } || _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
-            *)
-                _fatal "${FUNCNAME}: failed to recognize: $_l"
-            ;;
-    esac
-    eval "${_ft}=(\"$h\" \"\${_b[@]}\")"
-}
-
-#;
 # @desc Evolution of odsel_scli(), in unstable form. This one does work with
 #       the new odsel_exprseq implementation and will deprecate odsel_scli()
+# @ptip $1  An odsel i9kg expression.
 #;
 function __odsel_i9kgi_p() {
     local p= n= v= i= a= b= x= y= r=() _r _c k s= j
@@ -624,25 +529,6 @@ function _odsel_rpli_i() {
                     ;;
                 *) ;;
             esac
-    }
-}
-
-#;
-# @desc The odsel i9kg instruction decoy
-# @ptip $1  The i9kg instruction to process, as passed by odsel_vsi
-#;
-function _odsel_i9kg_i() {
-    odsel_scli "${1//[[:space:]]/}" && {
-        local x=${ODSEL_EXPBLOCK[0]} y z=()
-        unset ODSEL_EXPBLOCK[0]
-        (($# != 2)) && {
-            _emsg "${FUNCNAME}: target not set for i9kg sequence"
-            return 1
-        }
-        for y in ${!ODSEL_EXPBLOCK[@]}; do
-            z+=("$(odsel_exprseq "${ODSEL_EXPBLOCK[$y]}" $x)") || return 1
-        done
-        eval "$2=(\"\${z[@]}\")"
     }
 }
 
@@ -1327,7 +1213,6 @@ function odsel_del() {
 #       expression, making the requirement of XML / * redundant for step - description.
 #       This is a silent function generator.
 # @ptip $1  The odsel grammar - modifier definition expression.
-# @note FIXME: redesign odsel_scli() and related to follow suit.
 #;
 function __odsel_gscoil_p() {
     local x="${1//[[:space:]]/}"
