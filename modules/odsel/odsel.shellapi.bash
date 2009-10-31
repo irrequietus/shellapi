@@ -952,6 +952,38 @@ function odsel_sppx() {
 }
 
 #;
+# @desc An anonymous callback deploy function that can deploy callbacks while respecting
+#       their actual dependencies.
+# @ptip $1  Anonymous callbacks with ; separation
+# @note An anonymous callback sequencing experiment.
+#;
+function __odsel_cbkdeploy() {
+    local v x y
+    __odsel_ddepprep_p "$1" && {
+        v=($(__fnapi_deploy_schedule_p ODSEL_DDEPS)) || _fatal
+        for x in ${v[@]:1}; do
+            _omsg "$(_emph preq): ${!x}"
+            for y in $($x preq); do
+                $y || {
+                    _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
+                          "* ..."
+                    unset -v ODSEL_DDEPS ODSEL_CBKDEP ODSEL_SSPXU
+                    return 1
+                }
+            done
+            _omsg "$(_emph runf): () => ${!x}"
+            $x || {
+                _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
+                      "* ${!x}"
+                break
+            }
+        done
+    } || _emsg "${FUNCNAME}: deployment failure"
+    unset -v ODSEL_DDEPS ODSEL_CBKDEP ODSEL_SSPXU
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc The internal event handler for the -> operator for rpli instructions
 # @ptip $@  The array "passed" through _odsel_rpli_i
 #;
