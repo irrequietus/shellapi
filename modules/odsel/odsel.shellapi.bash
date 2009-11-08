@@ -74,6 +74,16 @@ function odsel_vsi() {
                                     done
                                     _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
                                     eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
+                                elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>[[:space:]]*\{(.*)\} ]]; then
+                                    local nm="${BASH_REMATCH[1]}" o="${BASH_REMATCH[2]}" t= l=
+                                    _omsg "$(_emph dcbk): callback list detected for: ${BASH_REMATCH[1]}()"
+                                    while [[ $o =~ (\][[:space:]]*,) ]]; do
+                                        l="${o/"${BASH_REMATCH[1]}"*/}]"
+                                        t+="${l//[[:space:]]/}:code;"
+                                        o="${o#*${BASH_REMATCH[1]}}"
+                                    done
+                                    t+="${o//[[:space:]]/}:code;"
+                                    eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\"; }"
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>(.*) ]]; then
                                     _omsg "$(_emph dcbk): callback: ${BASH_REMATCH[1]}()"
                                     odsel_dcbk "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" \
@@ -109,10 +119,10 @@ function odsel_vsi() {
         elif [[ $y =~ ^([[:alnum:]_]*)\(\)(.*) ]]; then
             [[ -z ${BASH_REMATCH[2]} ]] \
                 && _omsg "$(_emph call): -> ${BASH_REMATCH[1]}" \
-                || _emsg "${FUNCNAME}: wrong syntax!"
+                || { _emsg "${FUNCNAME}: wrong syntax!"; return 1; }
             n="_fnop_${BASH_REMATCH[1]}"
             _isfunction $n && {
-                $n || { _emsg "${FUNCNAME}: callback failure"; return 1; }
+                ($n) || { _emsg "${FUNCNAME}: callback failure"; return 1; }
             } || {
                 ! [[ -z ${!n} ]] && {
                     n="$n[*]"
