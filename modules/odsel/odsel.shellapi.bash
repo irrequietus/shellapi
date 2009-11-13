@@ -25,12 +25,6 @@ function odsel_init() {
     ODSEL_TARGUESS=()
     ODSEL_DGET="wget -c"
     ODSEL_XMLA=()
-    ODSEL_REGEXP=( ':[{]([^}]*)[}]\]'
-                   '([^,]*),'
-                   '@([^@]*):([^->]*)->([^->]*)'
-                   '\[([^@{}>,-]*)@([^@{}>,-]*)\]'
-                   '\[([^@{}>,-]*):([^@{}>,-]*)\]'
-                   '\[([^@{}>,:]*)\]' )
     ODSEL_RXP=(
         [0]="^[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\
 ((\[[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\])|([[:space:]]*))"
@@ -78,12 +72,15 @@ function odsel_vsi() {
                                     local nm="${BASH_REMATCH[1]}" o="${BASH_REMATCH[2]}" t= l=
                                     _omsg "$(_emph dcbk): callback list detected for: ${BASH_REMATCH[1]}()"
                                     while [[ $o =~ (\][[:space:]]*,) ]]; do
-                                        l="${o/"${BASH_REMATCH[1]}"*/}]"
-                                        t+="${l//[[:space:]]/}:code;"
+                                        l="${o/"${BASH_REMATCH[1]}"*/}]:code;"
+                                        t+="$l"
                                         o="${o#*${BASH_REMATCH[1]}}"
+                                        __odsel_getcbk_p "$l" || return 1
                                     done
-                                    t+="${o//[[:space:]]/}:code;"
-                                    eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\"; }"
+                                    l="$o:code;"
+                                    t+="$l"
+                                    __odsel_getcbk_p "$l" \
+                                        && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\"; }"
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>(.*) ]]; then
                                     _omsg "$(_emph dcbk): callback: ${BASH_REMATCH[1]}()"
                                     odsel_dcbk "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" \
@@ -1342,7 +1339,7 @@ function __odsel_dcbk_p() {
 # @ptip $2  Callback name (optional).
 #;
 function __odsel_getcbk_p() {
-    local x=($(_odsel_i9kg_header "$1")) y z d g f=() a= n= h=()
+    local x=($(_odsel_i9kg_header "$1")) y= z= d= g= f=() a= n= h=()
     ODSEL_CBKDEP=()
     i9kgoo_load "$1" \
         && y="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "rpli" "${x[2]}")]" \
