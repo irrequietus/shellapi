@@ -50,17 +50,13 @@ function i9kgoo_load() {
             m="${y[$_I9KG_RLAY]}[${y[$_I9KG_POOL]}]"
             r=$(_dotstr ${y[$_I9KG_RHID]})
             p=$(_dotstr ${y[$_I9KG_PHID]})
-            eval "__LOCK__i9kg_${y[$_I9KG_RHID]}=1
-                  ! ((__LOCK__pool_${y[$_I9KG_PHID]}))" && {
-                _isfunction "_init_pool_${y[$_I9KG_PHID]}" || {
-                    . "$POOL_RELAY_CACHE/functions/${y[$_I9KG_PHID]}.poolconf.bash" &> /dev/null || {
-                        _emsg "@[${y[$_I9KG_POOL]}] : $p failed"
+            ((__LOCK__i9kg_${y[$_I9KG_RHID]}=1))
+            ! ((__LOCK__pool_${y[$_I9KG_PHID]})) && {
+                odsel_load "${y[$_I9KG_POOL]}" \
+                    && ((__LOCK__pool_${y[$_I9KG_PHID]}=1)) || {
+                        _emsg "${FUNCNAME}: pool could not be loaded: [${y[$_I9KG_POOL]}]"
                         return 1
                     }
-                    _eqmsg "@[${y[$_I9KG_POOL]}] : $p complete"
-                }
-                _init_pool_${y[$_I9KG_PHID]}
-                ((__LOCK__pool_${y[$_I9KG_PHID]}=1))
             }
             _ckmsg "requesting $m ?= $r"
             n="__pool_relay_${y[$_I9KG_PHID]}[$_FCACHE]"

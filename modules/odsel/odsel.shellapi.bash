@@ -180,6 +180,7 @@ function __odsel_i9kgi_p() {
                     r+=("$n[${v}@stable:configure_pre->make_install_post]")
                     ;;
                 :)  [[ $x =~ [[:space:]]*\{([[:space:][:alnum:]:@\>,_-]*)\}[[:space:]]*\]([^\;]*)\; ]] && {
+                         s="${BASH_REMATCH[1]}"
                         case "${BASH_REMATCH[2]//[[:space:]]/}" in
                             :code|'') k=t ;;
                             :text)    k=c ;;
@@ -187,18 +188,24 @@ function __odsel_i9kgi_p() {
                                 return 1
                                 ;;
                         esac
-                        s="${BASH_REMATCH[1]},"
-                        while [[ $s =~ ${ODSEL_RXP[2]} ]]; do
-                            _r="${I9KG_PRESETS[@]}"
-                            _r="${_r#*${BASH_REMATCH[2]}}"
-                            _r="${_r%${BASH_REMATCH[3]}*}"
-                            r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
-                            for _c in ${_r}; do
-                                r+=("$n[${v}@${BASH_REMATCH[1]}:${_c}]") 
+                        [[ $s =~ @([[:alnum:]_]*):([[:alnum:]_]*) ]] \
+                            && [[ $s == @${BASH_REMATCH[1]}:${BASH_REMATCH[2]} ]] && {
+                            r+=("$n[$v$s]")
+                            s=
+                        } || {
+                            s="$s,"
+                            while [[ $s =~ ${ODSEL_RXP[2]} ]]; do
+                                _r="${I9KG_PRESETS[@]}"
+                                _r="${_r#*${BASH_REMATCH[2]}}"
+                                _r="${_r%${BASH_REMATCH[3]}*}"
+                                r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
+                                for _c in ${_r}; do
+                                    r+=("$n[${v}@${BASH_REMATCH[1]}:${_c}]") 
+                                done
+                                r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]")
+                                s="${s#*,}"
                             done
-                            r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]")
-                            s="${s#*,}"
-                        done
+                        }
                         [[ -z $s ]]
                     } || ! :
                     ;;
@@ -1352,7 +1359,11 @@ function __odsel_getcbk_p() {
                 _isfunction _get_$g || eval "_get_$g() { odsel_sppx $d ${x[3]}; }"
                 h+=(_get_$g)
             done
-            for d in $z; do d=__i9kg_rcache_${x[2]}[$d]; f+=("${!d}"); done
+            for d in $z; do
+                while read -r d; do
+                    f+=("$d")
+                done< <(d="__i9kg_rcache_${x[2]}[$d]"; printf "%s\n" "${!d}")
+            done
             _isfunction $n || {
                 fnapi_fnp_write $n f h
                 eval "$n=\"${x[0]}[${x[1]}]://${x[4]}\""
