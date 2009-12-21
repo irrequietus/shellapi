@@ -588,7 +588,7 @@ function _uuidg() {
 function _bashok() {
     local x=
     ((${BASH_VERSINFO[0]} > 3)) && \
-    x="odreex::(shellapi) : Using GNU Bash ${BASH_VERSINFO[0]}.x (current 3.2.10+ specific)" || {
+    x="odreex::(shellapi) : Using GNU Bash ${BASH_VERSINFO[0]}.x (3.2.10+ compliant code)" || {
         ((${BASH_VERSINFO[0]} == 3))  && \
         ((${BASH_VERSINFO[1]} >= 2))  && \
         ((${BASH_VERSINFO[2]} >= 10)) || \

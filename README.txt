@@ -4,6 +4,8 @@ READ THIS CAREFULLY
 ======================
 
 1.1. Compatibility is guaranteed with GNU Bash 3.2.10+ (including 4.0.x+).
+     Port that is more friendly towards 4.x - only code is ongoing but 3.2.10+
+     compliance is not to be deprecated for the time being.
 
 2. Preliminary Setup
 ====================
