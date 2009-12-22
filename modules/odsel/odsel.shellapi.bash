@@ -32,7 +32,10 @@ function odsel_init() {
 \[[[:space:]]*([[:alnum:]_\.-]*)[[:space:]]*(.)"
         [2]="[[:space:]]*@[[:space:]]*([[:alnum:]_]*)\
 [[:space:]]*:[[:space:]]*([[:alnum:]_]*)\
-[[:space:]]*->[[:space:]]*([[:alnum:]_]*)")
+[[:space:]]*->[[:space:]]*([[:alnum:]_]*)"
+        [3]="[[:space:]]*\{([[:space:][:alnum:]:@\>,_-]*)\}"
+        [4]="[[:space:]]*:[[:space:]]*(code|text)[[:space:]]*\;"
+)
     ODSEL_OPRT=()
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
@@ -138,6 +141,21 @@ function odsel_vsi() {
 }
 
 #;
+# @desc A selector for odsel "finals"; practically keyword - driven
+#       action selector
+# @ptip $1  An unmatched final selector
+#;
+function odsel_i9kgfsel() {
+    case "${1//[[:space:]]/}" in
+        ''|code|c) printf "t" ;;
+        text|t)    printf "c" ;;
+        *)  _emsg "${FUNCNAME}: unknown final: $1"
+            return 1
+            ;;
+    esac
+}
+
+#;
 # @desc Evolution of odsel_scli(), in unstable form. This one does work with
 #       the new odsel_exprseq implementation and will deprecate odsel_scli()
 # @ptip $1  An odsel i9kg expression.
@@ -151,44 +169,37 @@ function __odsel_i9kgi_p() {
         [[ ${x:=${1#*//}} =~ ${ODSEL_RXP[1]} ]] && {
             n="${BASH_REMATCH[1]}";v="${BASH_REMATCH[2]}";x="${x#*$v}"
             case "${j:=${BASH_REMATCH[3]}}" in
-                @)  [[ $x =~ ${ODSEL_RXP[2]}\]([^\;]*)\; ]] && {
-                        case "${BASH_REMATCH[4]//[[:space:]]/}" in
-                            :code|'') k=t ;;
-                            :text)    k=c ;;
-                            *)  _emsg "${FUNCNAME}: unknown final: ${BASH_REMATCH[4]}"
-                                return 1
-                                ;;
-                        esac
-                        _r="${I9KG_PRESETS[@]}"
-                        _r="${_r#*${BASH_REMATCH[2]}}"
-                        _r="${_r%${BASH_REMATCH[3]}*}"
-                        r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
-                        for _c in ${_r}; do
-                            r+=("$n[${v}@${BASH_REMATCH[1]}:${_c}]") 
-                        done
-                        r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]")
-                        [[ ${x#*${BASH_REMATCH[3]}*]} =~ \
-                            ^[[:space:]]*:[[:space:]]*(code|text)[[:space:]]*\; ]] && {
-                                case "${BASH_REMATCH[1]}" in
-                                    code) k=t ;;
-                                    text) k=c ;;
-                                esac
+                @)  [[ $x =~ @([[:alnum:]_]*):([[:alnum:]_]*)\]${ODSEL_RXP[4]}
+                    || $x =~ @([[:alnum:]_]*):([[:alnum:]_]*)\]([^\;]*)\; ]] && {
+                        k=$(odsel_i9kgfsel "${BASH_REMATCH[3]}") || return 1
+                        r+=("$n[$v@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
+                    } || {
+                        [[ $x =~ ${ODSEL_RXP[2]}\]${ODSEL_RXP[4]} || $x =~ ${ODSEL_RXP[2]}\]([^\;]*)\; ]] && {
+                            k=$(odsel_i9kgfsel "${BASH_REMATCH[4]}") \
+                                || return 1
+                            _r="${I9KG_PRESETS[@]}"
+                            _r="${_r#*${BASH_REMATCH[2]}}"
+                            _r="${_r%${BASH_REMATCH[3]}*}"
+                            r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
+                            for _c in ${_r}; do
+                                r+=("$n[${v}@${BASH_REMATCH[1]}:${_c}]") 
+                            done
+                            r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[3]}]")
+                            s="${x#*${BASH_REMATCH[3]}*]}"
+                            [[ $s =~ ^${ODSEL_RXP[4]} ]] \
+                                && k=$(odsel_i9kgfsel "${BASH_REMATCH[1]}") \
+                                || return 1
                         }
                     }
                     ;;
                 \]) # fix this once out of _p() phase, hardwiring must go
                     r+=("$n[${v}@stable:configure_pre->make_install_post]")
                     ;;
-                :)  [[ $x =~ [[:space:]]*\{([[:space:][:alnum:]:@\>,_-]*)\}[[:space:]]*\]([^\;]*)\; ]] && {
-                         s="${BASH_REMATCH[1]}"
-                        case "${BASH_REMATCH[2]//[[:space:]]/}" in
-                            :code|'') k=t ;;
-                            :text)    k=c ;;
-                            *)  _emsg "${FUNCNAME}: unknown final: ${BASH_REMATCH[2]}"
-                                return 1
-                                ;;
-                        esac
-                        [[ $s =~ @([[:alnum:]_]*):([[:alnum:]_]*) ]] \
+                :)  [[ $x =~ ${ODSEL_RXP[3]}\]${ODSEL_RXP[4]}
+                    || $x =~ ${ODSEL_RXP[3]}\]([^\;]*)\; ]] && {
+                        s="${BASH_REMATCH[1]}"
+                        k=$(odsel_i9kgfsel "${BASH_REMATCH[2]}") || return 1
+                        [[ $s =~ ^@([[:alnum:]_]*):([[:alnum:]_]*) ]] \
                             && [[ $s == @${BASH_REMATCH[1]}:${BASH_REMATCH[2]} ]] && {
                             r+=("$n[$v$s]")
                             s=
