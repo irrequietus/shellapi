@@ -63,14 +63,26 @@ function odsel_vsi() {
                         [[:space:]]*)
                                 n="${BASH_REMATCH[2]}"
                                 local _r="${BASH_REMATCH[1]}"
-                                if  [[ $n =~ ^([[:alnum:]_]*)\(\)\{ ]]; then
-                                    m=" ${!i[@]}"; m="${m#* $x }"; f=("${i[$x]#*{}")
-                                    for x in $m; do
-                                        [[ ${i[$x]} = } ]] && break
-                                        [[ -z ${i[$x]//[[:space:]]/} ]] || f+=("${i[$x]}")
-                                    done
-                                    _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
-                                    eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
+                                if  [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*\{([[:space:]]*) ]]; then
+                                    _isfunction _fnop_${BASH_REMATCH[1]} && {
+                                        _emsg "${FUNCNAME}: already defined: ${BASH_REMATCH[1]}()"
+                                    } || {
+                                        [[ ${n#*{${BASH_REMATCH[2]}} == \} ]] && {
+                                            eval "_fnop_${BASH_REMATCH[1]}(){ _void; }"
+                                        } || {
+                                            m=" ${!i[@]} "; m=(${m#* $x }); f=("${i[$x]#*{}")
+                                            [[ -z ${f[0]//[[:space:]]/} ]] && {
+                                                eval "_fnop_${BASH_REMATCH[1]}(){ _void; }"
+                                            } || {
+                                                for x in ${m[@]}; do
+                                                    [[ ${i[$x]} == \} ]] && break
+                                                    [[ -z ${i[$x]//[[:space:]]/} ]] || f+=("${i[$x]}")
+                                                done
+                                                _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
+                                                eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
+                                            }
+                                        }
+                                    }
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>[[:space:]]*\{(.*)\} ]]; then
                                     local nm="${BASH_REMATCH[1]}" o="${BASH_REMATCH[2]}" t= l=
                                     _omsg "$(_emph dcbk): callback list detected for: ${BASH_REMATCH[1]}()"
