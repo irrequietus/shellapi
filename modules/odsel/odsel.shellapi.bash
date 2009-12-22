@@ -165,7 +165,8 @@ function __odsel_i9kgi_p() {
     [[ $1 =~ ${ODSEL_RXP[0]} ]] && {
         p="${BASH_REMATCH[4]}${BASH_REMATCH[5]}"
         y=${BASH_REMATCH[1]}; p=${p:-prime}
-        odsel_presets_all
+        _r=_odsel_gscoil_$(odsel_gph "$p")
+        _isfunction $_r && _r="$($_r)" || return 2
         [[ ${x:=${1#*//}} =~ ${ODSEL_RXP[1]} ]] && {
             n="${BASH_REMATCH[1]}";v="${BASH_REMATCH[2]}";x="${x#*$v}"
             case "${j:=${BASH_REMATCH[3]}}" in
@@ -174,10 +175,9 @@ function __odsel_i9kgi_p() {
                         k=$(odsel_i9kgfsel "${BASH_REMATCH[3]}") || return 1
                         r+=("$n[$v@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
                     } || {
-                        [[ $x =~ ${ODSEL_RXP[2]}\]${ODSEL_RXP[4]} || $x =~ ${ODSEL_RXP[2]}\]([^\;]*)\; ]] && {
-                            k=$(odsel_i9kgfsel "${BASH_REMATCH[4]}") \
-                                || return 1
-                            _r="${I9KG_PRESETS[@]}"
+                        [[ $x =~ ${ODSEL_RXP[2]}\]${ODSEL_RXP[4]} \
+                        || $x =~ ${ODSEL_RXP[2]}\]([^\;]*)\; ]] && {
+                            k=$(odsel_i9kgfsel "${BASH_REMATCH[4]}") || return 1
                             _r="${_r#*${BASH_REMATCH[2]}}"
                             _r="${_r%${BASH_REMATCH[3]}*}"
                             r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
@@ -206,7 +206,6 @@ function __odsel_i9kgi_p() {
                         } || {
                             s="$s,"
                             while [[ $s =~ ${ODSEL_RXP[2]} ]]; do
-                                _r="${I9KG_PRESETS[@]}"
                                 _r="${_r#*${BASH_REMATCH[2]}}"
                                 _r="${_r%${BASH_REMATCH[3]}*}"
                                 r+=("$n[${v}@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
@@ -223,15 +222,14 @@ function __odsel_i9kgi_p() {
                  *) ! : ;;
             esac
         } || ! :
-    } || _emsg "${FUNCNAME}: invalid expression: ${1//[[:space:]]/}"
+    } || return 1
     [[ -z $2 ]] && {
         x=($(_odsel_i9kg_header "$1"))
         x="${x[2]}"
     } || x="$2"
     for z in ${!r[@]}; do
-        odsel_exprseq "${r[$z]}" $x $k
+        odsel_exprseq "${r[$z]}" $x $k || return 1
     done
-    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
@@ -1367,7 +1365,8 @@ function __odsel_getcbk_p() {
             for d in ${!a}; do ODSEL_CBKDEP+=("${d/:*/}[${x[1]}]://${x[4]/[*/}[${d#*:}]"); done
             for d in ${!y}; do
                 g=${x[1]}_${d//[:.]/_}
-                _isfunction _get_$g || eval "_get_$g() { odsel_sppx $d ${x[3]}; }"
+                _isfunction _get_$g \
+                    || eval "_get_$g() { odsel_sppx $d ${x[3]}; }"
                 h+=(_get_$g)
             done
             for d in $z; do
@@ -1380,9 +1379,11 @@ function __odsel_getcbk_p() {
                 eval "$n=\"${x[0]}[${x[1]}]://${x[4]}\""
             }
         } || {
+            y=$?
             x="${1//[[:space:]]/}"
-            _emsg  "${FUNCNAME}: odsel expression callback failed:" \
-                    "* ${x:0:$((${#x}/2))}..."
+            _emsg  "${FUNCNAME}: odsel callback failure:"
+            (($y == 2)) && _emsg "* grammar is undefined for pool: $(_emph ${x[1]})"
+            _emsg  "* ${x:0:$((${#x}/2))}..."
         }
     ! ((${#SHELLAPI_ERROR[@]}))
 }
