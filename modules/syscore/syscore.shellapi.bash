@@ -552,6 +552,35 @@ function _qsplit() {
 }
 
 #;
+# @desc A simple C - style comment remover
+# @ptip Any /* */ enclosed character sequence, provided it is not
+#       nested within paired quotes.
+# @note Should eventually consider optimizing _qsplit() with it as well.
+#;
+function _ccrem() {
+    local x="$1" l= s= t=
+    while [[ $x =~ (/\*|[\'\"]|\*/) ]]; do
+        t="${BASH_REMATCH[1]}"
+        case "$t" in
+            \"|\')
+                l="${x#*$t}"
+                s+="${x/$t*/}$t${l/$t*/}$t"
+                x="${x#*$t*$t}"
+                ;;
+             /\*)
+                x="${x/$t*/}${x#*"*/"}"
+                ;;
+             \*/)
+                _emsg "${FUNCNAME}: stray comment - aborting"
+                return 1
+                ;;
+        esac
+    done
+    s+="$x"
+    printf "%s\n" "$s"
+}
+
+#;
 # @desc Split string into an array, using a particular character as delimiter
 # @ptip $1  string to split
 # @ptip $2  optional, character to use as delimiter (defaults to comma)

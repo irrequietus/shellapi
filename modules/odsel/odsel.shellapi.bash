@@ -48,7 +48,7 @@ function odsel_init() {
 # @ptip $1  A valid odsel expression
 #;
 function odsel_vsi() {
-    _qsplit "${1}" \;
+    _qsplit "$(_ccrem "${1}")" \;
     local x y z a n m b z g f=() i=("${SPLIT_STRING[@]}")
     for((x=0;x<${#i[@]};x++)); do
         y="${i[$x]}"
