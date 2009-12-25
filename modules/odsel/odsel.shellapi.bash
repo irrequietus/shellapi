@@ -40,7 +40,7 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
     ODSEL_OPRT[$(_opsolve "<-")]="lm"
-    _wexp_this odsel_gscoil odsel_vdef odsel_dcbk odsel_import odsel_export
+    _wexp_this odsel_gscoil odsel_vdef odsel_dcbk odsel_import odsel_export odsel_fsi
 }
 
 #;
@@ -166,6 +166,20 @@ function odsel_i9kgfsel() {
             return 1
             ;;
     esac
+}
+
+#;
+# @desc An odsel file interpreter
+# @ptip $1  full path to odsel file to interpret
+#;
+function __odsel_fsi_p() {
+    ! [[ -z $1 ]] && {
+        [[ -e $1 ]] && {
+            odsel_vsi "$(< "$1")" \
+                || _emsg "${FUNCNAME}: file could not be interpreted"
+        } || _emsg "${FUNCNAME}: file not found: $1"
+    } || _emsg "${FUNCNAME}: no file given, aborting"
+    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
