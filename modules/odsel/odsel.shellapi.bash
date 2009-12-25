@@ -40,7 +40,7 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
     ODSEL_OPRT[$(_opsolve "<-")]="lm"
-    _wexp_this odsel_gscoil odsel_vdef odsel_dcbk
+    _wexp_this odsel_gscoil odsel_vdef odsel_dcbk odsel_import odsel_export
 }
 
 #;
@@ -51,12 +51,9 @@ function odsel_vsi() {
     _qsplit "${1}" \;
     local x y z a n m b z g f=() i=("${SPLIT_STRING[@]}")
     for((x=0;x<${#i[@]};x++)); do
-        y="${i[$x]//[[:space:]]/}"
-        [[ -z $y ]] && continue
-        if   [[ ${y:0:1} == @ ]]; then
-            _omsg "$(_emph rpli): ${y:1}"
-            _odsel_rpli_i "${y:1}"
-        elif [[ $y =~ ^(new|del|load|delc|newc|sim|def|:)(.*) ]]; then
+        y="${i[$x]}"
+        [[ -z ${y//[[:space:]]/} ]] && continue
+        if [[ $y =~ ^[[:space:]]*(:|@|new|del|load|delc|newc|sim|def|import|export)[[:space:]]*(.*) ]]; then
             case "${BASH_REMATCH[1]}" in
                 def|:)
                     case "${i[$x]#*${BASH_REMATCH[1]}}" in
@@ -123,12 +120,16 @@ function odsel_vsi() {
                                 ;;
                     esac
                     ;;
+                @)
+                    _omsg "$(_emph rpli): ${BASH_REMATCH[1]:1}${BASH_REMATCH[2]}"
+                    _odsel_rpli_i "${BASH_REMATCH[1]:1}${BASH_REMATCH[2]}"
+                    ;;
                 *)
                     _omsg "$(_emph rpli): odsel_${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
                     odsel_${BASH_REMATCH[1]} "${BASH_REMATCH[2]}"
                     ;;
             esac
-        elif [[ $y =~ ^([[:alnum:]_]*)\(\)(.*) ]]; then
+        elif [[ $y =~ ^[[:space:]]*([[:alnum:]_]*)\(\)(.*) ]]; then
             [[ -z ${BASH_REMATCH[2]} ]] \
                 && _omsg "$(_emph call): -> ${BASH_REMATCH[1]}" \
                 || { _emsg "${FUNCNAME}: wrong syntax!"; return 1; }
@@ -143,10 +144,10 @@ function odsel_vsi() {
                 } || _emsg  "$(_emph call): ${BASH_REMATCH[1]}(): failed because:" \
                             "* undefined call: ${BASH_REMATCH[1]}()"
             }
-        elif [[ $y =~ ^([\]\[[:alnum:]_]*):// ]]; then
+        elif [[ $y =~ ^[[:space:]]*([\]\[[:alnum:]_]*):// ]]; then
             _omsg "$(_emph i9kg): ? ${BASH_REMATCH[1]}"
         else
-            _emsg "${FUNCNAME}: unknown request:" " *  $x"
+            _emsg "${FUNCNAME}: unknown request"
         fi
         ((${#SHELLAPI_ERROR[@]})) && return 1 || :
     done
@@ -1125,6 +1126,30 @@ function odsel_ispool() {
     local x="$(_ifnot_jpath "$1" "${I9KG_POOLSPACE}")"
     [[ -d $x ]] \
         && [[ -e $POOL_RELAY_CACHE/xml/$(_hsos "$x").poolconf.xml ]]
+}
+
+#;
+# @desc A keyword reserve for "export" functionality
+#;
+function __odsel_export_p() {
+    _qsplit "$1" && {
+        local i=("${SPLIT_STRING[@]}")
+        _omsg "${FUNCNAME}: $(_emph "reserved :: ${#i[@]}")"
+        return 0
+    }
+    return 1
+}
+
+#;
+# @desc A keyword reserve for "import" functionality
+#;
+function __odsel_import_p() {
+    _qsplit "$1" && {
+        local i=("${SPLIT_STRING[@]}")
+        _omsg "${FUNCNAME}: $(_emph "reserved :: ${#i[@]}")"
+        return 0
+    }
+    return 1
 }
 
 #;
