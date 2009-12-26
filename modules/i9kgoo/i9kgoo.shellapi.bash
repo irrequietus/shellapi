@@ -45,8 +45,7 @@ function i9kgoo_load() {
             && y=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
             || y=("${x/,*/}" "prime")
         y=($(_odsel_i9kg_header "${y[0]}[${y[1]}]"))
-        ((__LOCK__i9kg_${y[$_I9KG_RHID]})) \
-        && _wmsg "reusing: ${y[$_I9KG_RLAY]}[${y[$_I9KG_POOL]}] -> $(_dotstr ${y[$_I9KG_RHID]})" || {
+        ((__LOCK__i9kg_${y[$_I9KG_RHID]})) || {
             m="${y[$_I9KG_RLAY]}[${y[$_I9KG_POOL]}]"
             r=$(_dotstr ${y[$_I9KG_RHID]})
             p=$(_dotstr ${y[$_I9KG_PHID]})
