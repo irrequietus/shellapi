@@ -43,6 +43,11 @@ function odsel_init() {
     _wexp_this odsel_vdef odsel_import odsel_export odsel_fsi
 }
 
+#;
+# @desc The prototype for handling the odsel switch / case expression
+# @ptip $1  switch / case expression written in odsel semantics
+# @note Currently comprised of a simple syntax checker only
+#;
 function odsel_swcase() {
     [[ $1 =~ ^[[:space:]]*([[:alnum:]\(\)]*)*[[:space:]]*=\>[[:space:]]*(.*) ]] && {
         local x="${BASH_REMATCH[1]}" y="${BASH_REMATCH[2]}" z=
