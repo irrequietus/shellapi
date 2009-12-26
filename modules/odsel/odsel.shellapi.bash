@@ -43,6 +43,21 @@ function odsel_init() {
     _wexp_this odsel_gscoil odsel_vdef odsel_dcbk odsel_import odsel_export odsel_fsi
 }
 
+function odsel_swcase() {
+    [[ $1 =~ ^[[:space:]]*([[:alnum:]\(\)]*)*[[:space:]]*=\>[[:space:]]*(.*) ]] && {
+        local x="${BASH_REMATCH[1]}" y="${BASH_REMATCH[2]}" z=
+        while [[ $y =~ ^[[:space:]]*(\||case)[[:space:]]+(.*) ]]; do
+            z="${BASH_REMATCH[2]}"
+            [[ $z =~ ^\"([^\"]*)\"[[:space:]]*:[[:space:]]+([[:alnum:]_\(\)]*) \
+            || $z =~ ^\'([^\']*)\'[[:space:]]*:[[:space:]]+([[:alnum:]_\(\)]*) \
+            || $z =~ ^([[:alnum:]_]*)[[:space:]]*:[[:space:]]+([[:alnum:]_\(\)]*) ]] && {
+                y="${y#*"${BASH_REMATCH[1]}"*"${BASH_REMATCH[2]}"}"
+            }
+        done
+    } || _emsg "${FUNCNAME}: incorrect syntax"
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
 #;
 # @desc odsel_vsi prototype (to deprecate ununified means)
 # @ptip $1  A valid odsel expression
@@ -53,8 +68,18 @@ function odsel_vsi() {
     for((x=0;x<${#i[@]};x++)); do
         y="${i[$x]}"
         [[ -z ${y//[[:space:]]/} ]] && continue
-        if [[ $y =~ ^[[:space:]]*(:|@|new|del|load|delc|newc|sim|def|import|export)[[:space:]]*(.*) ]]; then
+        if [[ $y =~ ^[[:space:]]*(\?|:|@|new|del|load|delc|newc|sim|def|import|export|unit|init|switch)[[:space:]]*(.*) ]]; then
             case "${BASH_REMATCH[1]}" in
+                init|unit)
+                    _omsg "$(_emph ${BASH_REMATCH[1]}): ${i[$x]}"
+                ;;
+                \?|switch)
+                    n="${y#*${BASH_REMATCH[1]}}"
+                    [[ $n =~ ^[[:space:]]*([[:alnum:]\(\)]*)*[[:space:]]*=\>[[:space:]]*(.*) ]]
+                    _omsg "$(_emph patt): ${BASH_REMATCH[1]}"
+                    odsel_swcase "$n" \
+                        || return 1
+                ;;
                 def|:)
                     case "${i[$x]#*${BASH_REMATCH[1]}}" in
                         [[:space:]]*)
