@@ -401,6 +401,40 @@ function odsel_xmla() {
 }
 
 #;
+# @desc Creating an i9kg DTD automatically after an odsel_gscoil call. This
+#       gives the ability to override any defaults provided for i9kg action tag
+#       mode attributes. Examples to follow.
+# @ptip $1  Function representing the customized event grammar for i9kg files
+#       as produced by odsel_gscoil(), the format is _odsel_gscoil_<pool hash id>
+#;
+function odsel_gscoil_dtd() {
+    _isfunction "$1" && {
+        local x=($($1)) y=(dbld drun nbld nrun) z n
+        n=("${y[@]/%/ |}" rpli)
+        x=("${x[@]/%/ |}")
+        printf "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
+<!-- autogenerating custom i9kg DTD: begin -->
+<!ELEMENT i9kg (instance)*>
+<!ATTLIST i9kg name CDATA #REQUIRED>
+<!ELEMENT instance (materials,(sequence)*)>
+<!ELEMENT sequence (action)*>
+<!ELEMENT action (code|text)*>
+<!ELEMENT code (#PCDATA)>
+<!ELEMENT text (#PCDATA)>
+<!ELEMENT materials (EMPTY | (%s)*)>
+%s
+<!ATTLIST i9kg name CDATA #REQUIRED>
+<!ATTLIST instance alias CDATA #REQUIRED version CDATA #REQUIRED>
+<!ATTLIST sequence variant CDATA #REQUIRED>
+<!ATTLIST action mode (%s null) \"null\">
+<!-- autogenerating custom i9kg DTD: end -->\n" "${n[*]}" \
+        "$(for n in ${y[@]} rpli; do
+            printf "<!ELEMENT %s EMPTY>\n<!ATTLIST %s item CDATA #REQUIRED>\n" $n $n
+          done)" "${x[*]}"
+    } || return 1
+}
+
+#;
 # @desc Read a file with ppli links and preprocess it
 # @ptip $1  path to file
 #;
