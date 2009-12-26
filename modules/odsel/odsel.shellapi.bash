@@ -40,7 +40,7 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
     ODSEL_OPRT[$(_opsolve "<-")]="lm"
-    _wexp_this odsel_gscoil odsel_vdef odsel_dcbk odsel_import odsel_export odsel_fsi
+    _wexp_this odsel_vdef odsel_import odsel_export odsel_fsi
 }
 
 function odsel_swcase() {
@@ -112,11 +112,11 @@ function odsel_vsi() {
                                         l="${o/"${BASH_REMATCH[1]}"*/}]:code;"
                                         t+="$l"
                                         o="${o#*${BASH_REMATCH[1]}}"
-                                        __odsel_getcbk_p "$l" || return 1
+                                        odsel_getcbk "$l" || return 1
                                     done
                                     l="$o:code;"
                                     t+="$l"
-                                    __odsel_getcbk_p "$l" \
+                                    odsel_getcbk "$l" \
                                         && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\"; }"
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>(.*) ]]; then
                                     _omsg "$(_emph dcbk): callback: ${BASH_REMATCH[1]}()"
@@ -874,7 +874,7 @@ function odsel_extpli() {
 #;
 function __odsel_ddepexp_p() {
     local x z=()
-    __odsel_getcbk_p "$1" && {
+    odsel_getcbk "$1" && {
         ((${#ODSEL_CBKDEP[@]})) && {
             x="${1%@*}]"
             x="${x//[\{\}]/}"
@@ -907,7 +907,7 @@ function __odsel_ddepexp_p() {
 #;
 # @desc The "initiating part" of the cascade trio (prepare, expand, formulate) needed
 #       for completing the initial part of the instantiation sequence. The other
-#       two are __odsel_ddepexp_p() and __odsel_getcbk_p()
+#       two are __odsel_ddepexp_p() and odsel_getcbk()
 # @ptip $1  A semicolon separated list of odsel block extraction expressions
 # @devs FIXME: change (;), give alternative to ODSEL_DDEPS global, etc.
 #;
@@ -1347,7 +1347,7 @@ function odsel_del() {
 #       This is a silent function generator.
 # @ptip $1  The odsel grammar - modifier definition expression.
 #;
-function __odsel_gscoil_p() {
+function odsel_gscoil() {
     local x="${1//[[:space:]]/}"
     [[ "$x" =~ :\[([[:alnum:]_]*)\]=\>@\{([,[:alnum:]_]*)\}:\{([,[:alnum:]_]*)\}([:\>,\|[:alnum:]_-]*)\; ]] && {
         [[ ${x#*${BASH_REMATCH[4]}} = \; ]] && {
@@ -1452,9 +1452,9 @@ function __odsel_vdef_p() {
 # @note This is a prototype, towards the final step and it is hardwired to :code
 #       from the default odsel coil (the presets as defined within odsel.config.xml).
 #;
-function __odsel_dcbk_p() {
+function odsel_dcbk() {
     _isfunction _fnop_$1 && _emsg "${FUNCNAME}: already defined: $1()" || {
-        __odsel_getcbk_p "$2" _fnop_$1
+        odsel_getcbk "$2" _fnop_$1
     }
     ! ((${#SHELLAPI_ERROR[@]}))
 }
@@ -1464,7 +1464,7 @@ function __odsel_dcbk_p() {
 # @ptip $1  An odsel expression.
 # @ptip $2  Callback name (optional).
 #;
-function __odsel_getcbk_p() {
+function odsel_getcbk() {
     local x=($(_odsel_i9kg_header "$1")) y= z= d= g= f=() a= n= h=()
     ODSEL_CBKDEP=()
     i9kgoo_load "$1" \
