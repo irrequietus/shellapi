@@ -295,14 +295,28 @@ function __odsel_i9kgi_p() {
 #       instruction sequences etc. The resulting array is
 # @ptip $1  The path to the i9kg XML file to process
 # @ptip $2  The array where to store the odsel cache (defaults to ODSEL_XMLA global)
+# @note     Use of <bashdata> is completely experimental within i9kg xml files and
+#           this is why it only gives a warning despite performing the planned operations.
 #;
 function odsel_xmla() {
     local   v_sn= v_an= v_in= v_iv= x= l= \
-            v=0 i=0 p=0 q=0 \
+            v=0 i=0 p=0 q=0 _bd=0 _bc=0 _bn= \
             t=() c=() k=() y=() r=() n=() \
             _A=() _D=() _NB=() _NR=() _DB=() _DR=()
     while read -r l; do
-        y+=("$l")
+        (($_bd)) && {
+            [[ $l == \</bashdata\> ]] && {
+                _bd=0
+                local f="$(mktemp)"
+                _wmsg "${FUNCNAME}: null - handling <bashdata>"
+                printf "%s\n</bashdata>\n" "${_BD[$_bc]}" > "$f"
+                _xml2bda "$f"
+                _bn="$(type _gblx_$_bn | tail --lines=+4)"
+                unset -f _gblx_$_bn
+                ((_bc++))
+            } || _BD[$_bc]+="$(printf "\n%s" "$l")"
+            continue
+        } || y+=("$l")
         case "$l" in
             \<code\> | \<text\>)
                 v=${#y[@]}
@@ -376,6 +390,11 @@ function odsel_xmla() {
                 ||  $l =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
                     && v_sn="${BASH_REMATCH[1]}" \
                     || { _emsg "${FUNCNAME}: attribute missing in $1: variant"; return 1; }
+                ;;
+            \<bashdata\>)
+                _bd=1
+                _bn="$(_hsos "_${v_in}[${v_iv}@${v_sn}]")"
+                _BD[$_bc]="<bashdata fni=\"_gblx_$_bn\">"
                 ;;
             \</instance\>)
                 _D[$i]="${_D[$i]:1}"
