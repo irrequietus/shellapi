@@ -382,6 +382,65 @@ function _xmlpnseq() {
 }
 
 #;
+# @desc JSON normalizing function: stores processed json into a bash array
+#       with particular semantics. While operational, this is very experimental.
+# @ptip $1  A bash string containing valid json.
+# @ptip $2  A variable where the normalized transform is to be stored.
+# @devs A practical usage example:
+#
+# $ [ ... you have initialized shellapi ... ]
+# _jsonpnseq "$(< "path/to/yourfile.json")" \
+#       && _omsg "$(_emph "json"): parsed successfully" || _fatal
+# _for_each SPNSEQ_JSON echo
+#
+#;
+function _jsonpnseq() {
+    local x="$1" c= _j=("") n= s=
+    while [[ $x =~ ^[[:space:]]*([\]\",\}\{:\[0-9\+\-]|null|true|false) ]]; do
+        c="${BASH_REMATCH[1]}"
+        case "$c" in
+            \")
+                x="${x#*$c}"; s=
+                while [[ $x =~ ^([^\\\"]*)([\"\\]) ]]; do
+                    n=$((${#BASH_REMATCH[1]}+1))
+                    [[ ${BASH_REMATCH[2]} == \" ]] && {
+                        s+="${BASH_REMATCH[1]}"
+                        break
+                    } || {
+                        [[ ${x:$n:1}  == \" ]] && ((n++))
+                        s+="${x:0:$n}"
+                    }
+                    x="${x:$n}"
+                done
+                _j+=("$s")
+                ;;
+             \{|\}|:|\[|\]|,)
+                _j[0]+="$c"
+                ;;
+             null|true|false)
+                x="${x#${BASH_REMATCH[1]}}"
+                ;;
+             [0-9\+\-])
+                [[ $x =~ ^[[:space:]]*([0-9eE\+\.]*) ]] && {
+                    x="${x#*${BASH_REMATCH[1]}}"
+                } || {
+                    _emsg "$(_emph "json"): invalid json"
+                    return 1
+                }
+                ;;
+             *) _emsg "$(_emph "json"): invalid json"
+                return 1
+                ;;
+        esac
+        x="${x#*$c}"
+    done
+    [[ $x =~ [^[:space:]] ]] && {
+        _emsg "$(_emph "json"): invalid json"
+        return 1
+    } || eval "${2:-SPNSEQ_JSON}=(\"\${_j[@]}\")"
+}
+
+#;
 # @desc Parse a series of XML general entities out of a sequence of DTD
 #       general entity statements. Works only with normalized sequences
 #       of entities (single line per entity, no comments): to be fixed
