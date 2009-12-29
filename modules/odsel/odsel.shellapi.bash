@@ -40,6 +40,9 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "->")]="pm"
     ODSEL_OPRT[$(_opsolve "~>")]="rm"
     ODSEL_OPRT[$(_opsolve "<-")]="lm"
+    ODSEL_OPRT[$(_opsolve "=")]="as0"
+    ODSEL_OPRT[$(_opsolve ":=")]="as1"
+    ODSEL_OPRT[$(_opsolve "::=")]="as2"
     _wexp_this odsel_vdef odsel_import odsel_export odsel_fsi
 }
 
@@ -141,6 +144,10 @@ function odsel_vsi() {
                                     [[ ${BASH_REMATCH[2]} = \<\< ]] \
                                         && n="${BASH_REMATCH[1]}://${BASH_REMATCH[3]}" \
                                         || n="${BASH_REMATCH[3]}"
+                                elif [[ $n =~ ^@([[:alnum:]_]*)\[([[:alnum:]_]*)\][[:space:]]*(:=|=|::=)[[:space:]]*(.*) ]]; then
+                                    _omsg "$(_emph i9kg): assignment operation detected"
+                                    _omsg "$(_emph i9kg): ${BASH_REMATCH[3]} ${BASH_REMATCH[1]}[${BASH_REMATCH[2]}]"
+                                    _odsel_${ODSEL_OPRT[$(_opsolve "${BASH_REMATCH[3]}")]} "${BASH_REMATCH[4]}" || return 1
                                 else
                                     _emsg "${FUNCNAME}: illegal def:" " *  $n"
                                 fi
@@ -1046,6 +1053,38 @@ function _odsel_pm() {
     [[ -z $y ]] \
         && _wmsg "operation valid but not active yet" \
         || odsel_getfn "$y"
+}
+
+#;
+# @desc Assignment type 0 handler decoy
+# @ptip $1  String with valid json input
+# @note The /* */ comments have been already removed so $1 is valid json
+#;
+function _odsel_as0() {
+    _omsg "$(_emph i9kg): assignment type 0"
+    _jsonpnseq "$1" \
+        && _omsg "$(_emph json): assignment of: $((${#SPNSEQ_JSON[@]}-1))"
+}
+#;
+# @desc Assignment type 1 handler decoy
+# @ptip $1  String with valid json input
+# @note The /* */ comments have been already removed so $1 is valid json
+#;
+function _odsel_as1() {
+    _omsg "$(_emph i9kg): assignment type 1"
+    _jsonpnseq "$1" \
+        && _omsg "$(_emph json): assignment of: $((${#SPNSEQ_JSON[@]}-1))"
+}
+
+#;
+# @desc Assignment type 2 handler decoy
+# @ptip $1  String with valid json input
+# @note The /* */ comments have been already removed so $1 is valid json
+#;
+function _odsel_as2() {
+    _omsg "$(_emph i9kg): assignment type 2"
+    _jsonpnseq "$1" \
+        && _omsg "$(_emph json): assignment of: $((${#SPNSEQ_JSON[@]}-1))"
 }
 
 #;
