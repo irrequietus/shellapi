@@ -3,9 +3,10 @@ READ THIS CAREFULLY
 1. Compatibility Notes
 ======================
 
-1.1. Compatibility is guaranteed with GNU Bash 3.2.10+ (including 4.0.x+).
-     Port that is more friendly towards 4.x - only code is ongoing but 3.2.10+
-     compliance is not to be deprecated for the time being.
+1.1. Compatibility is guaranteed for any GNU/Linux distribution with GNU Bash 3.2.10+
+     (including 4.0.x+). Port that is more friendly towards 4.x - only code is ongoing
+     but 3.2.10+ compliance is not to be deprecated for the time being. For what concerns
+     the generation and use of uuids, /proc/sys/kernel/random/uuid is used.
 
 2. Preliminary Setup
 ====================
