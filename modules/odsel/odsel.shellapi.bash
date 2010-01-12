@@ -958,7 +958,7 @@ function odsel_sppx() {
     local a=$(_uuidg) x="$1" y z="${2:-$(odsel_gph prime)}"
     local b="__pool_relay_$z[$_PATCHES]"
     ODSEL_SSPXU=
-    _omsg "$(_emph sppx): $1 -> $a"
+    _omsg "$(_emph sppx): $1 -> $a: ..."
     odsel_uspaceinit "$a" \
         && odsel_extpli "pristine/$1" "${I9KG_UTILSPACE[$LOCATION]}/$a/source" "$z" \
         || _emsg "${FUNCNAME}: could not prepare resource: ff $1"
@@ -970,7 +970,8 @@ function odsel_sppx() {
             cp -ax "${!b}/${1/:/-}/" "${I9KG_UTILSPACE[$_LOCATION]}/$a/source" \
                 || { _emsg "${FUNCNAME}: could not prepare resource: $1"; return 1; }
         }
-    } 
+    }
+    _omsg "$(_emph sppx): $1 -> $a: ok!"
     ODSEL_SSPXU=$a
 }
 
