@@ -984,11 +984,12 @@ function odsel_sppx() {
 function __odsel_cbkdeploy() {
     local v x y
     __odsel_ddepprep_p "$1" && {
-        v=($(__fnapi_deploy_schedule_p ODSEL_DDEPS)) || _fatal
+        v=($(__fnapi_deploy_schedule_p ODSEL_DDEPS \
+                || { _for_each SHELLAPI_ERROR _fail; return 1; })) || _fatal
         for x in ${v[@]:1}; do
             _omsg "$(_emph preq): ${!x}"
             for y in $($x preq); do
-                ($y) || {
+                ($y || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
                     _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
                           "* ..."
                     unset -v ODSEL_DDEPS ODSEL_CBKDEP ODSEL_SSPXU
@@ -996,7 +997,7 @@ function __odsel_cbkdeploy() {
                 }
             done
             _omsg "$(_emph runf): () => ${!x}"
-            ($x) || {
+            ($x || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
                 _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
                       "* ${!x}"
                 break
