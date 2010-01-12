@@ -1754,6 +1754,7 @@ function odsel_delc() {
     local x="${1:-prime}"
     _psplit "${x//[[:space:]]/}"
     for x in ${!SPLIT_STRING[@]}; do
+        _omsg "$(_emph delc): deleting i9kg cache for: $(_emph ${SPLIT_STRING[$x]})"
         x=$(odsel_gph "${SPLIT_STRING[$x]}")
         . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash" &> /dev/null && {
             _isfunction "_init_pool_$x" && {
