@@ -727,24 +727,6 @@ function odsel_exprseq() {
 }
 
 #;
-# @desc Keyword message definition
-# @ptip $1  The odsel keyword for which we want to find the message
-#;
-function odsel_whatis() {
-    local x
-    case "$1" in
-        new)  x="creating a new pool"   ;;
-        del)  x="erasing from poolset"  ;;
-        load) x="loading pool"          ;;
-        newc) x="caching"               ;;
-        delc) x="deleting cache"        ;;
-        '')                             ;;
-        *)    x="unknown"               ;;
-    esac
-    printf "%s\n" "$x"
-}
-
-#;
 # @desc A dependency querying mechanism compatible with an i9kg rcache
 #       array. The purpose here is to get a whitespace separated list
 #       of dependencies of a specific type: {rpli,dbld,drun,nbld,nrun}.
