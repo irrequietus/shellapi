@@ -136,7 +136,7 @@ function odsel_vsi() {
                                 elif [[ $n =~ ^\[([[:alnum:]_]*)\][[:space:]]*=[[:space:]]*\>[[:space:]]*@ ]]; then
                                     n=${BASH_REMATCH[1]}
                                     odsel_gscoil "${i[$x]};" \
-                                        && _omsg "$(_emph coil): defined for: $(_emph $n)" \
+                                        && _omsg "$(_emph coil): $(_emph $n): defined" \
                                         || { _emsg "${FUNCNAME}: cannot define expression base: " \
                                                    " * : ${y:0:$((${#y}/5))}..."; }
                                 elif [[ $n =~ ^([\]\[[:alnum:]_]*)(=|\<\<)(.*) ]]; then
@@ -1176,7 +1176,7 @@ function odsel_load() {
         y="__pool_relay_$x"
         _isfunction "_init_pool_$x" && _init_pool_$x || {
             if [[ -e $POOL_RELAY_CACHE/functions/$x.poolconf.bash ]]; then
-                _imsg "@[$n]: loading configuration cache $(_dotstr "$x")"
+                _omsg "$(_emph pool): $(_emph $n): loading configuration cache $(_dotstr "$x")"
                 . "$POOL_RELAY_CACHE/functions/$x.poolconf.bash"
                 _init_pool_$x &> /dev/null || {
                     _emsg "${FUNCNAME}: for pool [$1]" " * : invalid cache: $(_dotstr "$x")"

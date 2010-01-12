@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2009 - George Makrydakis <george@odreex.org>
+# Copyright (C) 2009, 2010 - George Makrydakis <george@odreex.org>
 
 # This file is part of shellapi; shellapi is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General
@@ -57,7 +57,6 @@ function i9kgoo_load() {
                         return 1
                     }
             }
-            _ckmsg "requesting $m ?= $r"
             n="__pool_relay_${y[$_I9KG_PHID]}[$_FCACHE]"
             n="${!n}/__i9kg_init_${y[$_I9KG_RHID]}.odsel.bash"
             . "$n" &> /dev/null && {
@@ -70,7 +69,7 @@ function i9kgoo_load() {
                 l="__pool_relay_${y[$_I9KG_PHID]}[$_I9KG_SEEDS_XML]"
                 l="${!l}/${y[$_I9KG_RLAY]}.i9kg.xml"
                 [[ -e $l ]] && {
-                    _nmsg "extracting $m -> $r"
+                    _omsg "preparing $m -> $r"
                     odsel_xmla "$l" "__i9kg_rcache_${y[$_I9KG_RHID]}" \
                         && odsel_i9kg_objc "__i9kg_rcache_${y[$_I9KG_RHID]}" ${y[$_I9KG_RHID]} > "$n" \
                         && _eqmsg "$m: ok" || { _emsg "${FUNCNAME}: $m: fail"; return 1; }
@@ -220,7 +219,7 @@ function i9kgoo_sim_metabase_xml() {
             z=() o=  x=0 y=0 l= n= c=
     i9kgoo_pool_analyze "" "$a"
     _omsg \
-        "@[${1:-prime}]: $(_emph simulation) pristine(${#POOL_PRISTINE[@]}),clones(${#POOL_CLONES[@]})"
+        "$(_emph pool): $(_emph ${1:-prime}): sim:  pristine(${#POOL_PRISTINE[@]}),clones(${#POOL_CLONES[@]})"
     c=("${I9KG_PRESETS[@]}")
     odsel_presets_all
     n="${POOL_PRISTINE[0]/:*/}"
