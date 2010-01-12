@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2009 - George Makrydakis <george@odreex.org>
+# Copyright (C) 2009, 2010 - George Makrydakis <george@odreex.org>
 
 # This file is part of shellapi; shellapi is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General
@@ -76,7 +76,7 @@ function odsel_vsi() {
     for((x=0;x<${#i[@]};x++)); do
         y="${i[$x]}"
         [[ -z ${y//[[:space:]]/} ]] && continue
-        if [[ $y =~ ^[[:space:]]*(\?|:|@|new|del|load|delc|newc|sim|def|import|export|unit|init|switch)[[:space:]]*(.*) ]]; then
+        if [[ $y =~ ^[[:space:]]*(\?|:|@|newc|delc|load|del|new|sim|def|import|export|unit|init|switch)[[:space:]]*(.*) ]]; then
             case "${BASH_REMATCH[1]}" in
                 init|unit)
                     _omsg "$(_emph ${BASH_REMATCH[1]}): ${i[$x]}"
@@ -172,7 +172,8 @@ function odsel_vsi() {
                 || { _emsg "${FUNCNAME}: wrong syntax!"; return 1; }
             n="_fnop_${BASH_REMATCH[1]}"
             _isfunction $n && {
-                ($n) || { _emsg "${FUNCNAME}: callback failure"; return 1; }
+                ($n || { _for_each SHELLAPI_ERROR _fail; return 1; } ) \
+                    || { _emsg "${FUNCNAME}: callback failure"; return 1; }
             } || {
                 ! [[ -z ${!n} ]] && {
                     n="$n[*]"
@@ -234,13 +235,13 @@ function __odsel_i9kgi_p() {
         [[ ${x:=${1#*//}} =~ ${ODSEL_RXP[1]} ]] && {
             n="${BASH_REMATCH[1]}";v="${BASH_REMATCH[2]}";x="${x#*$v}"
             case "${j:=${BASH_REMATCH[3]}}" in
-                @)  [[ $x =~ @([[:alnum:]_]*):([[:alnum:]_]*)\]${ODSEL_RXP[4]}
-                    || $x =~ @([[:alnum:]_]*):([[:alnum:]_]*)\]([^\;]*)\; ]] && {
+                @)  [[ $x =~ @([[:alnum:]_]*):([[:alnum:]_]*)[[:space:]]*\]${ODSEL_RXP[4]}
+                    || $x =~ @([[:alnum:]_]*):([[:alnum:]_]*)[[:space:]]*\]([^\;]*)\; ]] && {
                         k=$(odsel_i9kgfsel "${BASH_REMATCH[3]}") || return 1
                         r+=("$n[$v@${BASH_REMATCH[1]}:${BASH_REMATCH[2]}]")
                     } || {
-                        [[ $x =~ ${ODSEL_RXP[2]}\]${ODSEL_RXP[4]} \
-                        || $x =~ ${ODSEL_RXP[2]}\]([^\;]*)\; ]] && {
+                        [[ $x =~ ${ODSEL_RXP[2]}[[:space:]]*\]${ODSEL_RXP[4]} \
+                        || $x =~ ${ODSEL_RXP[2]}[[:space:]]*\]([^\;]*)\; ]] && {
                             k=$(odsel_i9kgfsel "${BASH_REMATCH[4]}") || return 1
                             _r="${_r#*${BASH_REMATCH[2]}}"
                             _r="${_r%${BASH_REMATCH[3]}*}"
@@ -259,8 +260,8 @@ function __odsel_i9kgi_p() {
                 \]) # fix this once out of _p() phase, hardwiring must go
                     r+=("$n[${v}@stable:configure_pre->make_install_post]")
                     ;;
-                :)  [[ $x =~ ${ODSEL_RXP[3]}\]${ODSEL_RXP[4]}
-                    || $x =~ ${ODSEL_RXP[3]}\]([^\;]*)\; ]] && {
+                :)  [[ $x =~ ${ODSEL_RXP[3]}[[:space:]]*\]${ODSEL_RXP[4]}
+                    || $x =~ ${ODSEL_RXP[3]}[[:space:]]*\]([^\;]*)\; ]] && {
                         s="${BASH_REMATCH[1]}"
                         k=$(odsel_i9kgfsel "${BASH_REMATCH[2]}") || return 1
                         [[ $s =~ ^@([[:alnum:]_]*):([[:alnum:]_]*) ]] \
@@ -904,31 +905,27 @@ function odsel_extpli() {
 #       grammar must also be removed.
 #;
 function __odsel_ddepexp_p() {
-    local x z=()
+    local x= y= z=()
     odsel_getcbk "$1" && {
+        x="${1%@*}]"
+        x="${x//[\{\}[:space:]]/}"
+        y="${x//[:\/.\]\[]/_}"
         ((${#ODSEL_CBKDEP[@]})) && {
-            x="${1%@*}]"
-            x="${x//[\{\}]/}"
-            ((_cp_${x//[:\/.\]\[]/_})) && {
-                _emsg "${FUNCNAME}: a cycle has been detected during i9kg instantiation"
-                return 1
+            ((_cp_$y)) || {
+                ((_cp_$y=1))
+                ODSEL_DDEPS+=("$y ${ODSEL_CBKDEP[*]//[:\/.\]\[]/_}")
+                for x in ${!ODSEL_CBKDEP[@]}; do
+                    z+=("${ODSEL_CBKDEP[$x]}")
+                done
+                for x in ${!z[@]}; do
+                    __odsel_ddepexp_p "${z[$x]%?}@stable:configure_pre->make_install_post]:code;" \
+                    || break
+                done
             }
-            ((_cp_${x//[:\/.\]\[]/_}=1))
-            ODSEL_DDEPS+=("${x//[:\/.\]\[]/_} ${ODSEL_CBKDEP[*]//[:\/.\]\[]/_}")
-            for x in ${!ODSEL_CBKDEP[@]}; do
-                z+=("${ODSEL_CBKDEP[$x]}")
-            done
-            for x in ${!z[@]}; do
-                # hardwiring must be eliminated.
-                __odsel_ddepexp_p "${z[$x]%?}@stable:configure_pre->make_install_post]:code;" \
-                || break
-            done
         } || {
-            x="${1%@*}]"
-            x="${x//[\{\}]/}"
-            ((_cp_${x//[:\/.\]\[]/_})) || {
-                ODSEL_DDEPS+=("${x//[:\/.\]\[]/_} _void")
-                ((_cp_${x//[:\/.\]\[]/_}=1)) 
+            ((_cp_$y)) || {
+                ODSEL_DDEPS+=("$y _void")
+                ((_cp_$y=1))
             }
         }
     }

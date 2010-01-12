@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2009 - George Makrydakis <george@odreex.org>
+# Copyright (C) 2009, 2010 - George Makrydakis <george@odreex.org>
 
 # This file is part of shellapi; shellapi is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General
@@ -575,15 +575,14 @@ function __fnapi_schedule_p() {
             k=${#p[*]}
         }
     done
-    ((${#g1[@]} == 1)) \
-        && ODSEL_FNSCHEDULE+=(${g1[*]}) \
-        || ((a<r)) || {
+    ((${#g1[@]})) && ODSEL_FNSCHEDULE+=(${g1[*]})
+    ((a<r)) || {
             g1=(${g1[*]})
             _emsg "${FUNCNAME}: a cyclic event sequence has been detected"
             _emsg "${FUNCNAME}: cycle seems to start from: ${g1[0]}"
             _emsg "${FUNCNAME}: would have cycled at  : $((r-${#g1[*]}))/$r in sequence"
             return 1
-        }
+    }
     [[ -z $2 ]] \
         || eval "$2=(\"\${ODSEL_FNSCHEDULE[@]}\"); ODSEL_FNSCHEDULE=()"
 }
