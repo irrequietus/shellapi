@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2009 - George Makrydakis <george@odreex.org>
+# Copyright (C) 2009, 2010 - George Makrydakis <george@odreex.org>
 
 # This file is part of shellapi; shellapi is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General
@@ -25,9 +25,10 @@
 #           the shellapi.defaults if none is offered.
 # @warn Do not use in any other occasion but before any other shellapi call
 #       is made.
-# @warn In bash 4.x, the VERSION_OPERATORS=( [$(_opsolve ">")]="" ... ) syntax
+# @warn In bash 4.0.x, the VERSION_OPERATORS=( [$(_opsolve ">")]="" ... ) syntax
 #       does not work. One of the alternatives is to pass it down value by value
-#       in the usual way instead of =().
+#       in the usual way instead of =(). GNU Bash 4.1 adopts the 3.x approach
+#       but the fix must remain when using shellapi with GNU Bash 4.0.x
 #;
 function _init() {
     [[ -z $SHELLAPI_HOME ]] \
@@ -53,7 +54,7 @@ function _init() {
         || _emsg "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_NOLOCINIT]:-invalid locale}"
     [[ -e $f ]] \
         || _emsg "${FUNCNAME}: ${SHCORE_MSGL[$_SHCORE_NOGLOBCONF]:-no globals set}"
-    ((${#SHELLAPI_ERRORS[@]})) && _fatal
+    ((${#SHELLAPI_ERROR[@]})) && _fatal
     _xml2bda "$l"
     _xml2bda "$f"
     _initglobals_syscore
@@ -118,7 +119,7 @@ function _emsg() {
 #           is completely optional (stores in temporary when not set)
 #;
 function _xml2bda() {
-    local   i n f l x u= \
+    local   i= n= f= l= x= u= \
             c=0 g=() z=0 p=_ w= \
             a="${2:-$(mktemp)}" t1= t2=
     while read -r l; do
@@ -333,7 +334,7 @@ function _bda2plain() {
 #       not meant to be an ultimate solution because there is no need to.
 #;
 function _xmlpnseq() {
-    local l b c a x
+    local l= b= c= a= x=
     while read -r l; do
         l="$b$l";
         case "$l" in
@@ -449,7 +450,7 @@ function _jsonpnseq() {
 #       "emulation" for bash 3.x).
 #;
 function _xmlgerd() {
-    local l g=()
+    local l= g=()
     while read -r l; do
         g+=("$l")
     done< <(while read -r l; do
@@ -467,7 +468,7 @@ function _xmlgerd() {
 #           to XML_GE
 #;
 function _xmlgeex() {
-    local   v="$1" e q="$1" \
+    local   v="$1" e= q="$1" \
             x= r="$1" t="${2:-XML_GE}"
     x=$(_ssbfind "$t" "$1") && {
         v="$t[$x]"
@@ -738,9 +739,12 @@ function _ifnot_jpath() {
 
 #;
 # @desc Operator resolution interface
-# @note This is a bash 3.x workaround
+# @note This is a bash 3.x workaround, but it is to remain in use
+#       for the time being. Despite used within $() n gets initialized
+#       as a local before getting proper assignment; matter of guideline.
 #;
 function _opsolve() {
+    local n=
     case "$1" in
         \>\>)   n=1 ;;
         \>=)    n=2 ;;
@@ -762,6 +766,12 @@ function _opsolve() {
         :=)     n=18;;
         ::=)    n=19;;
         =)      n=20;;
+        ++)     n=21;;
+        --)     n=22;;
+        %=)     n=23;;
+        %%=)    n=24;;
+        \<%-)   n=25;;
+        -%\>)   n=26;;
         *)      n=0 ;;
     esac
     printf "%d" $n
@@ -934,7 +944,7 @@ function _arraygen_nls() {
 #;
 function _fatal() {
     if ((${#SHELLAPI_ERROR[@]})); then
-        local x
+        local x=
         printf "\033[1;31m[~]\033[0m: ${SHCORE_MSGL[$_SHCORE_FATAL]}:\n"
         for x in ${!SHELLAPI_ERROR[@]};do
             printf "\033[1;34m     {%d} --> \033[0m: %s\n" \
@@ -955,7 +965,7 @@ function _fatal() {
 #;
 function _wshow() {
     ((${#SHELLAPI_ERROR[@]} > 0)) && {
-        local x
+        local x=
         _wmsg "${SHCORE_MSGL[$_SHCORE_WSHOW]}:"
         for x in ${!SHELLAPI_ERROR[@]};do
             printf "\033[1;34;40m     {%d} --> \033[0m: %s\n" \
@@ -985,7 +995,7 @@ function _emph() {
 # @warn not applicable to entries containing whitespace (temporarily)
 #;
 function _qsx_pred() {
-    local l r
+    local l= r=
     (($# < 3)) && printf "%b\n" ${@:2} || (
         for n in ${@:3}; do
             "$1" "$n" "$2" \
@@ -1093,7 +1103,7 @@ function _decoy_this() {
 # @ptip $@  A list of __*_p() function prototypes
 #;
 function _wexp_this() {
-    local x
+    local x=
     for x in $@; do
         _isfunction "__${x}_p" && {
             eval "$x(){ local x=\"\$(_emph \"\${FUNCNAME}()\")\"
@@ -1119,7 +1129,7 @@ function _void() {
 # @retv 0 / 1
 #;
 function _vers_gt() {
-    local a b y x o v=() u t r k=${#_VERSTR[@]} c=() d=()
+    local a= b= y= x= o= v=() u= t= r= k=${#_VERSTR[@]} c=() d=()
     for u in 1 2; do
         o=0; t="${!u}"
         for r in ${_VERSTR[@]} ""; do
