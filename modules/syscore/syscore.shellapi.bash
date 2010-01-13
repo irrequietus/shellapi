@@ -628,7 +628,7 @@ function _ccrem() {
                 x="${x#*$t*$t}"
                 ;;
              /\*)
-                x="${x/"/*"*/}${x#*"*/"}"
+                x="${x/\/\**/}${x#*\*/}"
                 ;;
              \*/)
                 _emsg "${FUNCNAME}: stray comment - aborting"
