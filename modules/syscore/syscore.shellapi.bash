@@ -1048,6 +1048,26 @@ function _ssbfind() {
 
 #;
 # @desc Perform a binary search in a sorted array comprised of [[:space:]]
+#       separated key,value pairs.
+# @ptip $1  Array variable upon which to perform the search
+# @ptip $2  Value to search for
+# @ptip $4  Size correction factor (metaindex / compound)
+# @echo index where the value was found
+#;
+function _sharray_find() {
+    local   _s=$(($(_asof ${1})/$((((${3-1}>0))?${3-1}:1))))
+    local   _h=$_s _v="$2" _l=0 _t=0 _m=0
+    while ((_l < _h)); do
+        _t="$1[$((_m=((_l+((((_h-_l))/2))))))]"
+        [[ ${!_t/[[:space:]]*/} < $_v ]] && ((_l=_m+1)) || _h=$_m
+    done
+    { _t="$1[$_l]"; ((_l < _s)) && [[ ${!_t/[[:space:]]*/} = $_v ]]; } || _l=-1
+    printf "%d\n" $_l
+    ((_l+1)) || return 1
+}
+
+#;
+# @desc Perform a binary search in a sorted array comprised of [[:space:]]
 #       separated key,value pairs. A predicate for greater than (>) comparison
 #       must be provided.
 # @ptip $1  array variable upon which to perform the search
