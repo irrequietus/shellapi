@@ -738,6 +738,21 @@ function _ifnot_jpath() {
 }
 
 #;
+# @desc Deduce the absolute path given a relative path and the absolute
+#       one it is related to.
+# @ptip $1  Absolute path
+# @ptip $2  Relative path to $1
+# @echo Absolute path of $2
+#;
+function _pathget() {
+    local x="$1" y="$2"
+    { [[ -z $y ]] || [[ $y == [[:alnum:]_-]* ]]; } && y="./$y"
+    x="$({ cd "$1" && cd "${y%/*}/" && pwd; } 2>/dev/null)/${y##*/}" \
+        && [[ -e $x ]] \
+        && printf "%s\n" "$x"
+}
+
+#;
 # @desc Operator resolution interface
 # @note This is a bash 3.x workaround, but it is to remain in use
 #       for the time being. Despite used within $() n gets initialized
@@ -1025,7 +1040,7 @@ function _ssbfind() {
     done
     t="$1[$l]"
     t="${!t/ */}"
-    [[ $l < $s && $t = $v ]] \
+    { (($l < $s)) && [[ $t = $v ]]; } \
         || l=-1
     printf "%d\n" $l
     (($l+1)) || return 1
@@ -1067,7 +1082,7 @@ function _sharray_sort() {
     local   _s="$(eval printf '${#'"${1}"'[@]}')" \
             _l=0 _x=0 t=${2-"-k1,1 -t\ "}
     while read -r _l; do
-        eval "${1}"'['"$((_x++))"']="'"${_l}"'"'
+        eval "${1}"'['"$((_x++))"']="'"\${_l}"'"'
     done< <(for _l in $(_xsof $1); do
                 _l="$1[$_l]"; printf "%s\n" "${!_l}"
             done | sort $t)
