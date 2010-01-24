@@ -1237,32 +1237,6 @@ function _sharray_find() {
 # @desc Perform a binary search in a sorted array comprised of [[:space:]]
 #       separated key,value pairs. A predicate for greater than (>) comparison
 #       must be provided.
-# @ptip $1  array variable upon which to perform the search
-# @ptip $2  value to search for
-# @ptip $3  predicate for greater than (>) comparison
-# @echo index where the value was found
-#;
-function _ssbfind_pred() {
-    local   s=$(_asof ${1}) v="${2}" \
-            l=0 t=0 p="$3"
-    local   h=$s
-    while (($l < $h)); do
-        t="$1[$((m=$((l+$(($((h-l))/2))))))]"
-        $p $v ${!t} \
-            && l=$(($m + 1)) \
-            || h=$m
-    done
-    t="$1[$l]"
-    [[ $l < $s && ${!t} = $v ]] \
-        || l=-1
-    printf "%d\n" $l
-    (($l+1)) || return 1
-}
-
-#;
-# @desc Perform a binary search in a sorted array comprised of [[:space:]]
-#       separated key,value pairs. A predicate for greater than (>) comparison
-#       must be provided.
 # @ptip $1  Array variable upon which to perform the search
 # @ptip $2  Value to search for
 # @ptip $3  Predicate for greater than (>) comparison
