@@ -1216,32 +1216,6 @@ function _qsx_pred() {
 #;
 # @desc Perform a binary search in a sorted array comprised of [[:space:]]
 #       separated key,value pairs.
-# @ptip $1  array variable upon which to perform the search
-# @ptip $2  value to search for
-# @echo index where the value was found
-#;
-function _ssbfind() {
-    local   s=$(_asof ${1}) v="${2}" \
-            l=0 t=0
-    local   h=$s
-    while (($l < $h)); do
-        t="$1[$((m=$((l+$(($((h-l))/2))))))]"
-        t="${!t/ */}"
-        [[ ${t} < $v ]] \
-            && l=$(($m + 1)) \
-            || h=$m
-    done
-    t="$1[$l]"
-    t="${!t/ */}"
-    { (($l < $s)) && [[ $t = $v ]]; } \
-        || l=-1
-    printf "%d\n" $l
-    (($l+1)) || return 1
-}
-
-#;
-# @desc Perform a binary search in a sorted array comprised of [[:space:]]
-#       separated key,value pairs.
 # @ptip $1  Array variable upon which to perform the search
 # @ptip $2  Value to search for
 # @ptip $4  Size correction factor (metaindex / compound)
