@@ -442,6 +442,45 @@ function _jsonpnseq() {
 }
 
 #;
+# @desc XML entity query interface; bimodal call convention compatible $() / &&
+# @ptip $1  Entity to query for
+# @ptip $2  Type identifier (& | %)
+# @ptip $3  Entity storage array
+# @ptip $4  Entity metaindex array
+# @ptip $5  Variable where to store result
+# @echo String with entities resolved / stores to "$5" while caching.
+# @retn 0 / 1
+#;
+function _xmlapi_entq() {
+    local   v="$1" e= q="$4" u="$2" \
+            x= r="$1" t="$3" i=0 f="$5"
+    i=$(_sharray_find $q $v) && {
+        v="$q[$i]"; v="${!v#* }"; v="$t[$v]"; v="${!v}"; r="$v" 
+    } || { _emsg "${FUNCNAME}: $1 : not found!"; return 1; }
+    while [[ $v =~ $u([[:alnum:]_-]*)\; ]]; do
+        e="${BASH_REMATCH[1]}"
+        [[ $e == $1 ]] && {
+            _emsg "${FUNCNAME}(): $(_emph entity): $e is recursive!"
+            return 1
+        }
+        x=$(_sharray_find $q $e) && {
+            x="$q[$x]"; x="${!x#* }"; x="$t[$x]"
+            r="${r/"$u$e;"/${!x}}"; v="${v/"$u$e;"/${!x}}"
+        } || {
+            ((__XMLAPI_ALLOW_NDE__)) && v="${v/"$u$e;"/}" || {
+                _emsg "${FUNCNAME}(): $(_emph entity): $e was not found!" \
+                      "${FUNCNAME}(): $(_emph entity): $e requested by: $1"
+                return 1
+            }
+        }
+    done
+    ! [[ -z $f ]] && {
+        x="$q[$i]"; x="$t[${!x#* }]"
+        eval "$f=\"\$r\";$x=\"\$r\""
+    } || printf "%s\n" "$r"
+}
+
+#;
 # @desc Parse a series of XML general entities out of a sequence of DTD
 #       general entity statements. Works only with normalized sequences
 #       of entities (single line per entity, no comments): to be fixed
