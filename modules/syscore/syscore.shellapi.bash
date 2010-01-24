@@ -326,6 +326,7 @@ function _bda2plain() {
 # @desc XML "primers" for use where necessary.
 #;
 function __xmlapi_init() {
+    XML_AFTSEQ=()
     SHELLAPI_XMLGDF=(
         '^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+"([^"]*)"[[:space:]]*>'
         "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+'([^']*)'[[:space:]]*>"
