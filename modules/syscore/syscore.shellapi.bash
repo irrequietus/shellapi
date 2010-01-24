@@ -644,26 +644,6 @@ function __xmlapi_entfprep() {
 }
 
 #;
-# @desc Parse a series of XML general entities out of a sequence of DTD
-#       general entity statements. Works only with normalized sequences
-#       of entities (single line per entity, no comments): to be fixed
-# @ptip $1  normalized sequence file
-# @note sorted array with (key[[:space:]]value) style entries (associative
-#       "emulation" for bash 3.x).
-#;
-function _xmlgerd() {
-    local l= g=()
-    while read -r l; do
-        g+=("$l")
-    done< <(while read -r l; do
-            [[  $l =~ \<!ENTITY[[:space:]]*([a-zA-Z0-9\-]*)[[:space:]]*\"([^\"]*)\"[[:space:]]*\> \
-            ||  $l =~ \<!ENTITY[[:space:]]*([a-zA-Z0-9\-]*)[[:space:]]*\'([^\']*)\'[[:space:]]*\> \
-            ]]  && printf "%s %s\n" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
-        done < "$1" | sort -k1,1 -t\ )
-    XML_GE=("${g[@]}")
-}
-
-#;
 # @desc A general entity resolution wrapper for XML input
 # @ptip $1  String containing entities to resolve
 # @ptip $2  Type identifier (& | %)
