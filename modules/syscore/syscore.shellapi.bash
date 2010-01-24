@@ -501,6 +501,26 @@ function _xmlgerd() {
 }
 
 #;
+# @desc A general entity resolution wrapper for XML input
+# @ptip $1  String containing entities to resolve
+# @ptip $2  Type identifier (& | %)
+# @ptip $3  Entity storage array
+# @ptip $4  Entity metaindex array
+# @echo String with entities resolved
+# @retn 0 / 1
+#;
+function _xmlapi_eex() {
+    local x="$1" y= z=$3 o=$4 __e=
+    while [[ $x =~ $2([[:alnum:]\-]*)\; ]]; do
+        y=${BASH_REMATCH[1]}
+        _xmlapi_entq "${BASH_REMATCH[1]}" "$2" $z $o __e \
+            && x="${x//&$y;/$MYVAR}" \
+            || { return 1; }
+    done
+    printf "%s\n" "$x"
+}
+
+#;
 # @desc Expand a general entity
 # @ptip $1  entity to look for in the array (key[[:space:]]value)
 # @ptip $2  sorted array in which to look for the entity, defaults
