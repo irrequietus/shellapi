@@ -626,6 +626,24 @@ function _xmlapi_entq() {
 }
 
 #;
+# @desc Creates cached, fully expanded general XML entities
+# @ptip $1  Entity storage array
+# @ptip $2  Entity metaindex array
+# @retn 0 / 1
+#;
+function __xmlapi_entfprep() {
+    local __x= __y=$1 __z=$2 __e=
+    local __XMLAPI_ALLOW_NDE__=1
+    for __x in $(_xsof $__z); do
+        __x="$__z[$__x]"
+        _xmlapi_entq "${!__x/ */}" \& $__y $__z __e || {
+            _emsg "${FUNCNAME}(): could not cache correctly"
+            return 1
+        }
+    done
+}
+
+#;
 # @desc Parse a series of XML general entities out of a sequence of DTD
 #       general entity statements. Works only with normalized sequences
 #       of entities (single line per entity, no comments): to be fixed
