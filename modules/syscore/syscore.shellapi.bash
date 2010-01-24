@@ -336,6 +336,76 @@ function __xmlapi_init() {
         "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]+\[" )
 }
 
+#;
+# @desc XML DTD expression parser
+# @ptip $1  ...[internally passed, do not call directly]
+#;
+function __xmlapi_preseq() {
+    local y= v= s= k= dkt=0 f="$1" x= m=
+    SHELLAPI_XML_SGE=() SHELLAPI_XML_MGE=()
+    SHELLAPI_XML_SPE=() SHELLAPI_XML_MPE=()
+    while [[ $f =~ ^[[:space:]]*(\<!--|\<![A-Z]*|%[[:alnum:]_\-]+\;) ]]; do
+        case ${BASH_REMATCH[1]} in
+            %*\;)
+                m=${BASH_REMATCH[1]#?}
+                _xmlapi_entq "${m%?}" "%" SHELLAPI_XML_SPE SHELLAPI_XML_MPE MYVAR && {
+                    f="${f/"%${m%?};"/${MYVAR}}"
+                } || { _emsg "${FUNCNAME}: DTD failure..."; return 1; }
+            ;;
+            \<!DOCTYPE)
+                ((dkd)) && { _emsg "${FUNCNAME}(): $(_emph doctype) : is corrupt"; return 1; } || {
+                    f="${f#*E}"
+                    [[  $f =~ ${SHELLAPI_XMLGDF[4]} \
+                    ||  $f =~ ${SHELLAPI_XMLGDF[5]} \
+                    ||  $f =~ ${SHELLAPI_XMLGDF[6]} ]] && {
+                        ((${#BASH_REMATCH[@]} == 2)) \
+                            && { f="${f#*[}"; dkt=1; } \
+                            || { f="${f#*${BASH_REMATCH[3]}?*[}"; dkt=1; }
+                    }
+                }
+                ;;
+            \<!ENTITY)
+                f="${f#*Y}"
+                [[  $f =~ ${SHELLAPI_XMLGDF[0]} \
+                ||  $f =~ ${SHELLAPI_XMLGDF[1]} \
+                ||  $f =~ ${SHELLAPI_XMLGDF[2]} \
+                ||  $f =~ ${SHELLAPI_XMLGDF[3]} ]] && {
+                    ((${#BASH_REMATCH[@]} == 3)) && {
+                        m="${#SHELLAPI_XML_SGE[@]}"
+                        SHELLAPI_XML_SGE+=("${BASH_REMATCH[2]}")
+                        SHELLAPI_XML_MGE+=("${BASH_REMATCH[1]} $m")
+                        f="${f#*${BASH_REMATCH[2]}*>}"
+                    } || {
+                        s="${BASH_REMATCH[1]}"; x="${BASH_REMATCH[3]}"; f="${f#*$x*>}"
+                        [[ ${BASH_REMATCH[2]} == SYSTEM ]] && {
+                            m="$(_pathget "$(pwd)" "$x")" && {
+                                m="$(< "$m")"
+                                while [[ $m =~ \<!-- ]]; do y+="${m/\<!--*/}"; m="${m#*-->}"; done
+                                m="${y#*\?>}$m"; y="${#SHELLAPI_XML_SPE[@]}"
+                                SHELLAPI_XML_SPE+=("$m"); SHELLAPI_XML_MPE+=("$s $y")
+                                _sharray_sort SHELLAPI_XML_MPE SHELLAPI_XML_MPE
+                            }
+                        } || _omsg "${FUNCNAME}(): valid, but not supported yet."
+                    }
+                }
+            ;;
+            \<!--)
+                f="${f#*-->}"
+            ;;
+            \<!NOTATION|\<!ELEMENT|\<!ATTLIST)
+                f="${f#*>}" # FIXME: ...
+            ;;
+        esac
+    done
+    [[ $f =~ ^[[:space:]]*\][[:space:]]*\> ]] && {
+        _sharray_sort SHELLAPI_XML_MGE SHELLAPI_XML_MGE
+        f="${f#*>}"
+        __XMLDTD_TERM__=$((${#1}-${#f}))
+    } || {
+        _emsg "${FUNCNAME}(): $(_emph doctype) : is corrupt"
+        return 1 
+    }
+}
 
 #;
 # @desc XML normalizing function: outputs lines in a sequence of tag / non tag
