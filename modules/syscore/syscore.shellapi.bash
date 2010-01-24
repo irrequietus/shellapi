@@ -684,35 +684,6 @@ function _xmlapi_eex() {
 }
 
 #;
-# @desc Expand a general entity
-# @ptip $1  entity to look for in the array (key[[:space:]]value)
-# @ptip $2  sorted array in which to look for the entity, defaults
-#           to XML_GE
-#;
-function _xmlgeex() {
-    local   v="$1" e= q="$1" \
-            x= r="$1" t="${2:-XML_GE}"
-    x=$(_ssbfind "$t" "$1") && {
-        v="$t[$x]"
-        v="${!v/* /}"
-        r="$v"
-    } || _fatal "${FUNCNAME}: entity not found!"
-    while [[ $v =~ .*\&([^\"\'\&]*)\;.* ]]; do
-        e="${BASH_REMATCH[1]}"
-        ! [[ $q =~ /$e ]] && {
-            x=$(_ssbfind "$t" "$e") && {
-                x="$t[$x]"
-                r="${r/"&$e;"/${!x#$e *}}"
-                v="${v/"&$e;"/${!x#$e *}}"
-            } || v="${v/"&$e;"/}"
-            q="${q#$e/}"
-        } || _fatal "${FUNCNAME}: entity recursion has been detected: $e"
-        q="$e/$q"
-    done
-    printf "%s\n" "$r"
-}
-
-#;
 # @desc Give an error if a function to be included from a shellapi module
 #       is already defined.
 # @ptip $1  filename where to read from
