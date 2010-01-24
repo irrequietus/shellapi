@@ -1190,21 +1190,20 @@ function _sharray_find_pred() {
 
 #;
 # @desc Sort a bash array using the sort utility
-# @ptip $1 array to sort
-# @ptip $2 extra parameters to pass to the sort function
+# @ptip $1  Array to sort.
+# @ptip $2  Array variable where to store the result.
+# @ptip $3  Extra parameters to pass to the sort function
 #       works by adding -k1,1 -t\[[:space:]] as default
 #;
 function _sharray_sort() {
-    local   _s="$(eval printf '${#'"${1}"'[@]}')" \
-            _l=0 _x=0 t=${2-"-k1,1 -t\ "}
+    local   _s= _l=0 _x=0 _y="$2" \
+            _t=${3:-"-k1,1 -t\ "} _n=()
     while read -r _l; do
-        eval "${1}"'['"$((_x++))"']="'"\${_l}"'"'
+        _n[$((_x++))]="${_l}"
     done< <(for _l in $(_xsof $1); do
-                _l="$1[$_l]"; printf "%s\n" "${!_l}"
+                _s="$1[$_l]"; printf "%s\n" "${!_s/ */} $((_x++))"
             done | sort $t)
-    while (($_x < $_s)); do
-        unset ${1}[$((_x++))]
-    done
+    eval "$_y=(\"\${_n[@]}\")"
 }
 
 #;
