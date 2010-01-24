@@ -468,6 +468,66 @@ function _xmlpnseq() {
 }
 
 #;
+# @desc Process a valid XML document including certain of the elements in the DTD
+#       like entities (general, parameter) and on request file loading for them.
+# @ptip $1  Absolute, full path to file. This _must_ be a valid XML document.
+# @ptip $2  Expand entities or not (0/1)
+# @note This function is used as a duo with __xmlapi_preseq(), eventually it will
+#       deprecate _xmlpnseq() which has been used since the initial commit. Results
+#       are stored to a series of global arrays.
+#;
+function __xmlapi_aftseq() {
+    __xmlapi_init
+    local f= fn="$1" n= x=() y= v= s= k= \
+          dkt=0 dkd=0 x= q="${2:-0}"
+    [[ -e $fn ]] && f="$(< "$1")" \
+        || { _emsg "${FUNCNAME}(): file not valid: $1"; return 1; }
+    while [[ $f =~ ^[[:space:]]*(\<[[:alnum:]_:-]*|\</[[:alnum:]]*|\<![A-Z]*|\<!--|[^\<]*) ]]; do
+        case "${BASH_REMATCH[1]}" in
+            \<!--) f="${f#*-->}" ;;
+            \</*)  XML_AFTSEQ+=("${f/>*/}>"); f="${f#*>}" ;;
+            \<[a-zA-Z]*)
+                n="${BASH_REMATCH[1]} "
+                f="${f#*${BASH_REMATCH[1]}}"
+                while [[ $f =~ ^[[:space:]]+([[:alnum:]]*)[[:space:]]*=[[:space:]]*([\"\']) ]]; do
+                    f="${f#*${BASH_REMATCH[2]}}"; x="${f/${BASH_REMATCH[2]}*/}"
+                    [[ ${x/</} == $x ]] || { _emsg "${FUNCNAME}: spurious < encountered"; return 1; }
+                    n+="${BASH_REMATCH[1]}=${BASH_REMATCH[2]}$x${BASH_REMATCH[2]} "
+                    f="${f#*${BASH_REMATCH[2]}}"
+                done
+                [[ $f =~ ^[[:space:]]*(/\>|\>) ]] \
+                    && f="${f#*${BASH_REMATCH[1]}}" \
+                    || { _emsg " -?- "; return 1; }
+                XML_AFTSEQ+=("${n%?}${BASH_REMATCH[1]}")
+                ;;
+            \<!DOCTYPE)
+                ((dkd)) \
+                    && { _emsg "${FUNCNAME}(): $(_emph doctype) : is corrupt"; return 1; } \
+                    || { __xmlapi_preseq "$f" || return 1; dkd=1; f="${f:$__XMLDTD_TERM__}"; }
+                ;;
+            \<*)
+                _emsg "${FUNCNAME}: illegal instruction: ${BASH_REMATCH[1]} ..."
+                return 1
+                ;;
+            '') return ;;
+            *)
+                x="${BASH_REMATCH[1]%${BASH_REMATCH[1]##*[![:space:]]}}"
+                [[ -z $x ]] || {
+                    (($q)) && {
+                        XML_AFTSEQ+=("$(_xmlapi_eex "$x")") || {
+                            printf "%s\n" "${XML_AFTSEQ[${#XML_AFTSEQ[@]}-1]}"
+                            _emsg "${FUNCNAME}: xml entity was not found"
+                            return 1
+                        }
+                    } || XML_AFTSEQ+=("$x")
+                }
+                f="${f#*${BASH_REMATCH[1]}}"
+            ;;
+        esac
+    done
+}
+
+#;
 # @desc JSON normalizing function: stores processed json into a bash array
 #       with particular semantics. While operational, this is very experimental.
 # @ptip $1  A bash string containing valid json.
