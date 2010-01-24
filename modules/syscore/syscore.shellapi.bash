@@ -323,6 +323,21 @@ function _bda2plain() {
 }
 
 #;
+# @desc XML "primers" for use where necessary.
+#;
+function __xmlapi_init() {
+    SHELLAPI_XMLGDF=(
+        '^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+"([^"]*)"[[:space:]]*>'
+        "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+'([^']*)'[[:space:]]*>"
+        '^[[:space:]]+%[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+"([^"]*)"[[:space:]]*>'
+        "^[[:space:]]+%[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]*>"
+        "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+["
+        '^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+"([^"]*)"[[:space:]]+\['
+        "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]+\[" )
+}
+
+
+#;
 # @desc XML normalizing function: outputs lines in a sequence of tag / non tag
 #       data, allowing for parsing by bash functions and subsequent reuse within
 #       shellapi. This is the shellapi syscore module version.
