@@ -633,7 +633,7 @@ function _xmlapi_entq() {
 # @retn 0 / 1
 #;
 function __xmlapi_entfprep() {
-    local __x= __y=$1 __z=$2 __e=
+    local __x= __y=${1:-SHELLAPI_XML_SGE} __z=${2:-SHELLAPI_XML_MGE} __e=
     local __XMLAPI_ALLOW_NDE__=1
     for __x in $(_xsof $__z); do
         __x="$__z[$__x]"
@@ -654,7 +654,7 @@ function __xmlapi_entfprep() {
 # @retn 0 / 1
 #;
 function _xmlapi_eex() {
-    local x="$1" y= z=$3 o=$4 __e= _x="${2:-&}"
+    local x="$1" y= z=${3:-SHELLAPI_XML_SGE} o=${4:-SHELLAPI_XML_MGE} __e= _x="${2:-&}"
     while [[ $x =~ $_x([[:alnum:]_\-]*)\; ]]; do
         y=${BASH_REMATCH[1]}
         _xmlapi_entq "${BASH_REMATCH[1]}" "$_x" $z $o __e \
