@@ -499,7 +499,17 @@ function __xmlapi_aftseq() {
                 [[ $f =~ ^[[:space:]]*(/\>|\>) ]] \
                     && f="${f#*${BASH_REMATCH[1]}}" \
                     || { _emsg " -?- "; return 1; }
-                XML_AFTSEQ+=("${n%?}${BASH_REMATCH[1]}")
+                x="${n%?}${BASH_REMATCH[1]}"
+                x="${x%${x##*[![:space:]]}}"
+                [[ -z $x ]] || {
+                    (($q)) && {
+                        XML_AFTSEQ+=("$(_xmlapi_eex "$x" \& $__a $__b)") || {
+                            printf "%s\n" "${XML_AFTSEQ[${#XML_AFTSEQ[@]}-1]}"
+                            _emsg "${FUNCNAME}: xml entity was not found"
+                            return 1
+                        }
+                    } || XML_AFTSEQ+=("$x")
+                }
                 ;;
             \<!DOCTYPE)
                 ((dkd)) \
