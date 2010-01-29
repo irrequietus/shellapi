@@ -480,7 +480,7 @@ function _xmlpnseq() {
 function __xmlapi_aftseq() {
     __xmlapi_init
     local f= fn="$1" n= x=() y= v= s= k= \
-          dkt=0 dkd=0 x= q="${2:-0}"
+          dkt=0 dkd=0 x= q="${2:-0}" __a="SHELLAPI_XML_SGE" __b="SHELLAPI_XML_MGE"
     [[ -e $fn ]] && f="$(< "$1")" \
         || { _emsg "${FUNCNAME}(): file not valid: $1"; return 1; }
     while [[ $f =~ ^[[:space:]]*(\<[[:alnum:]_:-]*|\</[[:alnum:]]*|\<![A-Z]*|\<!--|[^\<]*) ]]; do
@@ -515,7 +515,7 @@ function __xmlapi_aftseq() {
                 x="${BASH_REMATCH[1]%${BASH_REMATCH[1]##*[![:space:]]}}"
                 [[ -z $x ]] || {
                     (($q)) && {
-                        XML_AFTSEQ+=("$(_xmlapi_eex "$x")") || {
+                        XML_AFTSEQ+=("$(_xmlapi_eex "$x" \& $__a $__b)") || {
                             printf "%s\n" "${XML_AFTSEQ[${#XML_AFTSEQ[@]}-1]}"
                             _emsg "${FUNCNAME}: xml entity was not found"
                             return 1
@@ -654,11 +654,11 @@ function __xmlapi_entfprep() {
 # @retn 0 / 1
 #;
 function _xmlapi_eex() {
-    local x="$1" y= z=$3 o=$4 __e=
-    while [[ $x =~ $2([[:alnum:]\-]*)\; ]]; do
+    local x="$1" y= z=$3 o=$4 __e= _x="${2:-&}"
+    while [[ $x =~ $_x([[:alnum:]\-]*)\; ]]; do
         y=${BASH_REMATCH[1]}
-        _xmlapi_entq "${BASH_REMATCH[1]}" "$2" $z $o __e \
-            && x="${x//&$y;/$MYVAR}" \
+        _xmlapi_entq "${BASH_REMATCH[1]}" "$_x" $z $o __e \
+            && x="${x//&$y;/$__e}" \
             || { return 1; }
     done
     printf "%s\n" "$x"
