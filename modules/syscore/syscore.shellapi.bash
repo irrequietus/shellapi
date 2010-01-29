@@ -332,7 +332,7 @@ function __xmlapi_init() {
         "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+'([^']*)'[[:space:]]*>"
         '^[[:space:]]+%[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+"([^"]*)"[[:space:]]*>'
         "^[[:space:]]+%[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]*>"
-        "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+["
+        "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+\["
         '^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+"([^"]*)"[[:space:]]+\['
         "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]+\[" )
 }
@@ -655,7 +655,7 @@ function __xmlapi_entfprep() {
 #;
 function _xmlapi_eex() {
     local x="$1" y= z=$3 o=$4 __e= _x="${2:-&}"
-    while [[ $x =~ $_x([[:alnum:]\-]*)\; ]]; do
+    while [[ $x =~ $_x([[:alnum:]_\-]*)\; ]]; do
         y=${BASH_REMATCH[1]}
         _xmlapi_entq "${BASH_REMATCH[1]}" "$_x" $z $o __e \
             && x="${x//&$y;/$__e}" \
