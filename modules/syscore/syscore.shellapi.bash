@@ -375,7 +375,7 @@ function __xmlapi_preseq() {
                         m="${#SHELLAPI_XML_SGE[@]}"
                         SHELLAPI_XML_SGE+=("${BASH_REMATCH[2]}")
                         SHELLAPI_XML_MGE+=("${BASH_REMATCH[1]} $m")
-                        f="${f#*${BASH_REMATCH[2]}*>}"
+                        f="${f#*"${BASH_REMATCH[2]}"*>}"
                     } || {
                         s="${BASH_REMATCH[1]}"; x="${BASH_REMATCH[3]}"; f="${f#*$x*>}"
                         [[ ${BASH_REMATCH[2]} == SYSTEM ]] && {
@@ -486,7 +486,10 @@ function __xmlapi_aftseq() {
     while [[ $f =~ ^[[:space:]]*(\<[[:alnum:]_:-]*|\</[[:alnum:]]*|\<![A-Z]*|\<!--|[^\<]*) ]]; do
         case "${BASH_REMATCH[1]}" in
             \<!--) f="${f#*-->}" ;;
-            \</*)  XML_AFTSEQ+=("${f/>*/}>"); f="${f#*>}" ;;
+            \</*)
+                x="${f/>*/}"
+                XML_AFTSEQ+=("<${x#*<}>")
+                f="${f#*>}" ;;
             \<[a-zA-Z]*)
                 n="${BASH_REMATCH[1]} "
                 f="${f#*${BASH_REMATCH[1]}}"
@@ -532,9 +535,10 @@ function __xmlapi_aftseq() {
                         }
                     } || XML_AFTSEQ+=("$x")
                 }
-                f="${f#*${BASH_REMATCH[1]}}"
+                f="${f#*"${BASH_REMATCH[1]}"}"
             ;;
         esac
+        f="${f%${f##*[![:space:]]}}"
     done
 }
 
