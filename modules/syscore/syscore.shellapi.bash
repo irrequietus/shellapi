@@ -333,8 +333,10 @@ function __xmlapi_init() {
         '^[[:space:]]+%[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+"([^"]*)"[[:space:]]*>'
         "^[[:space:]]+%[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]*>"
         "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+\["
-        '^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+"([^"]*)"[[:space:]]+\['
-        "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]+\[" )
+        '^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+"([^"]*)"[[:space:]]+(\[)'
+        "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]+(\[)"
+        '^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+"([^"]*)"[[:space:]]*>'
+        "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]*>")
 }
 
 #;
@@ -346,9 +348,9 @@ function __xmlapi_preseq() {
     SHELLAPI_XML_SGE=() SHELLAPI_XML_MGE=()
     SHELLAPI_XML_SPE=() SHELLAPI_XML_MPE=()
     while [[ $f =~ ^[[:space:]]*(\<!--|\<![A-Z]*|%[[:alnum:]_\-]+\;) ]]; do
-        case ${BASH_REMATCH[1]} in
+        case "${BASH_REMATCH[1]}" in
             %*\;)
-                m=${BASH_REMATCH[1]#?}
+                m="${BASH_REMATCH[1]#?}"
                 _xmlapi_entq "${m%?}" "%" SHELLAPI_XML_SPE SHELLAPI_XML_MPE MYVAR && {
                     f="${f/"%${m%?};"/${MYVAR}}"
                 } || { _emsg "${FUNCNAME}: DTD failure..."; return 1; }
@@ -358,10 +360,18 @@ function __xmlapi_preseq() {
                     f="${f#*E}"
                     [[  $f =~ ${SHELLAPI_XMLGDF[4]} \
                     ||  $f =~ ${SHELLAPI_XMLGDF[5]} \
-                    ||  $f =~ ${SHELLAPI_XMLGDF[6]} ]] && {
-                        ((${#BASH_REMATCH[@]} == 2)) \
-                            && { f="${f#*[}"; dkt=1; } \
-                            || { f="${f#*${BASH_REMATCH[3]}?*[}"; dkt=1; }
+                    ||  $f =~ ${SHELLAPI_XMLGDF[6]} \
+                    ||  $f =~ ${SHELLAPI_XMLGDF[7]} \
+                    ||  $f =~ ${SHELLAPI_XMLGDF[8]} ]] && {
+                        ((${#BASH_REMATCH[@]} == 4)) && {
+                            f="${f#*"${BASH_REMATCH[3]}"*>}"
+                            __XMLDTD_TERM__=$((${#1}-${#f}))
+                            return
+                        } || {
+                            ((${#BASH_REMATCH[@]} == 2)) \
+                                && { f="${f#*[}"; dkt=1; } \
+                                || { f="${f#*${BASH_REMATCH[3]}?*[}"; dkt=1; }
+                        }
                     }
                 }
                 ;;
