@@ -301,17 +301,21 @@ function __odsel_i9kgi_p() {
 # @desc Load an i9kg XML file describing the various instances of a "package"
 #       into an array, complete with the dependency query metadata, build
 #       instruction sequences etc. The resulting array is
-# @ptip $1  The path to the i9kg XML file to process
-# @ptip $2  The array where to store the odsel cache (defaults to ODSEL_XMLA global)
+# @ptip $1  The path to the i9kg XML file to process (stores result to ODSEL_XMLA global)
 # @note     Use of <bashdata> is completely experimental within i9kg xml files and
 #           this is why it only gives a warning despite performing the planned operations.
+# @note The latest change for use with __xmlapi_* prototypes is a temporary speed bottleneck
+#       for a while until 0.x-pre7.
 #;
 function odsel_xmla() {
     local   v_sn= v_an= v_in= v_iv= x= l= \
             v=0 i=0 p=0 q=0 _bd=0 _bc=0 _bn= \
             t=() c=() k=() y=() r=() n=() \
             _A=() _D=() _NB=() _NR=() _DB=() _DR=()
-    while read -r l; do
+    ODSEL_XMLA=()
+    __xmlapi_aftseq "$1" ||  { _emsg "${FUNCNAME}(): illegal exception at $1"; return 1; }
+    for l in ${!XML_AFTSEQ[@]}; do
+        l="${XML_AFTSEQ[$l]}"
         (($_bd)) && {
             [[ $l == \</bashdata\> ]] && {
                 _bd=0
@@ -324,7 +328,7 @@ function odsel_xmla() {
                 ((_bc++))
             } || _BD[$_bc]+="$(printf "\n%s" "$l")"
             continue
-        } || y+=("$l")
+        } || y+=("$(_xmlapi_eex "$l" \&)")
         case "$l" in
             \<code\> | \<text\>)
                 v=${#y[@]}
@@ -348,7 +352,7 @@ function odsel_xmla() {
             \<action\ *)
                 [[  $l =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
                 ||  $l =~ [[:space:]]*mode[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && v_an="${BASH_REMATCH[1]}" \
+                    && v_an="$(_xmlapi_eex "${BASH_REMATCH[1]}" \&)" \
                     || { _emsg "${FUNCNAME}: attribute missing in $1: mode"; return 1; }
                 ;;
             \</action\>)
@@ -360,43 +364,43 @@ function odsel_xmla() {
             \<instance\ *)
                 [[  $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
                 ||  $l =~ [[:space:]]*version[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && v_iv="${BASH_REMATCH[1]}" \
+                    && v_iv="$(_xmlapi_eex "${BASH_REMATCH[1]}" \&)" \
                     || { _emsg "${FUNCNAME}: attribute missing in $1: version"; return 1; }
                 [[  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
                 ||  $l =~ [[:space:]]*alias[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && v_in="${BASH_REMATCH[1]}" \
+                    && v_in="$(_xmlapi_eex "${BASH_REMATCH[1]}" \&)" \
                     || { _emsg "${FUNCNAME}: attribute missing in $1: alias"; return 1; }
                     n="$n$(printf "\n%s" "$v_in[$v_iv]")"
                 ;;
             \<rpli\ */\>)
                 [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
                 ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _D[$i]="${_D[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                    && _D[$i]="${_D[$i]}$(printf "\n%s" "$(_xmlapi_eex "${BASH_REMATCH[1]}" \&)")"
                 ;;
             \<dbld\ */\>)
                 [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
                 ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _DB[$i]="${_DB[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                    && _DB[$i]="${_DB[$i]}$(printf "\n%s" "$(_xmlapi_eex "${BASH_REMATCH[1]}" \&)")"
                 ;;
             \<drun\ */\>)
                 [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
                 ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _DR[$i]="${_DR[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                    && _DR[$i]="${_DR[$i]}$(printf "\n%s" "$(_xmlapi_eex "${BASH_REMATCH[1]}" \&)")"
                 ;;
             \<nbld\ */\>)
                 [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
                 ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _NB[$i]="${_NB[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                    && _NB[$i]="${_NB[$i]}$(printf "\n%s" "$(_xmlapi_eex "${BASH_REMATCH[1]}" \&)")"
                 ;;
             \<nrun\ */\>)
                 [[  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
                 ||  $l =~ [[:space:]]*item[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && _NR[$i]="${_NR[$i]}$(printf "\n%s" "${BASH_REMATCH[1]}")"
+                    && _NR[$i]="${_NR[$i]}$(printf "\n%s" "$(_xmlapi_eex "${BASH_REMATCH[1]}" \&)")"
                 ;;
             \<sequence\ *)
                 [[  $l =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\"([^\"]*)\" \
                 ||  $l =~ [[:space:]]*variant[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] \
-                    && v_sn="${BASH_REMATCH[1]}" \
+                    && v_sn="$(_xmlapi_eex "${BASH_REMATCH[1]}" \&)" \
                     || { _emsg "${FUNCNAME}: attribute missing in $1: variant"; return 1; }
                 ;;
             \<bashdata\>)
@@ -418,20 +422,19 @@ function odsel_xmla() {
                 return 1
                 ;;
         esac
-    done< <(_xmlpnseq "$1")
+    done
     y=()
     while read -r l; do
         y+=("$l")
     done< <(for l in ${!_A[@]}; do
                 printf "%s\n" "${_A[$l]}"
             done | sort -k1,1 -t\ )
-    eval "${2:-ODSEL_XMLA}=( \"\$((\${#y[@]}+1)) \$((\${#r[@]}+\${#y[@]}+1))\"
+    eval "${2:-ODSEL_XMLA}=(\"\$((\${#y[@]}+1)) \$((\${#r[@]}+\${#y[@]}+1))\"
             \"\${y[@]}\"
             \"\${r[@]}\"
             \"\${n:1}\"
-            \"\${_D[@]}\" \"\${_DB[@]}\" \"\${_DR[@]}\" \"\${_NB[@]}\" \"\${_NR[@]}\") "
+            \"\${_D[@]}\" \"\${_DB[@]}\" \"\${_DR[@]}\" \"\${_NB[@]}\" \"\${_NR[@]}\")"
 }
-
 
 #;
 # @desc Creating an i9kg DTD automatically after an odsel_gscoil call. This
