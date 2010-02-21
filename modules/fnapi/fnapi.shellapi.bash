@@ -232,18 +232,20 @@ function fnapi_slaunch() {
 # @ptip $1  Assignable function name for the _fnp_* generated function.
 # @ptip $2  Array containing sequence of commands comprising the nested function block.
 # @ptip $3  Array containing the _fnp_* dependencies of the generated function call (hash ids).
-# @ptip $4  An integer representing the "weight", a factor related to the time necessary
+# @ptip $4  Run location of the generated function.
+# @ptip $5  An integer representing the "weight", a factor related to the time necessary
 #           for the function to complete.
 #;
 function fnapi_fnp_write() {
     ! _isfunction "$1" && {
         eval "$1(){ local _d_=($(_for_each $3 printf "%s\n"))
         local _f_=$(f=$(_for_each $2 printf "%s\n" | ${FNAPI_CHECKSUM}); printf "${f/ */}")
-        [[ \$1 = csec ]] && printf \"%d\" ${4:-0} || {
+        [[ \$1 = csec ]] && printf \"%d\" ${5:-0} || {
         [[ \$1 = preq ]] && printf \"%s\n\" \"\${_d_[@]}\" || {
             fnapi_allows_flock \$_f_ && { {
+            pushd \"${4:-.}\" &> /dev/null && \\
             $(_for_each $2 printf "%s && \\\\\n")
-            : || ! :
+            popd &> /dev/null || ! :
         } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$_f_.inpr/output.log && fnapi_relock progress/\$_f_ pass \\
             || fnapi_relock progress/\$_f_ fail; }; }; }; }" &> /dev/null \
             || { _emsg "${FUNCNAME}: could not generate _fnp_*: $1"; unset -f $1; }

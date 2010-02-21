@@ -939,15 +939,16 @@ function __odsel_ddepprep_p() {
 #       allocated uuid - named folder within utilspace.
 # @ptip $1 Resource identifier (<name>:<version>) of the compressed resource.
 # @ptip $2 The hash identifier of the pool containing the resource we want.
+# @ptip $3 Specifying a particular uuid / identifier to use in utilspace (optional)
 #;
 function odsel_sppx() {
-    local a=$(_uuidg) x="$1" y z="${2:-$(odsel_gph prime)}"
+    local x="$1" y z="${2:-$(odsel_gph prime)}" a="${3:-$(_uuidg)}"
     local b="__pool_relay_$z[$_PATCHES]"
     ODSEL_SSPXU=
     _omsg "$(_emph sppx): $1 -> $a: ..."
     odsel_uspaceinit "$a" \
         && odsel_extpli "pristine/$1" "${I9KG_UTILSPACE[$LOCATION]}/$a/source" "$z" \
-        || _emsg "${FUNCNAME}: could not prepare resource: ff $1"
+        || _emsg "${FUNCNAME}: could not prepare resource: $1"
     ((${#SHELLAPI_ERROR[@]})) && {
         rm -rf "${I9KG_UTILSPACE[$_LOCATION]}/$a"
         return 1
@@ -968,7 +969,7 @@ function odsel_sppx() {
 # @note An anonymous callback sequencing experiment.
 #;
 function __odsel_cbkdeploy() {
-    local v x y
+    local v x y n=()
     __odsel_ddepprep_p "$1" && {
         v=($(__fnapi_deploy_schedule_p ODSEL_DDEPS \
                 || { _for_each SHELLAPI_ERROR _fail; return 1; })) || _fatal
@@ -1513,7 +1514,7 @@ function odsel_dcbk() {
 # @ptip $2  Callback name (optional).
 #;
 function odsel_getcbk() {
-    local x=($(_odsel_i9kg_header "$1")) y= z= d= g= f=() a= n= h=()
+    local x=($(_odsel_i9kg_header "$1")) y= z= d= g= f=() a= n= h=() m=$(_uuidg)
     ODSEL_CBKDEP=()
     i9kgoo_load "$1" \
         && y="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "rpli" "${x[2]}")]" \
@@ -1524,7 +1525,7 @@ function odsel_getcbk() {
             for d in ${!y}; do
                 g=${x[1]}_${d//[:.]/_}
                 _isfunction _get_$g \
-                    || eval "_get_$g() { odsel_sppx $d ${x[3]}; }"
+                    || eval "_get_$g() { odsel_sppx $d ${x[3]} $m; }"
                 h+=(_get_$g)
             done
             for d in $z; do
@@ -1533,7 +1534,7 @@ function odsel_getcbk() {
                 done< <(d="__i9kg_rcache_${x[2]}[$d]"; printf "%s\n" "${!d}")
             done
             _isfunction $n || {
-                fnapi_fnp_write $n f h
+                fnapi_fnp_write $n f h "${I9KG_UTILSPACE[$LOCATION]}/$m/source"
                 eval "$n=\"${x[0]}[${x[1]}]://${x[4]}\""
             }
         } || {
