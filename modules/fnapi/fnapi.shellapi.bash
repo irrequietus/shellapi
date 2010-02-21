@@ -240,6 +240,7 @@ function fnapi_fnp_write() {
     ! _isfunction "$1" && {
         eval "$1(){ local _d_=($(_for_each $3 printf "%s\n"))
         local _f_=$(f=$(_for_each $2 printf "%s\n" | ${FNAPI_CHECKSUM}); printf "${f/ */}")
+        [[ \$1 = path ]] && printf \"%s\n\" \"${4:-.}\" || {
         [[ \$1 = csec ]] && printf \"%d\" ${5:-0} || {
         [[ \$1 = preq ]] && printf \"%s\n\" \"\${_d_[@]}\" || {
             fnapi_allows_flock \$_f_ && { {
@@ -247,7 +248,7 @@ function fnapi_fnp_write() {
             $(_for_each $2 printf "%s && \\\\\n")
             popd &> /dev/null || ! :
         } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$_f_.inpr/output.log && fnapi_relock progress/\$_f_ pass \\
-            || fnapi_relock progress/\$_f_ fail; }; }; }; }" &> /dev/null \
+            || fnapi_relock progress/\$_f_ fail; }; }; }; }; }" &> /dev/null \
             || { _emsg "${FUNCNAME}: could not generate _fnp_*: $1"; unset -f $1; }
     } || _emsg "${FUNCNAME}: function already defined: $1"
     ! ((${#SHELLAPI_ERROR[@]}))
