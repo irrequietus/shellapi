@@ -540,7 +540,7 @@ function fnapi_gencascade() {
 #;
 function __fnapi_schedule_p() {
     eval "local g=(\"\${$1[@]}\")"
-    local a x r y i j p=() g1=() g2=() k=0
+    local a= x= r= y= j= s= g1=() g2=()
     ODSEL_FNSCHEDULE=()
     for x in ${!g[@]}; do
         a=(${g[$x]#*[[:space:]]})
@@ -555,40 +555,40 @@ function __fnapi_schedule_p() {
             g1[_fl_$y]="$y"
         done
     done
-    r=${#g1[*]}
-    a=0
-    while ((s=${#g1[@]})) && (($((a++))<r)); do
-        for x in ${!g1[@]}; do
-            [[ -z ${g2[$x]} ]] && {
-                p+=("${g1[$x]}")
-                unset -v _fl_${g1[$x]} g1[$x] g2[$x]
-            } || {
-                y=(${g2[$x]})
-                for i in ${!y[@]}; do
-                    for j in ${!p[@]}; do
-                        [[ ${p[$j]} = ${y[$i]} ]] \
-                            && unset y[$i]
-                    done
-                done
-                g2[$x]="${y[@]}"
-            }
-        done
-        ((s!=${#g1[@]})) && {
-            ODSEL_FNSCHEDULE+=("${p[@]:k}")
-            k=${#p[*]}
+    r=${#g1[@]}
+    for x in ${!g1[@]}; do
+        [[ -z ${g2[$x]} ]] && {
+            s+=("${g1[$x]}")
+            unset -v _fl_${g1[$x]} g1[$x]
         }
     done
-    ((${#g1[@]})) && ODSEL_FNSCHEDULE+=(${g1[*]})
-    ((a<r)) || {
-            g1=(${g1[*]})
-            _emsg "${FUNCNAME}: a cyclic event sequence has been detected"
-            _emsg "${FUNCNAME}: cycle seems to start from: ${g1[0]}"
-            _emsg "${FUNCNAME}: would have cycled at  : $((r-${#g1[*]}))/$r in sequence"
-            return 1
+    while ((${#s[@]})) ; do
+        j=${s[${#s[@]}-1]}
+        unset -v s[${#s[@]}-1]
+        ODSEL_FNSCHEDULE+=($j)
+        for x in ${!g1[@]}; do
+            y=(${g2[$x]})
+            for i in ${!y[@]}; do
+                [[ ${y[i]} = $j ]] \
+                    && unset -v y[i]
+            done
+            ((${#y[@]})) && g2[$x]="${y[@]}" || {
+                s+=(${g1[$x]})
+                unset -v _fl_${g1[$x]} g1[$x] g2[$x]
+            }
+        done
+    done
+    ((${#g1[@]})) && {
+        g1=(${g1[*]})
+        _emsg   "${FUNCNAME}(): a cyclic event sequence has been detected" \
+                "* : cycle seems to start from: ${g1[0]}" \
+                "* : would have cycled at  : $((r-${#g1[*]}))/$r in sequence"
+        return 1
     }
     [[ -z $2 ]] \
         || eval "$2=(\"\${ODSEL_FNSCHEDULE[@]}\"); ODSEL_FNSCHEDULE=()"
 }
+
 
 #;
 # @desc A deploy function for the schedule produced by __fnapi_schedule_p()
