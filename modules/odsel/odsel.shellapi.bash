@@ -25,6 +25,7 @@ function odsel_init() {
     ODSEL_TARGUESS=()
     ODSEL_DGET="wget -c"
     ODSEL_XMLA=()
+    ODSEL_EXPTSH=()
     ODSEL_RXP=(
         [0]="^[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\
 ((\[[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\])|([[:space:]]*))"
@@ -185,7 +186,7 @@ function odsel_vsi() {
                 || { _emsg "${FUNCNAME}: wrong syntax!"; return 1; }
             n="_fnop_${BASH_REMATCH[1]}"
             _isfunction $n && {
-                ($n || { _for_each SHELLAPI_ERROR _fail; return 1; } ) \
+                (odsel_exptsh_apply; $n || { _for_each SHELLAPI_ERROR _fail; return 1; } ) \
                     || { _emsg "${FUNCNAME}: callback failure"; return 1; }
             } || {
                 ! [[ -z ${!n} ]] && {
@@ -978,6 +979,16 @@ function odsel_sppx() {
 }
 
 #;
+# @desc Apply the various exports with shell qualifiers
+#;
+function odsel_exptsh_apply() {
+    local x=
+    for x in ${!ODSEL_EXPTSH[@]}; do
+        eval "export ${ODSEL_EXPTSH[x]}"
+    done
+}
+
+#;
 # @desc An anonymous callback deploy function that can deploy callbacks while respecting
 #       their actual dependencies.
 # @ptip $1  Anonymous callbacks with ; separation
@@ -996,7 +1007,7 @@ function __odsel_cbkdeploy() {
             _omsg "$(_emph preq): ${!x}"
             (($3)) && continue
             for y in $($x preq); do
-                ($y || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
+                (odsel_exptsh_apply; $y || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
                     _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
                           "* ..."
                     unset -v ODSEL_DDEPS ODSEL_CBKDEP ODSEL_SSPXU
@@ -1004,7 +1015,7 @@ function __odsel_cbkdeploy() {
                 }
             done
             _omsg "$(_emph runf): () => ${!x}"
-            ($x || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
+            (odsel_exptsh_apply; $x || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
                 _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
                       "* ${!x}"
                 break
@@ -1285,10 +1296,11 @@ function odsel_export() {
         for i in ${!SPLIT_STRING[@]}; do
             [[ ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\"([^\"]*)\"
             || ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
-                eval "[[ -z \$${BASH_REMATCH[1]} ]] \
-                        && ${BASH_REMATCH[1]}=\"${BASH_REMATCH[2]}\" \
-                        || { _emsg \"${FUNCNAME}(): variable already set: ${BASH_REMATCH[1]}\"; return 1; }";
+                ! ((_expt_${BASH_REMATCH[1]})) \
+                        && ODSEL_EXPTSH+=("${BASH_REMATCH[1]}=\"${BASH_REMATCH[2]}\"") \
+                        || { _emsg "${FUNCNAME}(): variable already set: ${BASH_REMATCH[1]}"; return 1; };
                 _omsg "$(_emph expt): ${BASH_REMATCH[1]} -> ${BASH_REMATCH[2]}"
+                ((_expt_${BASH_REMATCH[1]}=1))
             }
         done
         return 0
