@@ -113,8 +113,8 @@ function odsel_vsi() {
                                             }
                                         }
                                     }
-                                elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>[[:space:]]*\{(.*)\} ]]; then
-                                    local nm="${BASH_REMATCH[1]}" o="${BASH_REMATCH[2]}" t= l=
+                                elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*(=\>|=\>\>)[[:space:]]*\{(.*)\} ]]; then
+                                    local nm="${BASH_REMATCH[1]}" o="${BASH_REMATCH[3]}" t= l= k=$((${#BASH_REMATCH[2]} == 3))
                                     _omsg "$(_emph dcbk): callback list detected for: ${BASH_REMATCH[1]}()"
                                     while [[ $o =~ (\][[:space:]]*,) ]]; do
                                         l="${o/"${BASH_REMATCH[1]}"*/}]:code;"
@@ -125,7 +125,7 @@ function odsel_vsi() {
                                     l="$o:code;"
                                     t+="$l"
                                     odsel_getcbk "$l" \
-                                        && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\"; }"
+                                        && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\" $k; }"
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>(.*) ]]; then
                                     _omsg "$(_emph dcbk): callback: ${BASH_REMATCH[1]}()"
                                     odsel_dcbk "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" \
@@ -972,13 +972,16 @@ function odsel_sppx() {
 # @desc An anonymous callback deploy function that can deploy callbacks while respecting
 #       their actual dependencies.
 # @ptip $1  Anonymous callbacks with ; separation
+# @ptip $2  Use with deps or not, stick to strict partial order.
 # @note An anonymous callback sequencing experiment.
 #;
 function __odsel_cbkdeploy() {
     local v= x= y= z= n=()
     __odsel_ddepprep_p "$1" && {
-        v=($(__fnapi_deploy_schedule_p ODSEL_DDEPS \
+        (($2)) && {
+            v=($(__fnapi_deploy_schedule_p ODSEL_DDEPS \
                 || { _for_each SHELLAPI_ERROR _fail; return 1; })) || _fatal
+        } || v=(_void ${ODSEL_DDEPS[@]/%[[:space:]]*/})
         for x in ${v[@]:1}; do
             _omsg "$(_emph preq): ${!x}"
             for y in $($x preq); do
