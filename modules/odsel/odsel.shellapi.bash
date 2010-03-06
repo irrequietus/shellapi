@@ -43,7 +43,7 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "=")]="as0"
     ODSEL_OPRT[$(_opsolve ":=")]="as1"
     ODSEL_OPRT[$(_opsolve "::=")]="as2"
-    _wexp_this odsel_vdef odsel_import odsel_fsi
+    _wexp_this odsel_vdef odsel_import
 }
 
 #;
@@ -223,7 +223,7 @@ function odsel_i9kgfsel() {
 # @desc An odsel file interpreter
 # @ptip $1  full path to odsel file to interpret
 #;
-function __odsel_fsi_p() {
+function odsel_fsi() {
     ! [[ -z $1 ]] && {
         [[ -e $1 ]] && {
             odsel_vsi "$(< "$1")" \
