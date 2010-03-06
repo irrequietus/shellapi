@@ -114,16 +114,15 @@ function odsel_vsi() {
                                         }
                                     }
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*(=\>|=\>\>)[[:space:]]*\{(.*)\} ]]; then
-                                    local nm="${BASH_REMATCH[1]}" o="${BASH_REMATCH[3]}" t= l= k=$((${#BASH_REMATCH[2]} == 3))
+                                    local   nm="${BASH_REMATCH[1]}" o="${BASH_REMATCH[3]}" \
+                                            t= l= k=$((${#BASH_REMATCH[2]} == 3))
                                     _omsg "$(_emph dcbk): callback list detected for: ${BASH_REMATCH[1]}()"
                                     while [[ $o =~ (\][[:space:]]*,) ]]; do
-                                        l="${o/"${BASH_REMATCH[1]}"*/}]:code;"
-                                        t+="$l"
+                                        l="${o/"${BASH_REMATCH[1]}"*/}]:code;"; t+="$l"
                                         o="${o#*${BASH_REMATCH[1]}}"
                                         odsel_getcbk "$l" || return 1
                                     done
-                                    l="$o:code;"
-                                    t+="$l"
+                                    l="$o:code;"; t+="$l"
                                     odsel_getcbk "$l" \
                                         && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\" $k; }"
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>(.*) ]]; then
@@ -973,6 +972,7 @@ function odsel_sppx() {
 #       their actual dependencies.
 # @ptip $1  Anonymous callbacks with ; separation
 # @ptip $2  Use with deps or not, stick to strict partial order.
+# @ptip $3  Fake run flag (1 = true, 0 = false)
 # @note An anonymous callback sequencing experiment.
 #;
 function __odsel_cbkdeploy() {
@@ -984,6 +984,7 @@ function __odsel_cbkdeploy() {
         } || v=(_void ${ODSEL_DDEPS[@]/%[[:space:]]*/})
         for x in ${v[@]:1}; do
             _omsg "$(_emph preq): ${!x}"
+            (($3)) && continue
             for y in $($x preq); do
                 ($y || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
                     _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
