@@ -76,7 +76,7 @@ function odsel_vsi() {
     for((x=0;x<${#i[@]};x++)); do
         y="${i[$x]}"
         [[ -z ${y//[[:space:]]/} ]] && continue
-        if [[ $y =~ ^[[:space:]]*(\?|:|@|newc|delc|load|del|new|sim|def|import|export|unit|init|switch)[[:space:]]*(.*) ]]; then
+        if [[ $y =~ ^[[:space:]]*(\?|:|@|newc|delc|load|del|new|sim|def|import|export|unit|init|switch|flush)[[:space:]]*(.*) ]]; then
             case "${BASH_REMATCH[1]}" in
                 init|unit)
                     _omsg "$(_emph ${BASH_REMATCH[1]}): ${i[$x]}"
@@ -156,6 +156,10 @@ function odsel_vsi() {
                                 _omsg "$(_emph rpli): ${BASH_REMATCH[2]}"
                                 ;;
                     esac
+                    ;;
+                flush)
+                    _omsg "$(_emph flsh): cleaning up fail flags"
+                    fnapi_flush
                     ;;
                 @)
                     _omsg "$(_emph rpli): ${BASH_REMATCH[1]:1}${BASH_REMATCH[2]}"
