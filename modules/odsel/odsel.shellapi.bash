@@ -43,7 +43,7 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "=")]="as0"
     ODSEL_OPRT[$(_opsolve ":=")]="as1"
     ODSEL_OPRT[$(_opsolve "::=")]="as2"
-    _wexp_this odsel_vdef odsel_import odsel_export odsel_fsi
+    _wexp_this odsel_vdef odsel_import odsel_fsi
 }
 
 #;
@@ -166,6 +166,9 @@ function odsel_vsi() {
                 flush)
                     _omsg "$(_emph flsh): cleaning up fail flags"
                     fnapi_flush
+                    ;;
+                export|import)
+                    odsel_${BASH_REMATCH[1]} "${BASH_REMATCH[2]}"
                     ;;
                 @)
                     _omsg "$(_emph rpli): ${BASH_REMATCH[1]:1}${BASH_REMATCH[2]}"
@@ -1273,7 +1276,7 @@ function odsel_ispool() {
 #           double or single quoted.
 # @note Will fail if already set.
 #;
-function __odsel_export_p() {
+function odsel_export() {
     _qsplit "$1" && {
         local i=
         [[ ${SPLIT_STRING[0]} == \[\$\]:* ]] \
@@ -1285,6 +1288,7 @@ function __odsel_export_p() {
                 eval "[[ -z \$${BASH_REMATCH[1]} ]] \
                         && ${BASH_REMATCH[1]}=\"${BASH_REMATCH[2]}\" \
                         || { _emsg \"${FUNCNAME}(): variable already set: ${BASH_REMATCH[1]}\"; return 1; }";
+                _omsg "$(_emph expt): ${BASH_REMATCH[1]} -> ${BASH_REMATCH[2]}"
             }
         done
         return 0
