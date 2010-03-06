@@ -76,8 +76,15 @@ function odsel_vsi() {
     for((x=0;x<${#i[@]};x++)); do
         y="${i[$x]}"
         [[ -z ${y//[[:space:]]/} ]] && continue
-        if [[ $y =~ ^[[:space:]]*(\?|:|@|newc|delc|load|del|new|sim|def|import|export|unit|init|switch|flush)[[:space:]]*(.*) ]]; then
+        if [[ $y =~ ^[[:space:]]*(\?|:|@|\[\$\]:|newc|delc|load|del|new|sim|def|import|export|unit|init|switch|flush)[[:space:]]*(.*) ]]; then
             case "${BASH_REMATCH[1]}" in
+                \[\$\]:)
+                    n="${BASH_REMATCH[2]}"
+                    while [[ $n =~ ^\"([^\"]*)\" || $n =~ ^\'([^\']*)\' ]]; do
+                        _omsg "$(_emph \$): ${BASH_REMATCH[1]}"
+                        n="${n#*${BASH_REMATCH[1]}?}"
+                    done
+                ;;
                 init|unit)
                     _omsg "$(_emph ${BASH_REMATCH[1]}): ${i[$x]}"
                 ;;
