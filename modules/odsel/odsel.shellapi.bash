@@ -860,7 +860,6 @@ function odsel_extpli() {
         && x="${!z}/${POOL_ITEM[$_ENTRY]##*/}" \
         || { _emsg "${FUNCNAME}: could not find resource: ${1##*/}"; return 1; }
     [[ -e $x ]] && _cfx "$x" ${POOL_ITEM[$_CHECKSUM]} || {
-        SHELLAPI_ERROR=()
         odsel_getfn "$1" $h || {
             _emsg "${FUNCNAME}: could not export resource: ${1##*/}"
             return 1
@@ -891,11 +890,14 @@ function odsel_extpli() {
 #       grammar must also be removed.
 #;
 function __odsel_ddepexp_p() {
-    local x= y= z=()
+    local x= y= f= z=()
     odsel_getcbk "$1" && {
         x="${1%@*}]"
         x="${x//[\{\}[:space:]]/}"
         y="${x//[:\/.\]\[]/_}"
+        f="${1//[[:space:]]/}"
+        x="${f%:*}"
+        y=_fnoph_$(_hsos "${f}")
         ((${#ODSEL_CBKDEP[@]})) && {
             ((_cp_$y)) || {
                 ((_cp_$y=1))
@@ -969,7 +971,7 @@ function odsel_sppx() {
 # @note An anonymous callback sequencing experiment.
 #;
 function __odsel_cbkdeploy() {
-    local v x y n=()
+    local v= x= y= z= n=()
     __odsel_ddepprep_p "$1" && {
         v=($(__fnapi_deploy_schedule_p ODSEL_DDEPS \
                 || { _for_each SHELLAPI_ERROR _fail; return 1; })) || _fatal
@@ -1157,7 +1159,7 @@ function _odsel_i9kg_header() {
             && a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]:-prime}") \
             || a=("${a/:*/}" "prime")
     a[2]="$(_hsos "${a[0]}[${a[1]}]")"
-    printf "%s\n" "${a[@]} $(odsel_gph "${a[1]}") $v"
+    printf "%s\n" "${a[@]} $(odsel_gph "${a[1]}") $v $(_hsos "${1//[[:space:]]/}")"
 }
 
 #;
@@ -1520,13 +1522,13 @@ function odsel_getcbk() {
         && y="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "rpli" "${x[2]}")]" \
         && a="__i9kg_rcache_${x[2]}[$(odsel_depquery "${x[4]}" "dbld" "${x[2]}")]" \
         && z="$(__odsel_i9kgi_p "$1;" "${x[2]}")" && {
-            n="${2:-${x[0]}_${x[1]}____${x[4]//[\].\[]/_}}"
-            for d in ${!a}; do ODSEL_CBKDEP+=("${d/:*/}[${x[1]}]://${x[4]/[*/}[${d#*:}]"); done
+            n="${2:-_fnoph_${x[5]}}"
+            for d in ${!a}; do ODSEL_CBKDEP+=("_fnoph_${x[5]}"); done
             for d in ${!y}; do
-                g=${x[1]}_${d//[:.]/_}
-                _isfunction _get_$g \
-                    || eval "_get_$g() { odsel_sppx $d ${x[3]} $m; }"
-                h+=(_get_$g)
+                g=${x[5]}
+                _isfunction _get_${x[5]} \
+                    || eval "_get_${x[5]}() { odsel_sppx $d ${x[3]} $m; }"
+                h+=(_get_${x[5]})
             done
             for d in $z; do
                 while read -r d; do
@@ -1535,7 +1537,7 @@ function odsel_getcbk() {
             done
             _isfunction $n || {
                 fnapi_fnp_write $n f h "${I9KG_UTILSPACE[$LOCATION]}/$m/source"
-                eval "$n=\"${x[0]}[${x[1]}]://${x[4]}\""
+                eval "$n=\"${1//[[:space:]]/}\""
             }
         } || {
             y=$?
