@@ -1268,12 +1268,25 @@ function odsel_ispool() {
 }
 
 #;
-# @desc A keyword reserve for "export" functionality
+# @desc Exporting globals for shell use (currently)
+# @ptip $1  shell classifier ([$]:) followed by comma separated list of l = "r" assignments,
+#           double or single quoted.
+# @note Will fail if already set.
 #;
 function __odsel_export_p() {
     _qsplit "$1" && {
-        local i=("${SPLIT_STRING[@]}")
-        _omsg "${FUNCNAME}: $(_emph "reserved :: ${#i[@]}")"
+        local i=
+        [[ ${SPLIT_STRING[0]} == \[\$\]:* ]] \
+            && SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}" \
+            || { _emsg "${FUNCNAME}(): only shell classifiers supported"; return 1; }
+        for i in ${!SPLIT_STRING[@]}; do
+            [[ ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\"([^\"]*)\"
+            || ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
+                eval "[[ -z \$${BASH_REMATCH[1]} ]] \
+                        && ${BASH_REMATCH[1]}=\"${BASH_REMATCH[2]}\" \
+                        || { _emsg \"${FUNCNAME}(): variable already set: ${BASH_REMATCH[1]}\"; return 1; }";
+            }
+        done
         return 0
     }
     return 1
