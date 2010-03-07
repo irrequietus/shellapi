@@ -121,9 +121,12 @@ function odsel_vsi() {
                                             }
                                         }
                                     }
-                                elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*(=\>|=\>\>)[[:space:]]*\{(.*)\} ]]; then
+                                elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*(=\>|=\>\>|~\>|~\>\>)[[:space:]]*\{(.*)\} ]]; then
                                     local   nm="${BASH_REMATCH[1]}" o="${BASH_REMATCH[3]}" \
-                                            t= l= k=$((${#BASH_REMATCH[2]} == 3))
+                                            t= l= k=$((${#BASH_REMATCH[2]} == 3)) ff=0
+                                    [[ ${BASH_REMATCH[2]} == ~* ]] && {
+                                        _omsg "$(_emph fake): $(_emph "${BASH_REMATCH[2]}"): ${nm}()"; ff=1
+                                    }
                                     _omsg "$(_emph dcbk): callback list detected for: ${BASH_REMATCH[1]}()"
                                     while [[ $o =~ (\][[:space:]]*,) ]]; do
                                         l="${o/"${BASH_REMATCH[1]}"*/}]:code;"; t+="$l"
@@ -132,7 +135,7 @@ function odsel_vsi() {
                                     done
                                     l="$o:code;"; t+="$l"
                                     odsel_getcbk "$l" \
-                                        && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\" $k; }"
+                                        && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\" $k $ff; }"
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>(.*) ]]; then
                                     _omsg "$(_emph dcbk): callback: ${BASH_REMATCH[1]}()"
                                     odsel_dcbk "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" \
