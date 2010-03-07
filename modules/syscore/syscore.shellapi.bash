@@ -773,6 +773,22 @@ function _cfx() {
 }
 
 #;
+# @desc Escape character normalizer, for use during caching
+# @ptip $1  Escape - containing string
+#;
+function _escx() {
+    local x="$1" y=
+    while [[ $x =~ (\\\"|\"|\\\'|\'|\\\$|\$|\\\`|\`) ]]; do
+        y+="${x/${BASH_REMATCH[1]}*/}"
+        ((${#BASH_REMATCH[1]} - 1)) \
+            && y+="\\\\${BASH_REMATCH[1]:1}" \
+            || y+="\\${BASH_REMATCH[1]}"
+        x="${x#*${BASH_REMATCH[1]}}"
+    done
+    printf "%s\n" "$y$x"
+}
+
+#;
 # @desc Shorten long strings before print and add dots if necessary...
 # @ptip $1  string to shorten
 #;

@@ -353,14 +353,10 @@ function odsel_xmla() {
                 [[ $l == \</code\> ]] \
                     && k+=("c$p") \
                     || k+=("t$p")
-                x="${y[$v]//\$/\\\$}"
-                x="${x//\`/\\\`}"
-                r[$p]="${x//\"/\\\"}"
+                r[$p]="$(_escx "${y[$v]}")"
                 ((v++))
                 for((;v<$q;v++)); do
-                    x="${y[$v]//\$/\\\$}"
-                    x="${x//\`/\\\`}"
-                    r[$p]="${r[$p]}$(printf "\n%s" "${x//\"/\\\"}")"
+                    r[$p]="${r[$p]}$(printf "\n%s" "$(_escx "${y[$v]}")")"
                 done
                 ;;
             \<action\ *)
@@ -1576,7 +1572,7 @@ function odsel_getcbk() {
             done
             for d in $z; do
                 while read -r d; do
-                    f+=("$d")
+                    f+=("${d}")
                 done< <(d="__i9kg_rcache_${x[2]}[$d]"; printf "%s\n" "${!d}")
             done
             _isfunction $n || {
