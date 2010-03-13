@@ -44,7 +44,7 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "=")]="as0"
     ODSEL_OPRT[$(_opsolve ":=")]="as1"
     ODSEL_OPRT[$(_opsolve "::=")]="as2"
-    _wexp_this odsel_vdef odsel_import
+    _wexp_this odsel_vdef
 }
 
 #;
@@ -1289,19 +1289,29 @@ function odsel_ispool() {
 function odsel_export() {
     _qsplit "$1" && {
         local i=
-        [[ ${SPLIT_STRING[0]} == \[\$\]:* ]] \
-            && SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}" \
-            || { _emsg "${FUNCNAME}(): only shell classifiers supported"; return 1; }
-        for i in ${!SPLIT_STRING[@]}; do
-            [[ ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\"([^\"]*)\"
-            || ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
-                ! ((_expt_${BASH_REMATCH[1]})) \
-                        && ODSEL_EXPTSH+=("${BASH_REMATCH[1]}=\"${BASH_REMATCH[2]}\"") \
-                        || { _emsg "${FUNCNAME}(): variable already set: ${BASH_REMATCH[1]}"; return 1; };
-                _omsg "$(_emph expt): ${BASH_REMATCH[1]} -> ${BASH_REMATCH[2]}"
-                ((_expt_${BASH_REMATCH[1]}=1))
-            }
-        done
+        case "${SPLIT_STRING[0]}" in
+            \[\$\]:*)
+                SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}"
+                for i in ${!SPLIT_STRING[@]}; do
+                    [[ ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\"([^\"]*)\"
+                    || ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
+                        ! ((_expt_${BASH_REMATCH[1]})) \
+                                && ODSEL_EXPTSH+=("${BASH_REMATCH[1]}=\"${BASH_REMATCH[2]}\"") \
+                                || { _emsg "${FUNCNAME}(): variable already set: ${BASH_REMATCH[1]}"; return 1; };
+                        _omsg "$(_emph expt): ${BASH_REMATCH[1]} -> ${BASH_REMATCH[2]}"
+                        ((_expt_${BASH_REMATCH[1]}=1))
+                    }
+                done
+                ;;
+            \[\*\]:*)   SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}"
+                for i in ${!SPLIT_STRING[@]}; do
+                    [[ ${SPLIT_STRING[i]} =~ ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*=\>[[:space:]]*\"([^\"]*)\"
+                    || ${SPLIT_STRING[i]} =~ ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*=\>[[:space:]]*\'([^\']*)\' ]] && {
+                        _omsg "$(_emph expt): exporting ${BASH_REMATCH[1]} to ${BASH_REMATCH[2]}"
+                    }
+                done
+            ;;
+        esac
         return 0
     }
     return 1
@@ -1310,10 +1320,33 @@ function odsel_export() {
 #;
 # @desc A keyword reserve for "import" functionality
 #;
-function __odsel_import_p() {
+function odsel_import() {
     _qsplit "$1" && {
-        local i=("${SPLIT_STRING[@]}")
-        _omsg "${FUNCNAME}: $(_emph "reserved :: ${#i[@]}")"
+        local i=
+        case "${SPLIT_STRING[0]}" in
+            \[\$\]:*)
+                SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}"
+                for i in ${!SPLIT_STRING[@]}; do
+                    [[ ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\"([^\"]*)\"
+                    || ${SPLIT_STRING[i]} =~ ^[[:space:]]*([[:alnum:]_]*)[[:space:]]*=[[:space:]]*\'([^\']*)\' ]] && {
+                        ! ((_expt_${BASH_REMATCH[1]})) \
+                                && ODSEL_EXPTSH+=("${BASH_REMATCH[1]}=\"${BASH_REMATCH[2]}\"") \
+                                || { _emsg "${FUNCNAME}(): variable already set: ${BASH_REMATCH[1]}"; return 1; };
+                        _omsg "$(_emph expt): ${BASH_REMATCH[1]} -> ${BASH_REMATCH[2]}"
+                        ((_expt_${BASH_REMATCH[1]}=1))
+                    }
+                done
+                ;;
+            \[\*\]:*)
+                SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}"
+                for i in ${!SPLIT_STRING[@]}; do
+                    [[ ${SPLIT_STRING[i]} =~ ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*\<=[[:space:]]*\"([^\"]*)\"
+                    || ${SPLIT_STRING[i]} =~ ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*\<=[[:space:]]*\'([^\']*)\' ]] && {
+                        _omsg "$(_emph impt): importing ${BASH_REMATCH[1]} from ${BASH_REMATCH[2]}"
+                    }
+                done
+            ;;
+        esac
         return 0
     }
     return 1
