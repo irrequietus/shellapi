@@ -1284,11 +1284,11 @@ function odsel_ispool() {
 # @desc Exporting globals for shell use (currently)
 # @ptip $1  shell classifier ([$]:) followed by comma separated list of l = "r" assignments,
 #           double or single quoted.
-# @note Will fail if already set.
+# @note Will fail if already set. This is a "seeming" copy.
 #;
 function odsel_export() {
     _qsplit "$1" && {
-        local i=
+        local i= x= y= z=
         case "${SPLIT_STRING[0]}" in
             \[\$\]:*)
                 SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}"
@@ -1303,11 +1303,28 @@ function odsel_export() {
                     }
                 done
                 ;;
-            \[\*\]:*)   SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}"
-                for i in ${!SPLIT_STRING[@]}; do
-                    [[ ${SPLIT_STRING[i]} =~ ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*=\>[[:space:]]*\"([^\"]*)\"
-                    || ${SPLIT_STRING[i]} =~ ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*=\>[[:space:]]*\'([^\']*)\' ]] && {
+            \[\*\]:*)
+                SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}"
+                local fx=("${SPLIT_STRING[@]}") n=()
+                for i in ${!fx[@]}; do
+                    [[ ${fx[i]} =~ ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*=\>[[:space:]]*\"([^\"]*)\"
+                    || ${fx[i]} =~ ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*=\>[[:space:]]*\'([^\']*)\' ]] && {
                         _omsg "$(_emph expt): exporting ${BASH_REMATCH[1]} to ${BASH_REMATCH[2]}"
+                        x="$(_ifnot_jpath "${BASH_REMATCH[1]}" "${I9KG_POOLSPACE}")"
+                        y="${BASH_REMATCH[2]}"
+                        odsel_load "${BASH_REMATCH[1]}"
+                        x=__pool_relay_$(odsel_gph ${BASH_REMATCH[1]})
+                        for i in ${I9KG_ALIASES[@]/R??[ID]/}; do
+                            z="$y${I9KG_PRIME[_$i]##*/prime}"
+                            n[_$i]="$z"
+                            i="$x[\$_$i]"
+                            mkdir -p "$z"
+                        done
+                        for z in _I9KG_SEEDS_XML _PATCHES _EZCONFIG _METABASE; do
+                            i="$x[${!z}]"
+                            ! [ -z "$(ls -A "${!i}"/)" ] \
+                                && cp -ax "${!i}"/* "${n[${!z}]}"
+                        done
                     }
                 done
             ;;
