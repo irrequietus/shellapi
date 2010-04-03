@@ -82,12 +82,14 @@ for odsel itself are to follow. Callbacks (as well as functions) can be defined 
 or non - nested definitions in odsel expressions; odsel_vsi() is the shellapi function that
 is the current GNU Bash - implementation for odsel.
 
-Check commit 955562675d27a7db4d5f115a4f7fc3844c9e61ca for some of the details related to
-callback / function generation at the official git repository for the shellapi:
-
-http://gitorious.org/odreex/shellapi.
-
 This is still something *experimental*.
+
+repositories:
+  git://gitorious.org/odreex/shellapi.git   ( up to April 3rd 2010 )
+  git://github.com/gmakrydakis/shellapi.git ( test mirror as of April 3rd 2010 )
+
+I am in the process of moving and shaping up the project a bit. Contact me if there
+is anything that you need or cannot explain.
 
 4. Final remarks
 ================
