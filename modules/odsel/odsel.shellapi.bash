@@ -77,7 +77,7 @@ function odsel_vsi() {
     for((x=0;x<${#i[@]};x++)); do
         y="${i[$x]}"
         [[ -z ${y//[[:space:]]/} ]] && continue
-        if [[ $y =~ ^[[:space:]]*(\?|:|@|\[\$\]:|newc|delc|load|del|new|sim|def|import|export|unit|init|switch|flush)[[:space:]]*(.*) ]]; then
+        if [[ $y =~ ^[[:space:]]*(\?|:|@|\[\$\]:|newc|delc|load|del|new|sim|def|import|export|unit|init|switch|flush|asu)[[:space:]]*(.*) ]]; then
             case "${BASH_REMATCH[1]}" in
                 \[\$\]:)
                     n="${BASH_REMATCH[2]}"
@@ -1069,6 +1069,27 @@ function _odsel_pm() {
     [[ -z $y ]] \
         && _wmsg "operation valid but not active yet" \
         || odsel_getfn "$y"
+}
+
+function odsel_asu() {
+    _qsplit "$1" && {
+        local i= x= y= z=
+        case "${SPLIT_STRING[0]}" in
+            \[\?\]:*)
+                SPLIT_STRING[0]="${SPLIT_STRING[0]#*:}"
+                for i in ${!SPLIT_STRING[@]}; do
+                    [[ ${SPLIT_STRING[i]} =~ \
+                        ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*=\>[[:space:]]*([[:alnum:]_]*)\(\) ]] && {
+                        _omsg "$(_emph \*asu): $ $(_emph "${BASH_REMATCH[1]}") ::: ${BASH_REMATCH[2]}"
+                        _omsg "$(_emph "****"): reserved: ${BASH_REMATCH[2]}()"
+                    }
+                done
+                ;;
+            *) _fatal "~ no way ~" ;;
+        esac
+        return 0
+    }
+    return 1
 }
 
 #;
