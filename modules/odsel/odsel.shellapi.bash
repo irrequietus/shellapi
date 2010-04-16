@@ -135,7 +135,7 @@ function odsel_vsi() {
                                     done
                                     l="$o:code;"; t+="$l"
                                     odsel_getcbk "$l" \
-                                        && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\" $k $ff; }"
+                                        && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\" $k $ff \${FUNCNAME}; }"
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>(.*) ]]; then
                                     _omsg "$(_emph dcbk): callback: ${BASH_REMATCH[1]}()"
                                     odsel_dcbk "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" \
@@ -993,19 +993,19 @@ function odsel_exptsh_apply() {
 # @ptip $1  Anonymous callbacks with ; separation
 # @ptip $2  Use with deps or not, stick to strict partial order.
 # @ptip $3  Fake run flag (1 = true, 0 = false)
+# @ptip $4  Rewrite target (optimization pass)
 # @note An anonymous callback sequencing experiment.
 #;
 function __odsel_cbkdeploy() {
-    local v= x= y= z= n=()
+    local v= x= y= z= n=() _clls=()
     __odsel_ddepprep_p "$1" && {
         (($2)) && {
             v=($(__fnapi_deploy_schedule_p ODSEL_DDEPS \
                 || { _for_each SHELLAPI_ERROR _fail; return 1; })) || _fatal
         } || v=(_void ${ODSEL_DDEPS[@]/%[[:space:]]*/})
         for x in ${v[@]:1}; do
-            _omsg "$(_emph preq): ${!x}"
-            (($3)) && continue
             for y in $($x preq); do
+                ! [[ -z $4 ]] && _clls+=("$y") || \
                 (odsel_exptsh_apply; $y || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
                     _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
                           "* ..."
@@ -1013,7 +1013,7 @@ function __odsel_cbkdeploy() {
                     return 1
                 }
             done
-            _omsg "$(_emph runf): () => ${!x}"
+            ! [[ -z $4 ]] && _clls+=("$x") || \
             (odsel_exptsh_apply; $x || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
                 _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
                       "* ${!x}"
@@ -1022,7 +1022,30 @@ function __odsel_cbkdeploy() {
         done
     } || _emsg "${FUNCNAME}: deployment failure"
     unset -v ODSEL_DDEPS ODSEL_CBKDEP ODSEL_SSPXU
+    ((${#_clls[@]})) && {
+        odsel_cbjit $4 _clls
+        (($3)) || $4
+    }
     ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
+# @desc odsel_shjit()
+#;
+function odsel_shjit() {
+    _void;
+}
+
+#;
+# @desc Callback dump, just in time!
+# @note Experimental hook for future shjit development.
+#;
+function odsel_cbjit() {
+    eval "$1(){ (_omsg \"$(_emph cbjit): ${1#*_*_}()\"; odsel_exptsh_apply;
+                $(_for_each $2 printf "%s && ") : \
+                || { _for_each SHELLAPI_ERROR _fail; return 1; })\
+                || _emsg \"\${FUNCNAME}: could not deploy self\"
+                !((\${#SHELLAPI_ERROR[@]})); }"
 }
 
 #;
