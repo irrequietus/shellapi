@@ -41,13 +41,14 @@ function _init() {
     export SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}
     export SHELLAPI_TARGET="${SHELLAPI_TARGET:-"$(pwd)/$(_uuidg)"}"
     export SHELLAPI_LDOT=${SHELLAPI_LDOT:-10}
-    export VERSION_OPERATORS=()
-    export VERSION_OPERATORS[$(_opsolve "<")]="lt"
-    export VERSION_OPERATORS[$(_opsolve ">")]="gt"
-    export VERSION_OPERATORS[$(_opsolve ">=")]="gte"
-    export VERSION_OPERATORS[$(_opsolve "<=")]="lte"
-    export VERSION_OPERATORS[$(_opsolve "!=")]="neq"
-    export VERSION_OPERATORS[$(_opsolve "==")]="eqt"
+    VERSION_OPERATORS=()
+    VERSION_OPERATORS[$(_opsolve "<")]="lt"
+    VERSION_OPERATORS[$(_opsolve ">")]="gt"
+    VERSION_OPERATORS[$(_opsolve ">=")]="gte"
+    VERSION_OPERATORS[$(_opsolve "<=")]="lte"
+    VERSION_OPERATORS[$(_opsolve "!=")]="neq"
+    VERSION_OPERATORS[$(_opsolve "==")]="eqt"
+    export VERSION_OPERATORS
     local l="$SHELLAPI_MODULES_DIR/syscore/locales/syscore.locale.$SHELLAPI_LOCALE.xml"
     local f="$SHELLAPI_MODULES_DIR/syscore/extra/syscore.config.xml"
     [[ -e $l ]] \
@@ -154,7 +155,7 @@ function _xml2bda() {
                     esac
                 }
                 x=${#g[@]}
-                g+=(" $u$n=\"")
+                g+=(" $u export $n=\"")
                 [[ $l == */\> ]] && {
                     g[$x]="${g[$x]}\""
                     z=0
@@ -209,7 +210,7 @@ function _xml2bda() {
                     t1="&&"
                     t2="||"
                 }
-                g+=("export $n=()")
+                g+=("$n=(); export $n;")
                 ;;
             \<index\> | \<index\ *)
                 [[ $l =~ [[:space:]]*name[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
@@ -217,7 +218,7 @@ function _xml2bda() {
                     && i="${BASH_REMATCH[1]}" \
                     || i=
                 [[ -z $i ]] && {
-                    g+=("export  $n[\${#$n[@]}]=\"")
+                    g+=(" $n[\${#$n[@]}]=\"")
                     z=3
                 } || {
                     [[ -z $w ]] || {
@@ -226,8 +227,8 @@ function _xml2bda() {
                             || g+=(" [[ -z \$$p$i ]] $t1 {")
                     }
                     [[ $u == reuse ]] \
-                        && g[$((x=${#g[@]}))]="export $n[\$$p$i]=\"" \
-                        || g[$((x=${#g[@]}))]="export $n[\$(($p$i=\${#$n[@]}))]=\""
+                        && g[$((x=${#g[@]}))]=" $n[\$$p$i]=\"" \
+                        || g[$((x=${#g[@]}))]=" $n[\$(($p$i=\${#$n[@]}))]=\""
                     [[ $l == */\> ]] && {
                         g[$x]="${g[$x]}\""
                         [[ -z $w ]] \
@@ -337,6 +338,7 @@ function __xmlapi_init() {
         "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]+(\[)"
         '^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+"([^"]*)"[[:space:]]*>'
         "^[[:space:]]+([[:alnum:]_-]+)[[:space:]]+(SYSTEM|PUBLIC)[[:space:]]+'([^']*)'[[:space:]]*>")
+    export SHELLAPI_XMLGDF XML_AFTSEQ
 }
 
 #;
@@ -347,6 +349,7 @@ function __xmlapi_preseq() {
     local y= v= s= k= dkt=0 f="$1" x= m=
     SHELLAPI_XML_SGE=() SHELLAPI_XML_MGE=()
     SHELLAPI_XML_SPE=() SHELLAPI_XML_MPE=()
+    export SHELLAPI_XML_SGE SHELLAPI_XML_SPE SHELLAPI_XML_MGE SHELLAPI_XML_MPE
     while [[ $f =~ ^[[:space:]]*(\<!--|\<![A-Z]*|%[[:alnum:]_\-]+\;) ]]; do
         case "${BASH_REMATCH[1]}" in
             %*\;)
