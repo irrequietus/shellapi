@@ -248,7 +248,7 @@ function fnapi_fnp_write() {
             $(_for_each $2 printf "%s && \\\\\n")
             popd &> /dev/null || ! :
         } &> \${I9KG_DEFS[\$_PROGRESS_LOCKS]}/\$_f_.inpr/output.log && fnapi_relock progress/\$_f_ pass \\
-            || fnapi_relock progress/\$_f_ fail; }; }; }; }; }" &> /dev/null \
+            || fnapi_relock progress/\$_f_ fail; }; }; }; }; }" &> /dev/null && export -f $1 \
             || { _emsg "${FUNCNAME}: could not generate _fnp_*: $1"; unset -f $1; }
     } || _emsg "${FUNCNAME}: function already defined: $1"
     ! ((${#SHELLAPI_ERROR[@]}))

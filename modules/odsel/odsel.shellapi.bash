@@ -1104,7 +1104,12 @@ function odsel_asu() {
                     [[ ${SPLIT_STRING[i]} =~ \
                         ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*=\>[[:space:]]*([[:alnum:]_]*)\(\) ]] && {
                         _omsg "$(_emph \*asu): $ $(_emph "${BASH_REMATCH[1]}") ::: ${BASH_REMATCH[2]}"
-                        _omsg "$(_emph "****"): reserved: ${BASH_REMATCH[2]}()"
+                        i="_fnop_${BASH_REMATCH[2]}"
+                        _isfunction $i && (odsel_exptsh_apply; $i) || {
+                            i="$i[*]"
+                            odsel_vsi "${!i}" \
+                                || _emsg "${FUNCNAME}: cascade failure"
+                        }
                     }
                 done
                 ;;
