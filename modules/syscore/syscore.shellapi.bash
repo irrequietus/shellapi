@@ -83,6 +83,18 @@ function _init() {
         _wmsg "shellapi runspace >> [${SHELLAPI_TARGET##*/}]"
         _setup_layout "${SHELLAPI_TARGET}"
     }
+    _fexpf
+}
+
+#;
+# @desc Function exporter
+#;
+function _fexpf() {
+    local x="${SHELLAPI_MODULES[@]/#/\\|}"
+    x="${x// /}"
+    while read -r x; do
+        export -f ${x/ */}
+    done< <(declare -f | grep '^\(_\|'${x:2}'\)')
 }
 
 #;
