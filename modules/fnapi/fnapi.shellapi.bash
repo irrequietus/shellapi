@@ -468,6 +468,7 @@ function fnapi_genblock() {
 \$(_dotstr \${FNAPI_HEADER[\$_FNAPI_FHASH]})\" \n}\n" \
     "$2" "${4:-"\${FUNCNAME}"}" "${5:-wshow}" \
     "${4:-"\${FUNCNAME}"}" "${4:-"\${FUNCNAME}"}"
+    ODSEL_SHJIT_A+=("$1")
 }
 
 #;

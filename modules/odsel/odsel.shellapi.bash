@@ -1005,27 +1005,14 @@ function __odsel_cbkdeploy() {
         } || v=(_void ${ODSEL_DDEPS[@]/%[[:space:]]*/})
         for x in ${v[@]:1}; do
             for y in $($x preq); do
-                ! [[ -z $4 ]] && _clls+=("$y") || \
-                (odsel_exptsh_apply; $y || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
-                    _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
-                          "* ..."
-                    unset -v ODSEL_DDEPS ODSEL_CBKDEP ODSEL_SSPXU
-                    return 1
-                }
+                _clls+=("$y")
             done
-            ! [[ -z $4 ]] && _clls+=("$x") || \
-            (odsel_exptsh_apply; $x || { _for_each SHELLAPI_ERROR _fail; return 1; }) || {
-                _emsg "${FUNCNAME}: could not deploy anonymous callback:" \
-                      "* ${!x}"
-                break
-            }
+            _clls+=("$x")
         done
     } || _emsg "${FUNCNAME}: deployment failure"
     unset -v ODSEL_DDEPS ODSEL_CBKDEP ODSEL_SSPXU
-    ((${#_clls[@]})) && {
-        odsel_cbjit $4 _clls
-        (($3)) || $4
-    }
+    odsel_cbjit $4 _clls
+    $4
     ! ((${#SHELLAPI_ERROR[@]}))
 }
 
@@ -1033,7 +1020,18 @@ function __odsel_cbkdeploy() {
 # @desc odsel_shjit()
 #;
 function odsel_shjit() {
-    _void;
+    odsel_cbjit $1 $2
+}
+
+#;
+# @desc odsel_s2f() is hardwired to produce fakeops for the time being.
+#;
+function odsel_s2f() {
+    local __v="$1"
+    case "$1" in
+        _get_*) printf "_omsg \"$(_emph preq): %s\" && " "${__v##*_}" ;;
+        _fno*) printf "_omsg \"$(_emph runf): %s\" && " "${!1}";;
+    esac
 }
 
 #;
@@ -1042,7 +1040,7 @@ function odsel_shjit() {
 #;
 function odsel_cbjit() {
     eval "$1(){ (_omsg \"$(_emph cbjit): ${1#*_*_}()\"; odsel_exptsh_apply;
-                $(_for_each $2 printf "%s && ") : \
+                $(_for_each $2 odsel_s2f) : \
                 || { _for_each SHELLAPI_ERROR _fail; return 1; })\
                 || _emsg \"\${FUNCNAME}: could not deploy self\"
                 !((\${#SHELLAPI_ERROR[@]})); }"
