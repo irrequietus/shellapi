@@ -21,12 +21,12 @@
 # @warn Same fix as in _init for _opsolve (bash 4.x related)
 #;
 function odsel_init() {
-    ODSEL_TARCOIL=()
-    ODSEL_TARGUESS=()
-    ODSEL_DGET="wget -c"
-    ODSEL_XMLA=()
-    ODSEL_EXPTSH=()
-    ODSEL_RXP=(
+    export ODSEL_TARCOIL=()
+    export ODSEL_TARGUESS=()
+    export ODSEL_DGET="wget -c"
+    export ODSEL_XMLA=()
+    export ODSEL_EXPTSH=()
+    export ODSEL_RXP=(
         [0]="^[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\
 ((\[[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\])|([[:space:]]*))"
         [1]="^[[:space:]]*([[:alnum:]_-]*)[[:space:]]*\
@@ -37,13 +37,13 @@ function odsel_init() {
         [3]="[[:space:]]*\{([[:space:][:alnum:]:@\>,_-]*)\}"
         [4]="[[:space:]]*:[[:space:]]*(code|text)[[:space:]]*\;"
 )
-    ODSEL_OPRT=()
-    ODSEL_OPRT[$(_opsolve "->")]="pm"
-    ODSEL_OPRT[$(_opsolve "~>")]="rm"
-    ODSEL_OPRT[$(_opsolve "<-")]="lm"
-    ODSEL_OPRT[$(_opsolve "=")]="as0"
-    ODSEL_OPRT[$(_opsolve ":=")]="as1"
-    ODSEL_OPRT[$(_opsolve "::=")]="as2"
+    export ODSEL_OPRT=()
+    export ODSEL_OPRT[$(_opsolve "->")]="pm"
+    export ODSEL_OPRT[$(_opsolve "~>")]="rm"
+    export ODSEL_OPRT[$(_opsolve "<-")]="lm"
+    export ODSEL_OPRT[$(_opsolve "=")]="as0"
+    export ODSEL_OPRT[$(_opsolve ":=")]="as1"
+    export ODSEL_OPRT[$(_opsolve "::=")]="as2"
     _wexp_this odsel_vdef
 }
 

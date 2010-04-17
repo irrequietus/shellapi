@@ -34,20 +34,20 @@ function _init() {
     [[ -z $SHELLAPI_HOME ]] \
         && _fatal "${FUNCNAME}: home not set"
     export LC_ALL=C
-    readonly    SHCORE_START=$(_dtfs) \
-                SHCORE_VERSION="0.x-pre6" \
-                _VERSTR=(alpha beta rc)
-    SHELLAPI_MODULES_DIR="${SHELLAPI_HOME}/modules"
-    SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}
-    SHELLAPI_TARGET="${SHELLAPI_TARGET:-"$(pwd)/$(_uuidg)"}"
-    SHELLAPI_LDOT=${SHELLAPI_LDOT:-10}
-    VERSION_OPERATORS=()
-    VERSION_OPERATORS[$(_opsolve "<")]="lt"
-    VERSION_OPERATORS[$(_opsolve ">")]="gt"
-    VERSION_OPERATORS[$(_opsolve ">=")]="gte"
-    VERSION_OPERATORS[$(_opsolve "<=")]="lte"
-    VERSION_OPERATORS[$(_opsolve "!=")]="neq"
-    VERSION_OPERATORS[$(_opsolve "==")]="eqt"
+    export SHCORE_START=$(_dtfs) \
+           SHCORE_VERSION="0.x-pre6" \
+           _VERSTR=(alpha beta rc)
+    export SHELLAPI_MODULES_DIR="${SHELLAPI_HOME}/modules"
+    export SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}
+    export SHELLAPI_TARGET="${SHELLAPI_TARGET:-"$(pwd)/$(_uuidg)"}"
+    export SHELLAPI_LDOT=${SHELLAPI_LDOT:-10}
+    export VERSION_OPERATORS=()
+    export VERSION_OPERATORS[$(_opsolve "<")]="lt"
+    export VERSION_OPERATORS[$(_opsolve ">")]="gt"
+    export VERSION_OPERATORS[$(_opsolve ">=")]="gte"
+    export VERSION_OPERATORS[$(_opsolve "<=")]="lte"
+    export VERSION_OPERATORS[$(_opsolve "!=")]="neq"
+    export VERSION_OPERATORS[$(_opsolve "==")]="eqt"
     local l="$SHELLAPI_MODULES_DIR/syscore/locales/syscore.locale.$SHELLAPI_LOCALE.xml"
     local f="$SHELLAPI_MODULES_DIR/syscore/extra/syscore.config.xml"
     [[ -e $l ]] \
@@ -209,7 +209,7 @@ function _xml2bda() {
                     t1="&&"
                     t2="||"
                 }
-                g+=(" $n=()")
+                g+=("export $n=()")
                 ;;
             \<index\> | \<index\ *)
                 [[ $l =~ [[:space:]]*name[[:space:]]*=[[:space:]]*\"([^\"]*)\" || \
@@ -217,7 +217,7 @@ function _xml2bda() {
                     && i="${BASH_REMATCH[1]}" \
                     || i=
                 [[ -z $i ]] && {
-                    g+=("  $n[\${#$n[@]}]=\"")
+                    g+=("export  $n[\${#$n[@]}]=\"")
                     z=3
                 } || {
                     [[ -z $w ]] || {
@@ -226,8 +226,8 @@ function _xml2bda() {
                             || g+=(" [[ -z \$$p$i ]] $t1 {")
                     }
                     [[ $u == reuse ]] \
-                        && g[$((x=${#g[@]}))]=" $n[\$$p$i]=\"" \
-                        || g[$((x=${#g[@]}))]=" $n[\$(($p$i=\${#$n[@]}))]=\""
+                        && g[$((x=${#g[@]}))]="export $n[\$$p$i]=\"" \
+                        || g[$((x=${#g[@]}))]="export $n[\$(($p$i=\${#$n[@]}))]=\""
                     [[ $l == */\> ]] && {
                         g[$x]="${g[$x]}\""
                         [[ -z $w ]] \

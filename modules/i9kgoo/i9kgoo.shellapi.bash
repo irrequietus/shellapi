@@ -20,7 +20,7 @@
 # @desc The implementation for the init handle
 #;
 function i9kgoo_init() {
-    I9KGOO_LIST=()
+    export I9KGOO_LIST=()
 }
 
 #;

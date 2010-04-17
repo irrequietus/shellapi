@@ -20,23 +20,23 @@
 # @desc The init handle for this module
 #;
 function fnapi_init() {
-    FNAPI_CHECKSUM="${SHELLAPI_HASH_MODES}"
-    FNAPI_SKIP=3
-    FNAPI_TIMER="0.2"
-    _FNAPI_FHASH=0
-    _FNAPI_FNAME=2
-    _FNAPI_FARGS=1
-    SHELLAPI_HASH_MODES="${FNAPI_CHECKSUM}"
-    SHELLAPI_HASH="${SHELLAPI_HASH_MODES}"
+    export FNAPI_CHECKSUM="${SHELLAPI_HASH_MODES}"
+    export FNAPI_SKIP=3
+    export FNAPI_TIMER="0.2"
+    export _FNAPI_FHASH=0
+    export _FNAPI_FNAME=2
+    export _FNAPI_FARGS=1
+    export SHELLAPI_HASH_MODES="${FNAPI_CHECKSUM}"
+    export SHELLAPI_HASH="${SHELLAPI_HASH_MODES}"
     case "${FNAPI_CHECKSUM}" in
         sha384sum | sha512sum)
-            FNAPI_HASH_LEVEL=2
+            export FNAPI_HASH_LEVEL=2
         ;;
         sha224sum | sha256sum)
-            FNAPI_HASH_LEVEL=1
+            export FNAPI_HASH_LEVEL=1
         ;;
         sha1sum | md5sum)
-            FNAPI_HASH_LEVEL=0
+            export FNAPI_HASH_LEVEL=0
         ;;
         *)
             _fatal "${FUNCNAME}: not supported ${FNAPI_CHECKSUM}"
