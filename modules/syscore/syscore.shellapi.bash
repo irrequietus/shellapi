@@ -244,7 +244,7 @@ function _xml2bda() {
                     [[ $l == */\> ]] && {
                         g[$x]="${g[$x]}\""
                         [[ -z $w ]] \
-                            || g+=(" } $t2 $w : $p$i\"")
+                            || g+=(" export $p$i; } $t2 $w : $p$i\"")
                         z=
                     } ||  z=1
                 }
@@ -1138,8 +1138,18 @@ function _isstr() {
 # @retv 0/1
 #;
 function _isfunction() {
-    [[ $(type -t "$1" 2>&1) = "function" ]] \
-        || return 1
+    case "$1" in
+        _fnop_*)
+            declare -f $1 &> /dev/null \
+                && return 0 \
+                || { declare -f _ea${1} &> /dev/null && _ea${1}; }
+                return 1
+            ;;
+        *)
+            [[ $(type -t "$1" 2>&1) = "function" ]] \
+                || return 1
+        ;;
+    esac
 }
 
 #;

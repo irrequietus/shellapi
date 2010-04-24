@@ -109,10 +109,12 @@ function odsel_vsi() {
                                     } || {
                                         [[ ${n#*{${BASH_REMATCH[2]}} == \} ]] && {
                                             eval "_fnop_${BASH_REMATCH[1]}(){ _void; }"
+                                            export -f _fnop_${BASH_REMATCH[1]}
                                         } || {
                                             m=" ${!i[@]} "; m=(${m#* $x }); f=("${i[$x]#*{}")
                                             [[ -z ${f[0]//[[:space:]]/} ]] && {
                                                 eval "_fnop_${BASH_REMATCH[1]}(){ _void; }"
+                                                export -f _fnop_${BASH_REMATCH[1]}
                                             } || {
                                                 for x in ${m[@]}; do
                                                     [[ ${i[$x]} == \} ]] && break
@@ -120,6 +122,9 @@ function odsel_vsi() {
                                                 done
                                                 _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
                                                 eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
+                                                eval "_ea_fnop_${BASH_REMATCH[1]}(){
+                                                    _fnop_${BASH_REMATCH[1]}=(\"${f[@]/%/;}\"); }"
+                                                export -f _ea_fnop_${BASH_REMATCH[1]}
                                             }
                                         }
                                     }
@@ -138,6 +143,7 @@ function odsel_vsi() {
                                     l="$o:code;"; t+="$l"
                                     odsel_getcbk "$l" \
                                         && eval "_fnop_$nm() { __odsel_cbkdeploy \"${t}\" $k $ff \${FUNCNAME}; }"
+                                    export -f _fnop_$nm
                                 elif [[ $n =~ ^([[:alnum:]_]*)\(\)[[:space:]]*=\>(.*) ]]; then
                                     _omsg "$(_emph dcbk): callback: ${BASH_REMATCH[1]}()"
                                     odsel_dcbk "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" \
@@ -1032,7 +1038,7 @@ function odsel_s2f() {
     local __v="$1"
     case "$1" in
         _get_*) printf "_omsg \"$(_emph preq): %s\" && " "${__v##*_}" ;;
-        _fno*) printf "_omsg \"$(_emph runf): %s\" && " "${!1}";;
+        _fno*) printf "_omsg \"$(_emph runf): %s\" && " "${!1}" ;;
     esac
 }
 
@@ -1094,6 +1100,10 @@ function _odsel_pm() {
         || odsel_getfn "$y"
 }
 
+#;
+# @desc Change user for a particular instruction
+# @ptip $1  odsel instruction
+#;
 function odsel_asu() {
     _qsplit "$1" && {
         local i= x= y= z=
@@ -1105,11 +1115,18 @@ function odsel_asu() {
                         ^[[:space:]]*\[([[:alnum:]_]*)\][[:space:]]*=\>[[:space:]]*([[:alnum:]_]*)\(\) ]] && {
                         _omsg "$(_emph \*asu): $ $(_emph "${BASH_REMATCH[1]}") ::: ${BASH_REMATCH[2]}"
                         i="_fnop_${BASH_REMATCH[2]}"
-                        _isfunction $i && (odsel_exptsh_apply; $i) || {
+                        x="${BASH_REMATCH[1]}"
                             i="$i[*]"
-                            odsel_vsi "${!i}" \
-                                || _emsg "${FUNCNAME}: cascade failure"
-                        }
+                            _omsg "$(_emph input): enter $(_emph password) for user $(_emph $x):"
+                            eval "__su_apply() { _initglobals_syscore
+                            for x in ${SHELLAPI_MODULES[@]}; do \${x}_init; _initglobals_\${x}; done
+                            odsel_vsi \"\$ODSEL_ASU_ACTION\"  || _fatal
+                            }"
+                            export -f __su_apply
+                            ODSEL_ASU_ACTION="${!i}" su $x -c __su_apply 2>/dev/null \
+                                || _fatal "$(_emph \*asu): instruction failure"
+                            unset -f __su_apply
+                            unset ODSEL_ASU_ACTION
                     }
                 done
                 ;;
@@ -1679,7 +1696,8 @@ function odsel_getcbk() {
             done
             _isfunction $n || {
                 fnapi_fnp_write $n f h "${I9KG_UTILSPACE[$LOCATION]}/$m/source"
-                eval "$n=\"${1//[[:space:]]/}\""
+                eval "export $n=\"${1//[[:space:]]/}\""
+                export -f $n
             }
         } || {
             y=$?
