@@ -1146,8 +1146,7 @@ function _isfunction() {
                 return 1
             ;;
         *)
-            [[ $(type -t "$1" 2>&1) = "function" ]] \
-                || return 1
+            declare -f $1 &> /dev/null || return 1
         ;;
     esac
 }
