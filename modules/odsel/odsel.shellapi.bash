@@ -1019,7 +1019,7 @@ function __odsel_cbkdeploy() {
         done
     } || _emsg "${FUNCNAME}: deployment failure"
     unset -v ODSEL_DDEPS ODSEL_CBKDEP ODSEL_SSPXU
-    odsel_cbjit $4 _clls
+    odsel_cbjit $4 _clls $3
     $4
     ! ((${#SHELLAPI_ERROR[@]}))
 }
@@ -1032,13 +1032,19 @@ function odsel_shjit() {
 }
 
 #;
-# @desc odsel_s2f() is hardwired to produce fakeops for the time being.
+# @desc odsel_s2f() is a simple and temporary relay layer.
 #;
 function odsel_s2f() {
-    local __v="$1"
-    case "$1" in
-        _get_*) printf "_omsg \"$(_emph preq): %s\" && " "${__v##*_}" ;;
-        _fno*) printf "_omsg \"$(_emph runf): %s\" && " "${!1}" ;;
+    local __v="$2"
+    case "$2" in
+        _get_*)
+            ! (($1)) \
+                && printf "_omsg \"$(_emph preq): %s\" && ${2} &&" "${__v##*_}" \
+                || printf "_omsg \"$(_emph preq): %s\" && " "${__v##*_}" ;;
+        _fno*)
+            ! (($1)) \
+                && printf "_omsg \"$(_emph runf): %s\" && ${2} && " "${!2}" \
+                || printf "_omsg \"$(_emph runf): %s\" && " "${!2}" ;;
     esac
 }
 
@@ -1048,7 +1054,7 @@ function odsel_s2f() {
 #;
 function odsel_cbjit() {
     eval "$1(){ (_omsg \"$(_emph cbjit): ${1#*_*_}()\"; odsel_exptsh_apply;
-                $(_for_each $2 odsel_s2f) : \
+                $(_for_each $2 odsel_s2f ${3:-1}) : \
                 || { _for_each SHELLAPI_ERROR _fail; return 1; })\
                 || _emsg \"\${FUNCNAME}: could not deploy self\"
                 !((\${#SHELLAPI_ERROR[@]})); }"
@@ -1103,6 +1109,7 @@ function _odsel_pm() {
 #;
 # @desc Change user for a particular instruction
 # @ptip $1  odsel instruction
+# @note asu [...] is still *very* experimental, avoid playing with it
 #;
 function odsel_asu() {
     _qsplit "$1" && {
