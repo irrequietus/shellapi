@@ -1635,7 +1635,8 @@ function odsel_gscoil() {
 function __odsel_vdef_p() {
     local x="$1," y z n m b
     while [[ ${x#"${x%%[![:space:]]*}"} =~ ^([[:alnum:]_]*)[[:space:]]*=[[:space:]]*(.*) ]]; do
-        n="${BASH_REMATCH[1]}"; m="${BASH_REMATCH[2]}"
+        n="__vdefpo_${BASH_REMATCH[1]}"; m="${BASH_REMATCH[2]}"
+        if [ -z "${!n}" ]; then
         [[ $m =~ \"([^\"]*)\"[[:space:]]*,|\
 \'([^\']*)\'[[:space:]]*,|\
 ([[:alnum:]_/:\.]*)[[:space:]]*,|\
@@ -1649,10 +1650,18 @@ function __odsel_vdef_p() {
 ^\'([^\']*)\'[[:space:]]*,|^([[:alnum:]_/:\.]*)[[:space:]]*, ]]; do
                 b="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
                 z="${z#*$b*,}"
-                _omsg "$(_emph def) : $n :: $b"
+                _omsg "$(_emph def) : ${n#__*_} :: $b"
+                eval "$n+=(\"\$b\")"
             done
-        else _omsg "$(_emph def) : $n : $y"; fi    
+        else
+            _omsg "$(_emph def) : ${n#__*_} : $y"
+            eval "$n=\"$y\""
+        fi
         x="${x#*$y*,}"
+        else
+            _emsg "variable [ ${n#__*_} ] is already bound!"
+            return 1
+        fi
     done
     [[ -z $x ]] || {
         _emsg "${FUNCNAME}: expression cannot be processed:$x"
