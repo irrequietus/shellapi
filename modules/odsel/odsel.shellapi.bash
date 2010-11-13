@@ -79,7 +79,10 @@ function odsel_vsi() {
     for((x=0;x<${#i[@]};x++)); do
         y="${i[$x]}"
         [[ -z ${y//[[:space:]]/} ]] && continue
-        if [[ $y =~ ^[[:space:]]*(\?|:|@|\[\$\]:|newc|delc|load|del|new|sim|def|import|export|unit|init|switch|flush|asu)[[:space:]]*(.*) ]]; then
+        if [[ $y =~ ^[[:space:]]*(\?|:|@|\[\$\]:|\
+newc|delc|load|del|new|sim|def|\
+import|export|unit|init|switch|\
+flush|asu|printf|inputf)[[:space:]]*(.*) ]]; then
             case "${BASH_REMATCH[1]}" in
                 \[\$\]:)
                     n="${BASH_REMATCH[2]}"
@@ -88,6 +91,7 @@ function odsel_vsi() {
                         n="${n#*${BASH_REMATCH[1]}?}"
                     done
                 ;;
+                printf|inputf) odsel_fparam "${i[$x]}" ;;
                 init|unit)
                     _omsg "$(_emph ${BASH_REMATCH[1]}): ${i[$x]}"
                 ;;
@@ -229,6 +233,20 @@ function odsel_i9kgfsel() {
             return 1
             ;;
     esac
+}
+
+
+function odsel_fparam() {
+    local fl="${1#"${1%%[![:space:]]*}"}" x= y=
+    local f="${fl/[([:space:]]*/}"
+    [[ ${fl##*)} =~ [^[:space:]] ]] || {
+        x="${fl#*(}"
+        x="${x%)*}"
+        _qsplit "$x" && {
+            _omsg "${FUNCNAME}: $(_emph $f) : ${#SPLIT_STRING[@]} !"
+        }
+    }
+    ! ((${#SHELLAPI_ERRORS[@]}))
 }
 
 #;

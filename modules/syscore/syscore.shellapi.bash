@@ -821,15 +821,29 @@ function _dotstr() {
 # @note Stores results to the SPLIT_STRING global array, it is quote/double quote
 #       sensitive.
 #;
+
 function _qsplit() {
     SPLIT_STRING=()
-    local x="$1${2:-,}" y="${2:-,}" z t
+    local x="$1${2:-,}" y="${2:-,}" z= t=
     while [[ $x =~ (^[[:space:]]*)([^$y\"\']*)([$y\"\']) ]]; do
         t="${BASH_REMATCH[3]}"
+        local m="${BASH_REMATCH[2]}"
         case "$t" in
             \"|\')
+                local p="${x/$t*/}" u= n=
                 x="${x#*"$t"}"
-                z+="${BASH_REMATCH[2]}$t${x/$t*/}$t"
+                while [[ $x =~ ^([^\\$t]*)([$t\\]) ]]; do
+                        n=$((${#BASH_REMATCH[1]}+1))
+                        [[ ${BASH_REMATCH[2]} == $t ]] && {
+                            u+="${BASH_REMATCH[1]}$t"
+                            break
+                        } || {
+                            [[ ${x:$n:1}  == $t ]] && ((n++))
+                            u+="${x:0:$n}"
+                        }
+                        x="${x:$n}"
+                done
+                z+="$m$t$u"
                 ;;
             "$y")
                 SPLIT_STRING+=("$z${BASH_REMATCH[2]}")
@@ -844,20 +858,30 @@ function _qsplit() {
 # @desc A simple C - style comment remover
 # @ptip Any /* */ enclosed character sequence, provided it is not
 #       nested within paired quotes.
-# @note Should eventually consider optimizing _qsplit() with it as well.
 #;
 function _ccrem() {
-    local x="$1" l= s= t=
-    while [[ $x =~ (/\*|[\'\"]|\*/) ]]; do
+    local x="$1" s= t=
+    while [[ $x =~ ([\'\"]|/\*|\*/) ]]; do
         t="${BASH_REMATCH[1]}"
         case "$t" in
             \"|\')
-                l="${x#*$t}"
-                s+="${x/$t*/}$t${l/$t*/}$t"
-                x="${x#*$t*$t}"
+                local p="${x/$t*/}" u= n=
+                x="${x#*$t}"
+                while [[ $x =~ ^([^\\$t]*)([$t\\]) ]]; do
+                        n=$((${#BASH_REMATCH[1]}+1))
+                        [[ ${BASH_REMATCH[2]} == $t ]] && {
+                            u+="${BASH_REMATCH[1]}$t"
+                            break
+                        } || {
+                            [[ ${x:$n:1}  == $t ]] && ((n++))
+                            u+="${x:0:$n}"
+                        }
+                        x="${x:$n}"
+                done
+                x="${x#*$t}"; s+="$p$t$u"
                 ;;
              /\*)
-                x="${x/\/\**/}${x#*\*/}"
+                x="${x/$t*/}${x#*$t*$t}"
                 ;;
              \*/)
                 _emsg "${FUNCNAME}: stray comment - aborting"
