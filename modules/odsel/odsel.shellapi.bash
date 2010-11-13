@@ -1036,6 +1036,17 @@ function odsel_printf() {
 }
 
 #;
+# @desc Reading from the console, formatted prompt.
+#;
+function odsel_inputf() {
+    local y="${@:1:1}" x=("${@:2}") z= n=
+    odsel_printf "${@:1:1}" "${@:3}" \
+        && read __vdefpo_${x[z]} \
+        || _emsg "$(_emsg inputf): failed to read from input."
+    ! ((${#SHELLAPI_ERRORS[@]}))
+}
+
+#;
 # @desc Apply the various exports with shell qualifiers
 #;
 function odsel_exptsh_apply() {
