@@ -44,7 +44,6 @@ function odsel_init() {
     ODSEL_OPRT[$(_opsolve "=")]="as0"
     ODSEL_OPRT[$(_opsolve ":=")]="as1"
     ODSEL_OPRT[$(_opsolve "::=")]="as2"
-    _wexp_this odsel_vdef
     export ODSEL_TARCOIL ODSEL_TARGUESS ODSEL_DGET ODSEL_XMLA \
            ODSEL_EXPTSH ODSEL_RXP ODSEL_OPRT
 }
@@ -243,7 +242,7 @@ function odsel_fparam() {
         x="${x%)*}"
         _qsplit "$x" && odsel_$f "${SPLIT_STRING[@]}"
     }
-    ! ((${#SHELLAPI_ERRORS[@]}))
+    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
@@ -1043,7 +1042,7 @@ function odsel_inputf() {
     odsel_printf "${@:1:1}" "${@:3}" \
         && read __vdefpo_${x[z]} \
         || _emsg "$(_emsg inputf): failed to read from input."
-    ! ((${#SHELLAPI_ERRORS[@]}))
+    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
@@ -1693,39 +1692,41 @@ function odsel_gscoil() {
 #       for a single value or containing nested lists ( variable = { , , , } )
 # @ptip $1  The part of an odsel expression containing said statement.
 #;
-function __odsel_vdef_p() {
-    local x="$1," y z n m b
-    while [[ ${x#"${x%%[![:space:]]*}"} =~ ^([[:alnum:]_]*)[[:space:]]*=[[:space:]]*(.*) ]]; do
-        n="__vdefpo_${BASH_REMATCH[1]}"; m="${BASH_REMATCH[2]}"
-        if [ -z "${!n}" ]; then
-        [[ $m =~ \"([^\"]*)\"[[:space:]]*,|\
-\'([^\']*)\'[[:space:]]*,|\
-([[:alnum:]_/:\.]*)[[:space:]]*,|\
-(\{[\'\"[:space:][:alnum:]_/:,\.\;\{\}]*\})[[:space:]]*, ]] \
-            && y="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}${BASH_REMATCH[4]}" \
-            || return 1
-        if [[ ${y:0:1} = { ]]; then
-            z="${y:1:$((${#y}-2))},"
-            while [[ ${z#"${z%%[![:space:]]*}"} =~ \
-^\"([^\"]*)\"[[:space:]]*,|\
-^\'([^\']*)\'[[:space:]]*,|^([[:alnum:]_/:\.]*)[[:space:]]*, ]]; do
-                b="${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
-                z="${z#*$b*,}"
-                _omsg "$(_emph def) : ${n#__*_} :: $b"
-                eval "$n+=(\"\$b\")"
-            done
-        else
-            _omsg "$(_emph def) : ${n#__*_} : $y"
-            eval "$n=\"$y\""
-        fi
-        x="${x#*$y*,}"
-        else
-            _emsg "variable [ ${n#__*_} ] is already bound!"
-            return 1
-        fi
-    done
-    [[ -z $x ]] || {
-        _emsg "${FUNCNAME}: expression cannot be processed:$x"
+function odsel_vdef() {
+    local x="$1" y=() z= n= o= s=()
+    _qsplit "$1" && {
+        y=("${SPLIT_STRING[@]}")
+        for((z=0;z<${#y[@]};++z)); do
+            [[ ${y[$z]} =~ ^([[:alnum:]_]*)[[:space:]]*=[[:space:]]*(.) ]] && {
+                n="${BASH_REMATCH[1]}"
+                o="${BASH_REMATCH[2]}"
+                y[$z]="${y[$z]#*=*${BASH_REMATCH[2]}}"
+                y[$z]="${y[$z]%"${y##*[![:space:]]}"}"
+                s=()
+                case "$o" in
+                    [\'\"])
+                       eval "__vdefpo_${n}=\"\${y[z]%?}\""
+                    ;;
+                    [:alpha:]) ;;
+                    \()
+                        s=()
+                        while [ "${y[$z]##*${y[$z]%?}}" != ")" ]; do
+                            s+=("${y[z]}")
+                            ((z++))
+                        done
+                        (($z>${#y[@]})) && {
+                            _emsg "${FUNCNAME}: overrun!"
+                            return 1
+                        }
+                        s+=("${y[$z]%?}");
+                        odsel_inputf "${s[0]}" "$n" "${s[@]:1}"
+                        ;;
+                    *)
+                        _wmsg "invalid assignment method: $n = $(_emph $o)..."
+                        ;;
+                esac
+            }
+        done
     }
     ! ((${#SHELLAPI_ERROR[@]}))
 }
@@ -1860,7 +1861,7 @@ function odsel_ifetch() {
             ;;
     esac
     printf "%s\n" "$e"
-    ! ((${#SHELLAPI_ERRORS[@]}))
+    ! ((${#SHELLAPI_ERROR[@]}))
 }
 
 #;
