@@ -78,7 +78,7 @@ function odsel_vsi() {
     for((x=0;x<${#i[@]};x++)); do
         y="${i[$x]}"
         [[ -z ${y//[[:space:]]/} ]] && continue
-        if [[ $y =~ ^[[:space:]]*(\?|:|@|\[\$\]:|\
+        if [[ $y =~ ^[[:space:]]*(\?|::|:|@|\[\$\]:|\
 newc|delc|load|del|new|sim|def|\
 import|export|unit|init|switch|\
 flush|asu|printf|inputf)[[:space:]]*(.*) ]]; then
@@ -100,6 +100,14 @@ flush|asu|printf|inputf)[[:space:]]*(.*) ]]; then
                     _omsg "$(_emph patt): ${BASH_REMATCH[1]}"
                     odsel_swcase "$n" \
                         || return 1
+                ;;
+                ::)
+                    n="${BASH_REMATCH[2]}"
+                    [[ $n =~ ^[[:space:]]*\(\"([^\"]*)\"\)[[:space:]]*=\>[[:space:]]*\"([^\"]*)\" ]] && {
+                        _wmsg "::(\"...\") => is in the reserved operator context pool!"
+                        _omsg "$(_emph ${BASH_REMATCH[1]}) => \"${BASH_REMATCH[2]}\""
+                        _fail "${FUNCNAME}: not deploying ::(\"...\") => in current context."
+                    }
                 ;;
                 def|:)
                     case "${i[$x]#*${BASH_REMATCH[1]}}" in
