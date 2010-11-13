@@ -235,16 +235,13 @@ function odsel_i9kgfsel() {
     esac
 }
 
-
 function odsel_fparam() {
     local fl="${1#"${1%%[![:space:]]*}"}" x= y=
     local f="${fl/[([:space:]]*/}"
     [[ ${fl##*)} =~ [^[:space:]] ]] || {
         x="${fl#*(}"
         x="${x%)*}"
-        _qsplit "$x" && {
-            _omsg "${FUNCNAME}: $(_emph $f) : ${#SPLIT_STRING[@]} !"
-        }
+        _qsplit "$x" && odsel_$f "${SPLIT_STRING[@]}"
     }
     ! ((${#SHELLAPI_ERRORS[@]}))
 }
@@ -1001,6 +998,41 @@ function odsel_sppx() {
     }
     _omsg "$(_emph sppx): $1 -> $a: ok!"
     ODSEL_SSPXU=$a
+}
+
+#;
+# @desc A function for printing formatted output.
+# @ptip $1 printf - compatible output string.
+# @ptip rest of parameters.
+#;
+
+function odsel_printf() {
+    local y="${@:1:1}" x=("${@:2}") z= n=
+    for((z=0;z!=${#x[@]};++z)); do
+        case "${x[$z]}" in
+            [[:alpha:]]*)
+                n="__vdefpo_${x[z]}"
+                ! [ -z "${!n}" ] && {
+                    ! (($(_asof $n)-1)) && x[z]="${!n}" || {
+                        _emsg "printf: variable $(_emph ${n#__*_}) is multibound";
+                        return 1;
+                    }
+                } || {
+                    _emsg "printf: variable: $(_emph ${x[z]}) is unbound"
+                    return 1
+                }
+                ;;
+                [\"\']*)
+                    n="${x[$z]#?}"
+                    x[z]="${n%?}"
+                ;;
+                *)
+                    _emsg "printf: illegal instruction: ${x[z]}"
+                    return 1
+                ;;
+        esac
+    done
+    printf "${y:1:$((${#y}-2))}" "${x[@]}"
 }
 
 #;
