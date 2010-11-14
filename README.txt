@@ -1,7 +1,7 @@
 READ THIS CAREFULLY
 
 UPDATE: checkout the devbox branch in the gitorious repository for shellapi
-for an the standalone shellapi launcher (odsel.sh)
+for an upcoming standalone shellapi launcher (odsel.sh)
 
 1. Compatibility Notes
 ======================
