@@ -1,6 +1,7 @@
 *~
 logging/*.log
 modules/*.profile
+deploy/__rspace
 .directory
 
 

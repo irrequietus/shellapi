@@ -24,14 +24,17 @@
 
 function __shellapi_checkinstall() {
     __shellapi_fcheck "${@}" && {
-        [ -z $SHELLAPI_HOME ] && {
+        [ -z "$SHELLAPI_HOME" ] && {
                 printf "You cannot run shellapi without specifying SHELLAPI_HOME!\n"
                 exit 1
             } || {
             [[ -d $SHELLAPI_HOME  ]] && {
                 . "${SHELLAPI_HOME}/modules/syscore/syscore.shellapi.bash" && {
                     ! [ -z $SHELLAPI_TARGET ] && {
-                    _init && odsel_fsi "${!#}" || _fatal
+                        _init || _fatal
+                        pushd "${SHELLAPI_BSTRAPSH:-.}" &> /dev/null
+                        odsel_fsi "$(_pathget $SHELLAPI_BSTRAPSH ${!#})" || _fatal
+                        popd &> /dev/null
                     } || {
                         printf "SHELLAPI_TARGET not set!\n"
                         exit 1
@@ -54,36 +57,55 @@ function __shellapi_checkinstall() {
 
 function __shellapi_fcheck() {
     local   rj= x= y=1 vars=() \
-            v_t=0 v_i=0 v_s=0 v_h=0
-    while getopts :i:s:t:h x; do
+            v_t=0 v_i=0 v_s=0 v_h=0 v_g=0 v_f=0
+    while getopts :i:s:t:hg:f x; do
         rj="${@:$((${OPTIND}-1)):${OPTIND}}"
         case $x in
-            [isth])
+            [isthgf])
                 ((v_$x)) && {
                     printf "shellapi: ( %s ) assigned as: \"%s\", aborting\n"\
                         "$x" "${vars[v_$x]}"
                     return 1
                 }
-                [[ $x == [isth] ]] && ((v_$x=$((y++)))) || {
+                [[ $x == [isthgf] ]] && ((v_$x=$((y++)))) || {
                     printf "shellapi: invalid option: %s\n" "$rj"
                     return 1
                 }
                 vars[v_$x]="$OPTARG"
                 ;;
             *)
-                [[ $rj\: == -[ist]\: ]] \
+                [[ $rj\: == -[istf]\: ]] \
                     && printf "shellapi: ( %s ) without input, aborting...\n" "$rj" \
                     || printf "shellapi: ( %s ) without match, aborting...\n" "$rj"
                 return 1
                 ;;
         esac
     done
+    ((v_f)) && {
+        printf "running odsel interpreter\n"
+        SHELLAPI_HOME="$SHELLAPI_BSTRAPRN" \
+        SHELLAPI_TARGET="$SHELLAPI_BSTRAPRN/deploy/__rspace"
+        export SHELLAPI_HOME SHELLAPI_TARGET
+        return 0
+    }
+    ((v_g)) && {
+        printf "generating odsel.bash self extracting script\n"
+        ((v_t)) && ((v_s)) && {
+            export SHELLAPI_TARGET="${vars[v_t]}"
+            export SHELLAPI_HOME="${vars[v_s]}"
+            . "${SHELLAPI_HOME}/modules/syscore/syscore.shellapi.bash"
+            _init
+            _odselrun_gen "${!#}/"
+            exit
+        }
+    }
     ((v_i)) && ((v_s+v_t+v_h)) && {
         printf "shellapi: option -i can only be used as standalone, aborting.\n"
         return 1
     } || {
         ((v_i)) && {
             printf "requested an installation!\n"
+            export SHELLAPI_TARGET="${vars[v_i]}"
             return 0
         } || {
             ! ((v_h)) && {
@@ -99,4 +121,3 @@ function __shellapi_fcheck() {
 }
 
 __shellapi_checkinstall "$@"
-

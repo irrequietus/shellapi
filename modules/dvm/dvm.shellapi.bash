@@ -191,6 +191,8 @@ function dvm_sfx_build() {
     }
     printf "#!/bin/bash\n_bstrap() {
     local l m=\"\$(pwd)\" n=0 o=$y p=\"\$(mktemp -d /tmp/_bstrap_sfx.XXXXXXXXXX)\"
+    declare -r SHELLAPI_BSTRAPSH=\"\$(pwd)\" SHELLAPI_BSTRAPRN=\"\$p/$y\"
+    export SHELLAPI_BSTRAPSH SHELLAPI_BSTRAPRN
     printf \"\\\\033[1;36m[>]\\\\033[0m: extraction in progress\\\\n\"
     while read -r l; do
         [[ \$l = __sfx__ ]] && break;
@@ -204,21 +206,21 @@ function dvm_sfx_build() {
     }
     printf \"\\\\033[1;36m[+]\\\\033[0m: extraction complete\\\\n\"
     unset _bstrap
-    cd \"\$p/$y\"
-    %s
+    pushd \"\$p/$y\" &> /dev/null
+    %s \"\$@\"
     p=\$?
-    cd \"\$m\"
-    exit \$p\n}\n_bstrap\n__sfx__\n" "$z" > "$x/bstrap.sh"
+    popd &> /dev/null
+    exit \$p\n}\n_bstrap \"\$@\"\n__sfx__\n" "$z" > "$x/bstrap.sh"
     {
-        pushd "$1" && \
-        cp -ax "." "$x/$y" && \
-        pushd "$x" && \
-        tar cjf "$y.sfx.tar.bz2" "$y" && \
-        cat "$x/bstrap.sh" "$y.sfx.tar.bz2" > "$x/_bstrap.sfx.$y.sh" && \
-        popd && popd && l=
-    }  &> /dev/null \
-        && printf "_bstrap.sfx.$y.sh\n"
-    [[ -z $l ]]
+        [ "$1" != "$x/$y" ] && {
+            pushd "$1" &> /dev/null && \
+            cp -ax "." "$x/$y" && \
+            pushd "$x" &> /dev/null && \
+            tar cjf "$y.sfx.tar.bz2" "$y" && \
+            cat "$x/bstrap.sh" "$y.sfx.tar.bz2" > "$x/_bstrap.sfx.$y.sh" && \
+            popd &> /dev/null && popd &> /dev/null && l=
+        } || return 1
+    } && printf "_bstrap.sfx.$y.sh\n"
 }
 
 #;

@@ -1105,6 +1105,16 @@ function _hsos() {
 }
 
 #;
+# @desc Generate a standalone, self - extracting bash script that runs .odsel files
+# @ptip $1 path where to place the end result (odsel_sh)
+#;
+function _odselrun_gen() {
+    mv "$1/__sfx__/$(dvm_sfx_build "$SHELLAPI_HOME" deploy/odsel.sh $1)" \
+       "$1/odsel_sh"
+    chmod +x "$1/odsel_sh"
+}
+
+#;
 # @desc Get array size of a referenced bash array
 # @ptip $1  referenced array variable
 # @echo array size
