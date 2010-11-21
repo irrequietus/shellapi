@@ -212,10 +212,11 @@ function dvm_sfx_build() {
     popd &> /dev/null
     exit \$p\n}\n_bstrap \"\$@\"\n__sfx__\n" "$z" > "$x/bstrap.sh"
     {
+        local t="$(mktemp -d /tmp/_bstrap_sfx_generate.XXXXXXXXXX)"
         [ "$1" != "$x/$y" ] && {
             pushd "$1" &> /dev/null && \
-            cp -ax "." "$x/$y" && \
-            pushd "$x" &> /dev/null && \
+            cp -ax "." "$t/$y" && \
+            pushd "$t" &> /dev/null && \
             tar cjf "$y.sfx.tar.bz2" "$y" && \
             cat "$x/bstrap.sh" "$y.sfx.tar.bz2" > "$x/_bstrap.sfx.$y.sh" && \
             popd &> /dev/null && popd &> /dev/null && l=

@@ -1109,6 +1109,7 @@ function _hsos() {
 # @ptip $1 path where to place the end result (odsel_sh)
 #;
 function _odselrun_gen() {
+    _setup_layout "${SHELLAPI_TARGET}" || _fatal
     mv "$1/__sfx__/$(dvm_sfx_build "$SHELLAPI_HOME" deploy/odsel.sh $1)" \
        "$1/odsel_sh"
     chmod +x "$1/odsel_sh"

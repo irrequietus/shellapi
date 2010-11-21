@@ -57,30 +57,43 @@ function __shellapi_checkinstall() {
 
 function __shellapi_fcheck() {
     local   rj= x= y=1 vars=() \
-            v_t=0 v_i=0 v_s=0 v_h=0 v_g=0 v_f=0
-    while getopts :i:s:t:hg:f x; do
+            v_t=0 v_i=0 v_s=0 v_h=0 \
+            v_g=0 v_f=0 v_j=0
+    while getopts :i:s:t:hg:f:j: x; do
         rj="${@:$((${OPTIND}-1)):${OPTIND}}"
         case $x in
-            [isthgf])
+            [isthgfj])
                 ((v_$x)) && {
                     printf "shellapi: ( %s ) assigned as: \"%s\", aborting\n"\
                         "$x" "${vars[v_$x]}"
                     return 1
                 }
-                [[ $x == [isthgf] ]] && ((v_$x=$((y++)))) || {
+                [[ $x == [isthgfj] ]] && ((v_$x=$((y++)))) || {
                     printf "shellapi: invalid option: %s\n" "$rj"
                     return 1
                 }
                 vars[v_$x]="$OPTARG"
                 ;;
             *)
-                [[ $rj\: == -[istf]\: ]] \
+                [[ $rj\: == -[istfj]\: ]] \
                     && printf "shellapi: ( %s ) without input, aborting...\n" "$rj" \
                     || printf "shellapi: ( %s ) without match, aborting...\n" "$rj"
                 return 1
                 ;;
         esac
     done
+    ((v_j)) && {
+        local s_double="$(pwd)"
+        export SHELLAPI_HOME="${s_double%/*}"
+        export SHELLAPI_TARGET="$SHELLAPI_HOME/deploy/__rspace"
+        . "${SHELLAPI_HOME}/modules/syscore/syscore.shellapi.bash"
+        _init
+        export SHELLAPI_TARGET="$(mktemp -d __rspace.XXXXXXXX)/__"
+        _omsg "creating odsel_sh..."
+        _odselrun_gen "${vars[v_j]}"
+        _omsg "created odsel_sh in ${vars[v_j]}"
+        exit
+    }
     ((v_f)) && {
         printf "running odsel interpreter\n"
         SHELLAPI_HOME="$SHELLAPI_BSTRAPRN" \

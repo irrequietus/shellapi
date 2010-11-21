@@ -1533,7 +1533,7 @@ function odsel_new() {
         [[ -e $f ]] \
             && _emsg "${FUNCNAME}: xml pool description already available: $(_dotstr "$h")" \
             && return 1
-        ! mkdir "$y" 2> /dev/null &&  {
+        ! mkdir -p "$y" 2> /dev/null &&  {
              [[ -d $y ]] \
                 && _emsg "${FUNCNAME}: already available: $y" \
                 || _emsg "${FUNCNAME}: could not create: $y"
