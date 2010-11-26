@@ -134,7 +134,7 @@ flush|asu|printf|inputf)[[:space:]]*(.*) ]]; then
                                                 _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
                                                 eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
                                                 eval "_ea_fnop_${BASH_REMATCH[1]}(){
-                                                    _fnop_${BASH_REMATCH[1]}=(\"${f[@]/%/;}\"); }"
+                                                    _fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\"); }"
                                                 export -f _ea_fnop_${BASH_REMATCH[1]}
                                             }
                                         }

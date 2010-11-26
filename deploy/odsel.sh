@@ -33,7 +33,7 @@ function __shellapi_checkinstall() {
                     ! [ -z $SHELLAPI_TARGET ] && {
                         _init || _fatal
                         pushd "${SHELLAPI_BSTRAPSH:-.}" &> /dev/null
-                        odsel_fsi "$(_pathget $SHELLAPI_BSTRAPSH ${!#})" || _fatal
+                        odsel_fsi "$(_pathget "${SHELLAPI_BSTRAPSH:-.}" ${!#})" || _fatal
                         popd &> /dev/null
                     } || {
                         printf "SHELLAPI_TARGET not set!\n"
