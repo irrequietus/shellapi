@@ -138,7 +138,7 @@ function __shellapi_fcheck() {
                 return 0
             } || {
                 printf "shellapi: help option!\n"
-                return 0
+                exit 0
             }
         }
     }
