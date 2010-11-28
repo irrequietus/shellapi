@@ -1,0 +1,15 @@
+/* odsel example 01: basic grammar and syntax in use. */
+
+
+: mynull_function(...) {};
+
+: main() {
+	: call_function(...) => mynull_function();
+
+	call_function( "this is some test content"
+		     , "more content like the previous one"
+		     , "last line!");
+};
+
+main();
+
