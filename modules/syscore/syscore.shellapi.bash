@@ -909,6 +909,93 @@ function _psplit() {
 }
 
 #;
+# @desc An odsel tokenizer, supporting very basic odsel syntax. Eventually this
+#       could be running the core of odsel_vsi() within the odsel shellapi module,
+#       since its current implementation comes from alpha stage. It also supports
+#       comment removal in a single step (_ccrem,_qsplit,_psplit etc could be
+#       deprecated for odsel_vsi() uses).
+# @ptip $1  odsel expression sequence
+# @note Resulting tokens are stored into the ODSEL_TOKENS global array
+#;
+function _qodseltok() {
+    ODSEL_TOKENS=()
+    local x="$1" z= t=
+    while [[ $x =~ (^[[:space:]]*)([^,\"\'\{\}\(\)\;:/=\>\<~]*)([,,\"\'\{\}\(\)\;:/=\>\<~]) ]]; do
+        local t="${BASH_REMATCH[3]}" m="${BASH_REMATCH[2]#"${BASH_REMATCH[2]%%[![:space:]]*}"}"
+        m="${m%"${m##*[![:space:]]}"}" 
+        case "$t" in
+        /)
+            case "${x#*$t}" in
+                \**)
+                    x="${x#*$t*\*/}"
+                    continue
+                ;;
+                *)
+                    _emsg "${FUNCNAME}: unknown token met: ${x}"
+                    return 1
+                ;;
+            esac
+        ;;
+        [=\>~])
+            n="${x#*$t}"
+            n="$t${n/[!=\>\<]*/}"
+            ODSEL_TOKENS+=("$n")
+            x="${x#*$n}"
+            continue
+        ;;
+        \(|\))
+            [ -z "$m" ] || ODSEL_TOKENS+=("$m")
+            ODSEL_TOKENS+=($t)
+            ;;
+        :)
+            case "${x#*$t}" in
+                :\(*)
+                    [[ ${x#*$t} =~ ^:\(\"([[:alnum:]_]*)\"\)[[:space:]]*=\>[[:space:]]*\"([^\"]*)\" ]] && {
+                        ODSEL_TOKENS+=("::(" "${BASH_REMATCH[1]}" "=>" "\"${BASH_REMATCH[2]}\"")
+                        x="${x#*\"${BASH_REMATCH[2]}\"}"
+                    } || return 1
+                    continue
+                ;;
+                *)
+                    ODSEL_TOKENS+=(:)
+                    x="${x#?}"
+                ;;
+            esac
+            ;;
+        \"|\')
+            local p="${x/$t*/}" u= n=
+            x="${x#*"$t"}"
+            while [[ $x =~ ^([^\\$t]*)([$t\\]) ]]; do
+                n=$((${#BASH_REMATCH[1]}+1))
+                [[ ${BASH_REMATCH[2]} == $t ]] && {
+                    u+="${BASH_REMATCH[1]}$t"
+                    break
+                } || {
+                    [[ ${x:$n:1}  == $t ]] && ((n++))
+                    u+="${x:0:$n}"
+                }
+                x="${x:$n}"
+                done
+                z+="$m$t$u"
+                z="${z#"${z%%[![:space:]]*}"}"
+                z="${z%"${z##*[![:space:]]}"}"
+            ;;
+        ,|\;|\{|\})
+                z="$z$m"
+                z="${z#"${z%%[![:space:]]*}"}"
+                z="${z%"${z##*[![:space:]]}"}"
+                [ -z "$z" ] || ODSEL_TOKENS+=("$z")
+                ODSEL_TOKENS+=($t)
+                z=
+            ;;
+        esac
+        x="${x#*"$t"}"
+        x="${x#"${x%%[![:space:]]*}"}"
+        x="${x%"${x##*[![:space:]]}"}"
+    done
+}
+
+#;
 # @desc Retrieve an uuid from /proc/sys/kernel/random/uuid
 # @echo An uuid value
 #;
