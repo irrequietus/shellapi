@@ -1,5 +1,17 @@
 READ THIS CAREFULLY
 
+UPDATE: checkout the devbox branch in the gitorious repository for shellapi
+for an upcoming standalone shellapi launcher (odsel_sh). A quick and dirty
+example is (in deploy folder of the devbox branch):
+
+./odsel.sh -j </path/to/where/odsel_sh/is/to/be/placed>
+
+This is marked as *experimental*, to be merged in master soon. Note that
+you do not need to set the SHELLAPI_HOME and SHELLAPI_TARGET globals this
+way. In order to run a .odsel file:
+
+odsel_sh -f </path/to/myfile.odsel>
+
 1. Compatibility Notes
 ======================
 

@@ -134,7 +134,7 @@ flush|asu|printf|inputf)[[:space:]]*(.*) ]]; then
                                                 _omsg "$(_emph dfun): ${BASH_REMATCH[1]}"
                                                 eval "_fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\")"
                                                 eval "_ea_fnop_${BASH_REMATCH[1]}(){
-                                                    _fnop_${BASH_REMATCH[1]}=(\"${f[@]/%/;}\"); }"
+                                                    _fnop_${BASH_REMATCH[1]}=(\"\${f[@]/%/;}\"); }"
                                                 export -f _ea_fnop_${BASH_REMATCH[1]}
                                             }
                                         }
@@ -211,7 +211,7 @@ flush|asu|printf|inputf)[[:space:]]*(.*) ]]; then
                 (odsel_exptsh_apply; $n || { _for_each SHELLAPI_ERROR _fail; return 1; } ) \
                     || { _emsg "${FUNCNAME}: callback failure"; return 1; }
             } || {
-                ! [[ -z ${!n} ]] && {
+                ! [ -z "${!n}" ] && {
                     n="$n[*]"
                     odsel_vsi "${!n}" \
                         || _emsg "${FUNCNAME}: cascade failure"

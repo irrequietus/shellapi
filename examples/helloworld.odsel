@@ -1,0 +1,10 @@
+
+/* A very simple q+a hello world in odsel! */
+
+: main() {
+    inputf("What is your name?\n", myvar);
+    printf("Well, %s, this is the (infamous) Hello, World!\n",myvar);
+};
+
+main();
+
