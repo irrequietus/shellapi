@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with shellapi. If not, see <http://www.gnu.org/licenses/>.
 
+function __shellapi_qp() {
+    printf "\033[1;32m[s]\033[0m: %s\n" "$1"
+}
+
 #;
 # @note Step one of the experimental loader, this is a test for
 #       the upcoming shell - strict only odsel subset that handles
@@ -25,7 +29,7 @@
 function __shellapi_checkinstall() {
     __shellapi_fcheck "${@}" && {
         [ -z "$SHELLAPI_HOME" ] && {
-                printf "You cannot run shellapi without specifying SHELLAPI_HOME!\n"
+                __shellapi_qp "You cannot run shellapi without specifying SHELLAPI_HOME!"
                 exit 1
             } || {
             [[ -d $SHELLAPI_HOME  ]] && {
@@ -36,18 +40,18 @@ function __shellapi_checkinstall() {
                         odsel_fsi "$(_pathget "${SHELLAPI_BSTRAPSH:-.}" ${!#})" || _fatal
                         popd &> /dev/null
                     } || {
-                        printf "SHELLAPI_TARGET not set!\n"
+                        __shellapi_qp "SHELLAPI_TARGET not set!\n"
                         exit 1
                     }
                 }
             } || {
-                printf "SHELLAPI_HOME set but directory does not exist!\n"
+                __shellapi_qp "SHELLAPI_HOME set but directory does not exist!\n"
                 exit 1
             }
         }
     } || {
         ((SHELLAPI_EXIT_0)) && return 0
-        printf "shellapi: environment is not set, aborting.\n"
+        __shellapi_qp "shellapi: environment is not set, aborting.\n"
         return 1
     }
 }
@@ -65,20 +69,20 @@ function __shellapi_fcheck() {
         case $x in
             [isthgfjq])
                 ((v_$x)) && {
-                    printf "shellapi: ( %s ) assigned as: \"%s\", aborting\n"\
+                    __shellapi_qp "shellapi: ( %s ) assigned as: \"%s\", aborting\n"\
                         "$x" "${vars[v_$x]}"
                     return 1
                 }
                 [[ $x == [isthgfjq] ]] && ((v_$x=$((y++)))) || {
-                    printf "shellapi: invalid option: %s\n" "$rj"
+                    __shellapi_qp "shellapi: invalid option: %s\n" "$rj"
                     return 1
                 }
                 vars[v_$x]="$OPTARG"
                 ;;
             *)
                 [[ $rj\: == -[istfjq]\: ]] \
-                    && printf "shellapi: ( %s ) without input, aborting...\n" "$rj" \
-                    || printf "shellapi: ( %s ) without match, aborting...\n" "$rj"
+                    && __shellapi_qp "shellapi: ( %s ) without input, aborting..." "$rj" \
+                    || __shellapi_qp "shellapi: ( %s ) without match, aborting..." "$rj"
                 return 1
                 ;;
         esac
@@ -106,14 +110,14 @@ function __shellapi_fcheck() {
         exit
     }
     ((v_f)) && {
-        printf "running odsel interpreter\n"
+        __shellapi_qp "running odsel interpreter\n"
         SHELLAPI_HOME="$SHELLAPI_BSTRAPRN" \
         SHELLAPI_TARGET="$SHELLAPI_BSTRAPRN/deploy/__rspace"
         export SHELLAPI_HOME SHELLAPI_TARGET
         return 0
     }
     ((v_g)) && {
-        printf "generating odsel.bash self extracting script\n"
+        __shellapi_qp "generating odsel.bash self extracting script"
         ((v_t)) && ((v_s)) && {
             export SHELLAPI_TARGET="${vars[v_t]}"
             export SHELLAPI_HOME="${vars[v_s]}"
@@ -124,11 +128,11 @@ function __shellapi_fcheck() {
         }
     }
     ((v_i)) && ((v_s+v_t+v_h)) && {
-        printf "shellapi: option -i can only be used as standalone, aborting.\n"
+        __shellapi_qp "shellapi: option -i can only be used as standalone, aborting."
         return 1
     } || {
         ((v_i)) && {
-            printf "requested an installation!\n"
+            __shellapi_qp "requested an installation!"
             export SHELLAPI_TARGET="${vars[v_i]}"
             return 0
         } || {
@@ -137,7 +141,7 @@ function __shellapi_fcheck() {
                 ((v_s)) && export SHELLAPI_HOME="${vars[v_s]}"
                 return 0
             } || {
-                printf "shellapi: help option!\n"
+                __shellapi_qp "shellapi: help option!"
                 exit 0
             }
         }
