@@ -11,6 +11,7 @@
     call_function( "this is some test content"
                    , "more content like the previous one"
                      , "last line!" );
+    : somelist = {"alpha", "beta", "gamma and delta here", "epsilon" };
 };
 
 main();
