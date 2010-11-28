@@ -232,7 +232,8 @@ flush|asu|printf|inputf)[[:space:]]*(.*) ]]; then
 #;
 function odsel_vsiq() {
     _qodseltok "$1" && {
-        _for_each ODSEL_TOKENS printf "* %s\n"
+        local ____y=("${ODSEL_TOKENS[@]/#/$(_emph ${FUNCNAME}\(\)): * }")
+        _for_each ____y _omsg
     }
     ! ((${#SHELLAPI_ERROR[@]}))
 }
