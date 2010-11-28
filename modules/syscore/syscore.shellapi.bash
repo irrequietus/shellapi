@@ -939,7 +939,8 @@ function _qodseltok() {
         [=\>~])
             n="${x#*$t}"
             n="$t${n/[!=\>\<]*/}"
-            ODSEL_TOKENS+=("$m" "$n")
+            [ -z "$m" ] || ODSEL_TOKENS+=("$m")
+            [ -z "$n" ] || ODSEL_TOKENS+=("$n")
             x="${x#*$n}"
             continue
         ;;

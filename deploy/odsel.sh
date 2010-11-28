@@ -92,6 +92,7 @@ function __shellapi_fcheck() {
         ! [ -z "${SHELLAPI_HOME}" ] && {
             ! [ -z "${SHELLAPI_TARGET}" ] && {
                 . "${SHELLAPI_HOME}/modules/syscore/syscore.shellapi.bash"
+                __shellapi_qp "running odsel_vsiq() driven odsel parsing..."
                 _init && odsel_vsiq "$(< "$(_pathget "$(pwd)" "${vars[v_q]}")")" || _fatal
                 SHELLAPI_EXIT_0=1
                 return 1
