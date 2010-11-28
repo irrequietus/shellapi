@@ -962,7 +962,7 @@ function _qodseltok() {
                 ;;
                 *)
                     ODSEL_TOKENS+=(:)
-                    x="${x#?}"
+                    x="${x#*$t}"
                     continue
                 ;;
             esac
