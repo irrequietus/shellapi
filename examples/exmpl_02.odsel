@@ -1,0 +1,24 @@
+
+/* Nested function scope and ("") operator example */
+
+: level1() {
+    : level2() {
+        : level3() {
+            : level4() {
+                : variable = ("Enter any string below:\n");
+                printf("Result is: %s\n",variable);
+                inputf("This is another way of entering the string:\n", variable);
+                printf("Result is: %s\n");
+            };
+            
+            /* Take note that the list below uses the ("") odsel operator a.k.a. inputf ! */
+            : myvarlist = { ("Type some text here:\n"), ("Type some more text here:\n") }
+            
+            level4();
+        };
+        level3();
+    };
+    level2();
+};
+
+: main() => level1();
