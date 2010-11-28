@@ -12,6 +12,10 @@ way. In order to run a .odsel file:
 
 odsel_sh -f </path/to/myfile.odsel>
 
+For those who have SHELLAPI_HOME and SHELLAPI_TARGET variables set in their
+environment, just running odsel.sh -q <filename> will do a quick run of
+odsel code through odsel_vsiq(). This is now available also in the master branch.
+
 1. Compatibility Notes
 ======================
 
