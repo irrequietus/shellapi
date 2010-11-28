@@ -944,8 +944,12 @@ function _qodseltok() {
             continue
         ;;
         \(|\))
-            [ -z "$m" ] || ODSEL_TOKENS+=("$m")
+            z="$z$m"
+            z="${z#"${z%%[![:space:]]*}"}"
+            z="${z%"${z##*[![:space:]]}"}"
+            [ -z "$z$m" ] || ODSEL_TOKENS+=("$z$m")
             ODSEL_TOKENS+=($t)
+            z=
             ;;
         :)
             case "${x#*$t}" in
