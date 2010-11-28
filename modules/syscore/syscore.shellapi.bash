@@ -920,10 +920,28 @@ function _psplit() {
 function _qodseltok() {
     ODSEL_TOKENS=()
     local x="$1" z= t=
-    while [[ $x =~ (^[[:space:]]*)([^,\"\'\{\}\(\)\;:/=\>\<~]*)([,,\"\'\{\}\(\)\;:/=\>\<~]) ]]; do
+    while [[ "$x" =~ (^[[:space:]]*)([^\]\[,\"\'\{\}\(\)\;:/=\>\<~\|-]*)([\]\[,\"\'\{\}\(\)\;:/=\>\<~\|-]) ]]; do
         local t="${BASH_REMATCH[3]}" m="${BASH_REMATCH[2]#"${BASH_REMATCH[2]%%[![:space:]]*}"}"
         m="${m%"${m##*[![:space:]]}"}" 
         case "$t" in
+        [\|\]\[])
+            ODSEL_TOKENS+=($t)
+            [ -z "$z" ] || ODSEL_TOKENS+=("$z")
+            z=
+        ;;
+        -)
+            case "${x#*$t}" in
+                \>*)
+                    x="${x#*$t>}"
+                    ODSEL_TOKENS+=("->")
+                    continue
+                ;;
+                *)
+                    _emsg "${FUNCNAME}: unknown token met: ${x}"
+                    return 1
+                ;;
+            esac
+        ;;
         /)
             case "${x#*$t}" in
                 \**)
@@ -985,6 +1003,8 @@ function _qodseltok() {
                 z+="$m$t$u"
                 z="${z#"${z%%[![:space:]]*}"}"
                 z="${z%"${z##*[![:space:]]}"}"
+                ODSEL_TOKENS+=("$z")
+                z=
             ;;
         ,|\;|\{|\})
                 z="$z$m"

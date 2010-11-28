@@ -1,0 +1,19 @@
+
+/* Displaying how odsel pool grammars are defined! The difference
+ * with the previous syntax used is that of double quotes for
+ * event definition
+ */
+
+: main() {
+    : ["prime"] => /* pool name */
+        @ {"stable", "unstable", "development" } /* you want how many branches? */
+        : { "configure_pre", "configure_build", "configure_post"
+          , "make_pre", "make_build", "make_post"
+          , "make_install_pre", "make_install_build", "make_install_post"
+          , "remove_pre", "remove_build", "remove_post" } /* the various steps */
+        | "configure"     : "configure_pre" -> "configure_post" /* from -> to for configure */
+        | "make"          : "make_pre" -> "make_post" /* from -> to for make */
+        | "make_install"  : "make_install_pre" -> "make_install_post" /* from -> to for make_install */
+        | "install"       : "configure_pre" -> "make_install_post" /* from -> to for install */
+        | "remove"        : "remove_pre" -> "remove_post" /* from -> to for remove */;
+};
