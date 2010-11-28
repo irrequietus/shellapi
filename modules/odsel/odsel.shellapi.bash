@@ -211,7 +211,7 @@ flush|asu|printf|inputf)[[:space:]]*(.*) ]]; then
                 (odsel_exptsh_apply; $n || { _for_each SHELLAPI_ERROR _fail; return 1; } ) \
                     || { _emsg "${FUNCNAME}: callback failure"; return 1; }
             } || {
-                ! [[ -z ${!n} ]] && {
+                ! [ -z "${!n}" ] && {
                     n="$n[*]"
                     odsel_vsi "${!n}" \
                         || _emsg "${FUNCNAME}: cascade failure"
