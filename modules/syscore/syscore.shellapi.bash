@@ -929,11 +929,11 @@ function _qodseltok() {
             [ -z "$z" ] || ODSEL_TOKENS+=("$z")
             z=
         ;;
-        -)
+        [~-])
             case "${x#*$t}" in
                 \>*)
                     x="${x#*$t>}"
-                    ODSEL_TOKENS+=("->")
+                    ODSEL_TOKENS+=("$t>")
                     continue
                 ;;
                 *)
@@ -954,7 +954,7 @@ function _qodseltok() {
                 ;;
             esac
         ;;
-        [=\>~])
+        [=\>])
             n="${x#*$t}"
             n="$t${n/[!=\>\<]*/}"
             [ -z "$m" ] || ODSEL_TOKENS+=("$m")
