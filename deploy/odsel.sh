@@ -46,6 +46,7 @@ function __shellapi_checkinstall() {
             }
         }
     } || {
+        ((SHELLAPI_EXIT_0)) && return 0
         printf "shellapi: environment is not set, aborting.\n"
         return 1
     }
@@ -58,30 +59,40 @@ function __shellapi_checkinstall() {
 function __shellapi_fcheck() {
     local   rj= x= y=1 vars=() \
             v_t=0 v_i=0 v_s=0 v_h=0 \
-            v_g=0 v_f=0 v_j=0
-    while getopts :i:s:t:hg:f:j: x; do
+            v_g=0 v_f=0 v_j=0 v_q=0
+    while getopts :i:s:t:hg:f:j:q: x; do
         rj="${@:$((${OPTIND}-1)):${OPTIND}}"
         case $x in
-            [isthgfj])
+            [isthgfjq])
                 ((v_$x)) && {
                     printf "shellapi: ( %s ) assigned as: \"%s\", aborting\n"\
                         "$x" "${vars[v_$x]}"
                     return 1
                 }
-                [[ $x == [isthgfj] ]] && ((v_$x=$((y++)))) || {
+                [[ $x == [isthgfjq] ]] && ((v_$x=$((y++)))) || {
                     printf "shellapi: invalid option: %s\n" "$rj"
                     return 1
                 }
                 vars[v_$x]="$OPTARG"
                 ;;
             *)
-                [[ $rj\: == -[istfj]\: ]] \
+                [[ $rj\: == -[istfjq]\: ]] \
                     && printf "shellapi: ( %s ) without input, aborting...\n" "$rj" \
                     || printf "shellapi: ( %s ) without match, aborting...\n" "$rj"
                 return 1
                 ;;
         esac
     done
+    ((v_q)) && {
+        ! [ -z "${SHELLAPI_HOME}" ] && {
+            ! [ -z "${SHELLAPI_TARGET}" ] && {
+                . "${SHELLAPI_HOME}/modules/syscore/syscore.shellapi.bash"
+                _init && odsel_vsiq "$(< "$(_pathget "$(pwd)" "${vars[v_q]}")")" || _fatal
+                SHELLAPI_EXIT_0=1
+                return 1
+            }
+        } || return 1
+    }
     ((v_j)) && {
         local s_double="$(pwd)"
         export SHELLAPI_HOME="${s_double%/*}"

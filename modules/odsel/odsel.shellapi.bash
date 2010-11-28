@@ -228,6 +228,16 @@ flush|asu|printf|inputf)[[:space:]]*(.*) ]]; then
 }
 
 #;
+# @desc A skeleton for a better odsel_vsi()
+#;
+function odsel_vsiq() {
+    _qodseltok "$1" && {
+        _for_each ODSEL_TOKENS printf "* %s\n"
+    }
+    ! ((${#SHELLAPI_ERROR[@]}))
+}
+
+#;
 # @desc A selector for odsel "finals"; practically keyword - driven
 #       action selector
 # @ptip $1  An unmatched final selector
