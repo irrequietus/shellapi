@@ -1,14 +1,16 @@
-/* odsel example 01: basic grammar and syntax in use. */
+/* odsel example 01: basic grammar and syntax in use.
+   This is intended more for testing use from odsel_vsiq(), some
+   constructs are not compatible with odsel_vsi() for the time being.
+ */
 
-
-: mynull_function(...) {};
+: mynull_function() {};
 
 : main() {
-	: call_function(...) => mynull_function();
-
-	call_function( "this is some test content"
-		     , "more content like the previous one"
-		     , "last line!");
+    ::("SHELL_VARIABLE") => "this is the content of the shell variable";
+    : call_function(...) => mynull_function();
+    call_function( "this is some test content"
+                   , "more content like the previous one"
+                     , "last line!" );
 };
 
 main();

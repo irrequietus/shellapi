@@ -954,8 +954,8 @@ function _qodseltok() {
         :)
             case "${x#*$t}" in
                 :\(*)
-                    [[ ${x#*$t} =~ ^:\(\"([[:alnum:]_]*)\"\)[[:space:]]*=\>[[:space:]]*\"([^\"]*)\" ]] && {
-                        ODSEL_TOKENS+=("::(" "${BASH_REMATCH[1]}" "=>" "\"${BASH_REMATCH[2]}\"")
+                    [[ ${x#*$t} =~ ^:\([[:space:]]*\"([[:alnum:]_]*)\"[[:space:]]*\)[[:space:]]*=\>[[:space:]]*\"([^\"]*)\" ]] && {
+                        ODSEL_TOKENS+=("::" "(" "${BASH_REMATCH[1]}" ")" "=>" "\"${BASH_REMATCH[2]}\"")
                         x="${x#*\"${BASH_REMATCH[2]}\"}"
                     } || return 1
                     continue
@@ -963,6 +963,7 @@ function _qodseltok() {
                 *)
                     ODSEL_TOKENS+=(:)
                     x="${x#?}"
+                    continue
                 ;;
             esac
             ;;
