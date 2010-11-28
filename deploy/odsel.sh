@@ -35,6 +35,7 @@ function __shellapi_checkinstall() {
             [[ -d $SHELLAPI_HOME  ]] && {
                 . "${SHELLAPI_HOME}/modules/syscore/syscore.shellapi.bash" && {
                     ! [ -z $SHELLAPI_TARGET ] && {
+                        unset __shellapi_fcheck __shellapi_checkinstall __shellapi_qp
                         _init || _fatal
                         pushd "${SHELLAPI_BSTRAPSH:-.}" &> /dev/null
                         odsel_fsi "$(_pathget "${SHELLAPI_BSTRAPSH:-.}" ${!#})" || _fatal
