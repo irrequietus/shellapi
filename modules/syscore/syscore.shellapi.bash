@@ -920,10 +920,15 @@ function _psplit() {
 function _qodseltok() {
     ODSEL_TOKENS=()
     local x="$1" z= t=
-    while [[ "$x" =~ (^[[:space:]]*)([^\]\[,\"\'\{\}\(\)\;:/=\>\<~\|@-]*)([\]\[,\"\'\{\}\(\)\;:/=\>\<~\|@-]) ]]; do
+    while [[ "$x" =~ (^[[:space:]]*)([^\]\[,\"\'\{\}\(\)\;:/=\>\<~\|[:space:]@-]*)([\]\[,\"\'\{\}\(\)\;:/=\>\<~\|[:space:]@-]) ]]; do
         local t="${BASH_REMATCH[3]}" m="${BASH_REMATCH[2]#"${BASH_REMATCH[2]%%[![:space:]]*}"}"
         m="${m%"${m##*[![:space:]]}"}" 
         case "$t" in
+        [[:space:]])
+            ODSEL_TOKENS+=("$m")
+            x="${x#*$m*$t}"
+            continue
+        ;;
         [\|\]\[@])
             ODSEL_TOKENS+=($t)
             [ -z "$z" ] || ODSEL_TOKENS+=("$z")
