@@ -9,7 +9,7 @@
 
 : main() {
 
-    load example; /* loading the example pool, this is still the old syntax. */
+    load("example"); /* loading the example pool, this is still the old syntax. */
 
     /* Remember to define the pool "grammar" */
 
