@@ -920,11 +920,11 @@ function _psplit() {
 function _qodseltok() {
     ODSEL_TOKENS=()
     local x="$1" z= t=
-    while [[ "$x" =~ (^[[:space:]]*)([^\]\[,\"\'\{\}\(\)\;:/=\>\<~\|-]*)([\]\[,\"\'\{\}\(\)\;:/=\>\<~\|-]) ]]; do
+    while [[ "$x" =~ (^[[:space:]]*)([^\]\[,\"\'\{\}\(\)\;:/=\>\<~\|@-]*)([\]\[,\"\'\{\}\(\)\;:/=\>\<~\|@-]) ]]; do
         local t="${BASH_REMATCH[3]}" m="${BASH_REMATCH[2]#"${BASH_REMATCH[2]%%[![:space:]]*}"}"
         m="${m%"${m##*[![:space:]]}"}" 
         case "$t" in
-        [\|\]\[])
+        [\|\]\[@])
             ODSEL_TOKENS+=($t)
             [ -z "$z" ] || ODSEL_TOKENS+=("$z")
             z=
@@ -973,10 +973,8 @@ function _qodseltok() {
         :)
             case "${x#*$t}" in
                 :\(*)
-                    [[ ${x#*$t} =~ ^:\([[:space:]]*\"([[:alnum:]_]*)\"[[:space:]]*\)[[:space:]]*=\>[[:space:]]*\"([^\"]*)\" ]] && {
-                        ODSEL_TOKENS+=("::" "(" "${BASH_REMATCH[1]}" ")" "=>" "\"${BASH_REMATCH[2]}\"")
-                        x="${x#*\"${BASH_REMATCH[2]}\"}"
-                    } || return 1
+                    ODSEL_TOKENS+=("::(")
+                    x="${x#*:\(}"
                     continue
                 ;;
                 *)
