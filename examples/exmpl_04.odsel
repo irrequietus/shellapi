@@ -27,7 +27,7 @@
 
     /* Let's define a callback package list. The order does not matter because dep resolution occurs */
 
-    : callback() => {
+    : callback() =>> {
         ::("foo1")["example"]@( "default" [ "1.10" @  "stable" : "configure_pre" -> "make_install"] ),
         ::("foo2")["example"]@( "default" [ "1.11" @  "stable" : "configure_pre" -> "make_install"] ),
         ::("foo3")["example"]@( "default" [ "1.12" @  "stable" : "configure_pre" -> "make_install"] ),
