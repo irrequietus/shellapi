@@ -7,10 +7,14 @@
  * odsel_vsi().
  */
 
+import odsel;
+
 : main() {
 
-    load("example"); /* loading the example pool, this is still the old syntax. */
-
+    odsel::load("example"); /* loading the example pool, this is still the old syntax. */
+    
+    odsel::printf("odsel standard functions belong in the odsel \"collection\"!\n");
+    
     /* Remember to define the pool "grammar" */
 
     : ["example"] =>

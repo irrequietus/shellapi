@@ -982,6 +982,12 @@ function _qodseltok() {
                     x="${x#*:\(}"
                     continue
                 ;;
+                :*)
+                    ODSEL_TOKENS+=("$m")
+                    ODSEL_TOKENS+=("::")
+                    x="${x#*::}"
+                    continue
+                ;;
                 *)
                     ODSEL_TOKENS+=(:)
                     x="${x#*$t}"

@@ -1,14 +1,15 @@
 
 /* Nested function scope and ("") operator example */
+import odsel;
 
 : level1() {
     : level2() {
         : level3() {
             : level4() {
                 : variable = ("Enter any string below:\n");
-                printf("Result is: %s\n",variable);
-                inputf("This is another way of entering the string:\n", variable);
-                printf("Result is: %s\n");
+                odsel::printf("Result is: %s\n",variable);
+                odsel::inputf("This is another way of entering the string:\n", variable);
+                odsel::printf("Result is: %s\n");
             };
             
             /* Take note that the list below uses the ("") odsel operator a.k.a. inputf ! */
