@@ -920,10 +920,33 @@ function _psplit() {
 function _qodseltok() {
     ODSEL_TOKENS=()
     local x="$1" z= t=
-    while [[ $x =~ (^[[:space:]]*)([^,\"\'\{\}\(\)\;:/=\>\<~]*)([,,\"\'\{\}\(\)\;:/=\>\<~]) ]]; do
+    while [[ "$x" =~ (^[[:space:]]*)([^\]\[,\"\'\{\}\(\)\;:/=\>\<~\|[:space:]@-]*)([\]\[,\"\'\{\}\(\)\;:/=\>\<~\|[:space:]@-]) ]]; do
         local t="${BASH_REMATCH[3]}" m="${BASH_REMATCH[2]#"${BASH_REMATCH[2]%%[![:space:]]*}"}"
         m="${m%"${m##*[![:space:]]}"}" 
         case "$t" in
+        [[:space:]])
+            ODSEL_TOKENS+=("$m")
+            x="${x#*$m*$t}"
+            continue
+        ;;
+        [\|\]\[@])
+            ODSEL_TOKENS+=($t)
+            [ -z "$z" ] || ODSEL_TOKENS+=("$z")
+            z=
+        ;;
+        [~-])
+            case "${x#*$t}" in
+                \>*)
+                    x="${x#*$t>}"
+                    ODSEL_TOKENS+=("$t>")
+                    continue
+                ;;
+                *)
+                    _emsg "${FUNCNAME}: unknown token met: ${x}"
+                    return 1
+                ;;
+            esac
+        ;;
         /)
             case "${x#*$t}" in
                 \**)
@@ -936,7 +959,7 @@ function _qodseltok() {
                 ;;
             esac
         ;;
-        [=\>~])
+        [=\>])
             n="${x#*$t}"
             n="$t${n/[!=\>\<]*/}"
             [ -z "$m" ] || ODSEL_TOKENS+=("$m")
@@ -955,10 +978,14 @@ function _qodseltok() {
         :)
             case "${x#*$t}" in
                 :\(*)
-                    [[ ${x#*$t} =~ ^:\([[:space:]]*\"([[:alnum:]_]*)\"[[:space:]]*\)[[:space:]]*=\>[[:space:]]*\"([^\"]*)\" ]] && {
-                        ODSEL_TOKENS+=("::" "(" "${BASH_REMATCH[1]}" ")" "=>" "\"${BASH_REMATCH[2]}\"")
-                        x="${x#*\"${BASH_REMATCH[2]}\"}"
-                    } || return 1
+                    ODSEL_TOKENS+=("::(")
+                    x="${x#*:\(}"
+                    continue
+                ;;
+                :*)
+                    ODSEL_TOKENS+=("$m")
+                    ODSEL_TOKENS+=("::")
+                    x="${x#*::}"
                     continue
                 ;;
                 *)
@@ -985,6 +1012,8 @@ function _qodseltok() {
                 z+="$m$t$u"
                 z="${z#"${z%%[![:space:]]*}"}"
                 z="${z%"${z##*[![:space:]]}"}"
+                ODSEL_TOKENS+=("$z")
+                z=
             ;;
         ,|\;|\{|\})
                 z="$z$m"
