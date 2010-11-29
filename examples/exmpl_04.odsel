@@ -1,0 +1,42 @@
+
+/* Copyright (C) 2010,  George Makrydakis <george@odreex.org>
+ * License: GPL3+
+ *
+ * A usage example for pools  and "callbacks", this is another bit
+ * of odsel sample code for the upcoming use of odsel_vsiq() deprecating
+ * odsel_vsi().
+ */
+
+: main() {
+
+    load example; /* loading the example pool, this is still the old syntax. */
+
+    /* Remember to define the pool "grammar" */
+
+    : ["example"] =>
+        @ {"stable", "unstable", "development" }
+        : { "configure_pre", "configure_build", "configure_post"
+          , "make_pre", "make_build", "make_post"
+          , "make_install_pre", "make_install_build", "make_install_post"
+          , "remove_pre", "remove_build", "remove_post" }
+        | "configure"     : "configure_pre" -> "configure_post"
+        | "make"          : "make_pre" -> "make_post"
+        | "make_install"  : "make_install_pre" -> "make_install_post"
+        | "install"       : "configure_pre" -> "make_install_post"
+        | "remove"        : "remove_pre" -> "remove_post";
+
+    /* Let's define a callback package list. The order does not matter because dep resolution occurs */
+
+    : callback() => {
+        ::("foo1")["example"]@( "default" [ "1.10" @  "stable" : "configure_pre" -> "make_install"] ),
+        ::("foo2")["example"]@( "default" [ "1.11" @  "stable" : "configure_pre" -> "make_install"] ),
+        ::("foo3")["example"]@( "default" [ "1.12" @  "stable" : "configure_pre" -> "make_install"] ),
+        ::("foo4")["example"]@( "default" [ "1.13" @  "stable" : "configure_pre" -> "make_install"] ),
+        ::("foo5")["example"]@( "default" [ "1.14" @  "stable" : "configure_pre" -> "make_install"] )
+    };
+
+    /* When everything is done, just deploy the callback */
+
+    callback();
+};
+
