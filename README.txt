@@ -16,6 +16,11 @@ For those who have SHELLAPI_HOME and SHELLAPI_TARGET variables set in their
 environment, just running odsel.sh -q <filename> will do a quick run of
 odsel code through odsel_vsiq(). This is now available also in the master branch.
 
+IMPORTANT NOTICE: the files in examples directory (.odsel) are designed to work
+with the upcoming odsel_vsiq() *ONLY* as of 29/11/2010. The older odsel syntax
+is for the time being locked into odsel_vsi() without any change / fix since
+it is to be deprecated.
+
 1. Compatibility Notes
 ======================
 
