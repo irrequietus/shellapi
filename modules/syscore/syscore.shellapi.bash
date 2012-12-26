@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2009, 2010 - George Makrydakis <george@odreex.org>
+# Copyright (C) 2009, 2010 - George Makrydakis <irrequietus@gmail.com>
 
 # This file is part of shellapi; shellapi is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General
@@ -35,7 +35,7 @@ function _init() {
         && _fatal "${FUNCNAME}: home not set"
     export LC_ALL=C
     export SHCORE_START=$(_dtfs) \
-           SHCORE_VERSION="0.x-pre7" \
+           SHCORE_VERSION="0.x-pre8" \
            _VERSTR=(alpha beta rc)
     export SHELLAPI_MODULES_DIR="${SHELLAPI_HOME}/modules"
     export SHELLAPI_LOCALE=${SHELLAPI_LOCALE:-en}

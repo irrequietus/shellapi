@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2009 - George Makrydakis <george@odreex.org>
+# Copyright (C) 2009 - George Makrydakis <irrequietus@gmail.com>
 
 # This file is part of shellapi; shellapi is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General

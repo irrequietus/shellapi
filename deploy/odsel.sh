@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2010 - George Makrydakis <george@odreex.org>
+# Copyright (C) 2010 - 2012, George Makrydakis <irrequietus@gmail.com>
 
 # This file is part of shellapi; shellapi is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General
@@ -41,18 +41,18 @@ function __shellapi_checkinstall() {
                         odsel_fsi "$(_pathget "${SHELLAPI_BSTRAPSH:-.}" ${!#})" || _fatal
                         popd &> /dev/null
                     } || {
-                        __shellapi_qp "SHELLAPI_TARGET not set!\n"
+                        __shellapi_qp "SHELLAPI_TARGET not set!"
                         exit 1
                     }
                 }
             } || {
-                __shellapi_qp "SHELLAPI_HOME set but directory does not exist!\n"
+                __shellapi_qp "SHELLAPI_HOME set but directory does not exist!"
                 exit 1
             }
         }
     } || {
         ((SHELLAPI_EXIT_0)) && return 0
-        __shellapi_qp "shellapi: environment is not set, aborting.\n"
+        __shellapi_qp "shellapi: environment is not set, aborting."
         return 1
     }
 }
@@ -64,30 +64,38 @@ function __shellapi_checkinstall() {
 function __shellapi_fcheck() {
     local   rj= x= y=1 vars=() \
             v_t=0 v_i=0 v_s=0 v_h=0 \
-            v_g=0 v_f=0 v_j=0 v_q=0
-    while getopts :i:s:t:hg:f:j:q: x; do
+            v_g=0 v_f=0 v_j=0 v_q=0 v_r=0
+    while getopts :i:s:t:hg:f:j:q:r: x; do
         rj="${@:$((${OPTIND}-1)):${OPTIND}}"
         case $x in
-            [isthgfjq])
+            [isthgfjqr])
                 ((v_$x)) && {
-                    __shellapi_qp "shellapi: ( %s ) assigned as: \"%s\", aborting\n"\
+                    __shellapi_qp "shellapi: ( %s ) assigned as: \"%s\", aborting"\
                         "$x" "${vars[v_$x]}"
                     return 1
                 }
-                [[ $x == [isthgfjq] ]] && ((v_$x=$((y++)))) || {
-                    __shellapi_qp "shellapi: invalid option: %s\n" "$rj"
+                [[ $x == [isthgfjqr] ]] && ((v_$x=$((y++)))) || {
+                    __shellapi_qp "shellapi: invalid option: %s" "$rj"
                     return 1
                 }
                 vars[v_$x]="$OPTARG"
                 ;;
             *)
-                [[ $rj\: == -[istfjq]\: ]] \
-                    && __shellapi_qp "shellapi: ( %s ) without input, aborting..." "$rj" \
-                    || __shellapi_qp "shellapi: ( %s ) without match, aborting..." "$rj"
+                __shellapi_qp "shellapi: unknown switch used!"
                 return 1
                 ;;
         esac
     done
+    ((v_r)) && {
+        ! [ -z "${SHELLAPI_HOME}" ] && {
+            export SHELLAPI_TARGET="${SHELLAPI_HOME}/deploy/__rspace"
+            . "${SHELLAPI_HOME}/modules/syscore/syscore.shellapi.bash"
+            __shellapi_qp "running odsel_vsiq() driven odsel parsing..."
+            _init && odsel_vsiq "$(< "$(_pathget "$(pwd)" "${vars[v_r]}")")" || _fatal
+            SHELLAPI_EXIT_0=1
+        }
+        return 1
+    }
     ((v_q)) && {
         ! [ -z "${SHELLAPI_HOME}" ] && {
             ! [ -z "${SHELLAPI_TARGET}" ] && {
