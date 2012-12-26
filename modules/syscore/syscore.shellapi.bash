@@ -32,7 +32,7 @@
 #;
 function _init() {
     [[ -z $SHELLAPI_HOME ]] \
-        && _fatal "${FUNCNAME}: home not set"
+        && _fatal "${FUNCNAME}: SHELLAPI_HOME global is not set"
     export LC_ALL=C
     export SHCORE_START=$(_dtfs) \
            SHCORE_VERSION="0.x-pre8" \

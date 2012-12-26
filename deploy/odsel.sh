@@ -64,17 +64,18 @@ function __shellapi_checkinstall() {
 function __shellapi_fcheck() {
     local   rj= x= y=1 vars=() \
             v_t=0 v_i=0 v_s=0 v_h=0 \
-            v_g=0 v_f=0 v_j=0 v_q=0 v_r=0
-    while getopts :i:s:t:hg:f:j:q:r: x; do
+            v_g=0 v_f=0 v_j=0 v_q=0 v_r=0 \
+            v_p=0
+    while getopts :i:s:t:hg:f:j:q:r:p: x; do
         rj="${@:$((${OPTIND}-1)):${OPTIND}}"
         case $x in
-            [isthgfjqr])
+            [isthgfjqrp])
                 ((v_$x)) && {
                     __shellapi_qp "shellapi: ( %s ) assigned as: \"%s\", aborting"\
                         "$x" "${vars[v_$x]}"
                     return 1
                 }
-                [[ $x == [isthgfjqr] ]] && ((v_$x=$((y++)))) || {
+                [[ $x == [isthgfjqrp] ]] && ((v_$x=$((y++)))) || {
                     __shellapi_qp "shellapi: invalid option: %s" "$rj"
                     return 1
                 }
@@ -86,6 +87,22 @@ function __shellapi_fcheck() {
                 ;;
         esac
     done
+    ((v_p)) && {
+         [ -z "${SHELLAPI_HOME}" ] && {
+            # NOTE: this assumes that you run odsel.sh within the 'deploy'
+            #       directory
+            pushd ../ &> /dev/null
+            export SHELLAPI_HOME="$(pwd)"
+            popd &> /dev/null
+         }
+         export SHELLAPI_TARGET="${SHELLAPI_HOME}/deploy/__rspace"
+         . "${SHELLAPI_HOME}/modules/syscore/syscore.shellapi.bash"
+         __shellapi_qp "hot run processing mode, prepare to explode!"
+         _init || _fatal
+         x="$(_pathget "$(pwd)" "${vars[v_p]}")"
+         [ -f "$x" ] && source "$x"
+         exit $?
+    }
     ((v_r)) && {
         ! [ -z "${SHELLAPI_HOME}" ] && {
             export SHELLAPI_TARGET="${SHELLAPI_HOME}/deploy/__rspace"

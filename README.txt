@@ -1,4 +1,4 @@
-shellapi (Dec 27 2012)
+shellapi (Dec 26 2012)
 ======================
 
 This is a highly GNU/BASH related project for building some of the packages
